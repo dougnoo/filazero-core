@@ -1,4 +1,5 @@
 import StaffLogin from '@/components/auth/StaffLogin';
+import { UserRole } from '@/domain/enums/user-role';
 
 export default function ProfessionalLogin() {
   return (
@@ -6,6 +7,7 @@ export default function ProfessionalLogin() {
       title="Área Profissional"
       subtitle="Acesso para profissionais de saúde"
       redirectTo="/profissional"
+      role={UserRole.PROFESSIONAL}
     />
   );
 }

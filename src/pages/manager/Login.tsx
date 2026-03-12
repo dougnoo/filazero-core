@@ -1,4 +1,5 @@
 import StaffLogin from '@/components/auth/StaffLogin';
+import { UserRole } from '@/domain/enums/user-role';
 
 export default function ManagerLogin() {
   return (
@@ -6,6 +7,7 @@ export default function ManagerLogin() {
       title="Área do Gestor"
       subtitle="Acesso para gestores de saúde"
       redirectTo="/gestor"
+      role={UserRole.MANAGER}
     />
   );
 }

@@ -1,8 +1,9 @@
 import { ReactNode } from 'react';
-import { useLocation, Link } from 'react-router-dom';
-import { Home, MessageSquare, Clock, User, LayoutDashboard, Users, ListChecks, Settings, LogOut } from 'lucide-react';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { Home, MessageSquare, Route as RouteIcon, User, LayoutDashboard, FileText, ListChecks, Activity, BarChart3, Settings, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserRole } from '@/domain/enums/user-role';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AppShellProps {
   children: ReactNode;
@@ -11,29 +12,40 @@ interface AppShellProps {
 
 const citizenNav = [
   { label: 'Início', icon: Home, path: '/' },
-  { label: 'Triagem', icon: MessageSquare, path: '/triagem' },
-  { label: 'Minha Fila', icon: Clock, path: '/fila' },
+  { label: 'Intake', icon: MessageSquare, path: '/intake' },
+  { label: 'Jornada', icon: RouteIcon, path: '/minha-jornada' },
   { label: 'Perfil', icon: User, path: '/perfil' },
 ];
 
 const professionalNav = [
   { label: 'Fila', icon: ListChecks, path: '/profissional' },
-  { label: 'Atendimentos', icon: Users, path: '/profissional/atendimentos' },
+  { label: 'Revisão', icon: FileText, path: '/revisao-clinica' },
   { label: 'Perfil', icon: User, path: '/profissional/perfil' },
 ];
 
 const managerNav = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/gestor' },
-  { label: 'Filas', icon: ListChecks, path: '/gestor/filas' },
-  { label: 'Configurações', icon: Settings, path: '/gestor/config' },
+  { label: 'Clínico', icon: Activity, path: '/dashboard-clinico' },
+  { label: 'Fluxo', icon: BarChart3, path: '/fluxo' },
+  { label: 'Config', icon: Settings, path: '/gestor/config' },
 ];
 
 export function AppShell({ children, role = UserRole.CITIZEN }: AppShellProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const isCitizen = role === UserRole.CITIZEN;
   const nav = role === UserRole.PROFESSIONAL ? professionalNav
     : role === UserRole.MANAGER ? managerNav
     : citizenNav;
+
+  const handleLogout = () => {
+    logout();
+    const loginPath = role === UserRole.PROFESSIONAL ? '/profissional/login'
+      : role === UserRole.MANAGER ? '/gestor/login'
+      : '/login';
+    navigate(loginPath);
+  };
 
   if (isCitizen) {
     return (
@@ -93,7 +105,10 @@ export function AppShell({ children, role = UserRole.CITIZEN }: AppShellProps) {
           })}
         </nav>
         <div className="border-t border-border p-4">
-          <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
             <LogOut className="h-4 w-4" />
             Sair
           </button>
@@ -110,6 +125,9 @@ export function AppShell({ children, role = UserRole.CITIZEN }: AppShellProps) {
           </div>
           <div className="hidden md:block" />
           <div className="flex items-center gap-3">
+            <button onClick={handleLogout} className="md:hidden">
+              <LogOut className="h-5 w-5 text-muted-foreground" />
+            </button>
             <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
               <User className="h-4 w-4 text-muted-foreground" />
             </div>
