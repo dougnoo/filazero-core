@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom';
-import { MessageSquare, Clock, Shield, ArrowRight } from 'lucide-react';
+import { MessageSquare, Route as RouteIcon, Shield, ArrowRight, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function CitizenHome() {
+  const { isAuthenticated, user } = useAuth();
+
   return (
     <div className="flex min-h-screen flex-col">
       {/* Hero */}
@@ -13,38 +16,57 @@ export default function CitizenHome() {
           </div>
           <h1 className="font-display text-3xl font-bold text-foreground">FilaZero</h1>
           <p className="mt-2 text-muted-foreground">
-            Triagem inteligente e fila digital para o SUS
+            Inteligência clínica para o atendimento público de saúde
           </p>
         </div>
       </div>
 
+      {/* Auth-aware greeting */}
+      {isAuthenticated && user && (
+        <div className="mx-auto w-full max-w-sm px-4 pt-4">
+          <p className="text-sm text-muted-foreground">
+            Olá, <span className="font-medium text-foreground">{user.name}</span>
+          </p>
+        </div>
+      )}
+
       {/* Actions */}
       <div className="mx-auto w-full max-w-sm space-y-3 px-4 pt-6">
-        <Link to="/triagem" className="block">
-          <div className="group flex items-center gap-4 rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/30">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-              <MessageSquare className="h-6 w-6 text-primary" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-display font-semibold text-foreground">Iniciar Triagem</h3>
-              <p className="text-sm text-muted-foreground">Descreva seus sintomas para a IA</p>
-            </div>
-            <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-          </div>
-        </Link>
+        {!isAuthenticated ? (
+          <Link to="/login" className="block">
+            <Button className="w-full h-12 font-display font-semibold">
+              Entrar com CPF
+            </Button>
+          </Link>
+        ) : (
+          <>
+            <Link to="/intake" className="block">
+              <div className="group flex items-center gap-4 rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/30">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <Brain className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-display font-semibold text-foreground">Iniciar Atendimento</h3>
+                  <p className="text-sm text-muted-foreground">Coleta clínica inteligente com IA</p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+              </div>
+            </Link>
 
-        <Link to="/fila" className="block">
-          <div className="group flex items-center gap-4 rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/30">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary/10">
-              <Clock className="h-6 w-6 text-secondary" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-display font-semibold text-foreground">Minha Fila</h3>
-              <p className="text-sm text-muted-foreground">Veja sua posição e tempo de espera</p>
-            </div>
-            <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-secondary transition-colors" />
-          </div>
-        </Link>
+            <Link to="/minha-jornada" className="block">
+              <div className="group flex items-center gap-4 rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:border-primary/30">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary/10">
+                  <RouteIcon className="h-6 w-6 text-secondary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-display font-semibold text-foreground">Minha Jornada</h3>
+                  <p className="text-sm text-muted-foreground">Acompanhe cada etapa do seu cuidado</p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-secondary transition-colors" />
+              </div>
+            </Link>
+          </>
+        )}
       </div>
 
       {/* Footer info */}

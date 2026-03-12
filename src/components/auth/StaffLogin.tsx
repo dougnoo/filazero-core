@@ -1,23 +1,30 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
+import { UserRole } from '@/domain/enums/user-role';
 
 interface StaffLoginProps {
   title: string;
   subtitle: string;
   redirectTo: string;
+  role: UserRole;
 }
 
-export default function StaffLogin({ title, subtitle, redirectTo }: StaffLoginProps) {
+export default function StaffLogin({ title, subtitle, redirectTo, role }: StaffLoginProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+  const { loginWithCredentials, isLoading } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || redirectTo;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate(redirectTo);
+    await loginWithCredentials(email, password, role);
+    navigate(from, { replace: true });
   };
 
   return (
@@ -53,8 +60,8 @@ export default function StaffLogin({ title, subtitle, redirectTo }: StaffLoginPr
                 className="h-12"
               />
             </div>
-            <Button type="submit" className="w-full h-12 font-display font-semibold">
-              Entrar
+            <Button type="submit" className="w-full h-12 font-display font-semibold" disabled={isLoading}>
+              {isLoading ? 'Entrando...' : 'Entrar'}
             </Button>
             <button type="button" className="w-full text-center text-sm text-primary hover:underline">
               Esqueci minha senha

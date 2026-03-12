@@ -1,14 +1,19 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function CitizenLogin() {
   const [cpf, setCpf] = useState('');
   const [step, setStep] = useState<'cpf' | 'otp'>('cpf');
   const [otp, setOtp] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+  const { loginWithCPF, isLoading } = useAuth();
+
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/';
 
   const formatCPF = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -25,10 +30,11 @@ export default function CitizenLogin() {
     }
   };
 
-  const handleOTPSubmit = (e: React.FormEvent) => {
+  const handleOTPSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (otp.length >= 4) {
-      navigate('/');
+      await loginWithCPF(cpf, otp);
+      navigate(from, { replace: true });
     }
   };
 
@@ -63,8 +69,8 @@ export default function CitizenLogin() {
                 className="text-center text-2xl tracking-[0.5em] h-14"
                 autoFocus
               />
-              <Button type="submit" className="w-full h-12 font-display font-semibold" disabled={otp.length < 4}>
-                Verificar
+              <Button type="submit" className="w-full h-12 font-display font-semibold" disabled={otp.length < 4 || isLoading}>
+                {isLoading ? 'Verificando...' : 'Verificar'}
               </Button>
               <button type="button" className="w-full text-center text-sm text-primary hover:underline">
                 Reenviar código
@@ -86,7 +92,7 @@ export default function CitizenLogin() {
             </div>
             <h1 className="font-display text-2xl font-bold">Entrar no FilaZero</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Informe seu CPF para acessar a triagem e fila digital
+              Informe seu CPF para acessar o atendimento clínico inteligente
             </p>
           </div>
           <form onSubmit={handleCPFSubmit} className="space-y-4">
