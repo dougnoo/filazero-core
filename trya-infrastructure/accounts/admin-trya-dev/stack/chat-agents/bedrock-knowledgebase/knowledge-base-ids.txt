@@ -1,0 +1,11 @@
+# Bedrock Knowledge Base IDs
+# Criado em: Fri Feb 20 09:41:39 -03 2026
+
+KNOWLEDGE_BASE_ID=A2DCFSGQSI
+KNOWLEDGE_BASE_ARN=arn:aws:bedrock:us-east-1:751426053736:knowledge-base/A2DCFSGQSI
+DATA_SOURCE_ID=WMBOATPWEN
+COLLECTION_ID=3t6eygcpri9ow9yiiws2
+COLLECTION_ENDPOINT=https://3t6eygcpri9ow9yiiws2.us-east-1.aoss.amazonaws.com
+IAM_ROLE_ARN=arn:aws:iam::751426053736:role/admin-trya-dev-kb-role
+
+# Use estes valores na configuração da Lambda

@@ -1,0 +1,335 @@
+# Implementation Plan
+
+- [x] 1. Extend domain layer with new errors
+  - [x] 1.1 Create InvalidStatusTransitionError
+    - Extend Error class with current and attempted status parameters
+    - _Requirements: 7.4, 7.5_
+  - [x] 1.2 Create UnauthorizedApprovalError
+    - Extend Error class with doctor ID and assigned doctor ID parameters
+    - _Requirements: 8.2, 8.3_
+
+- [ ] 2. Extend repository interface with query methods
+  - Add findById method to IMedicalApprovalRequestRepository interface
+  - Add findAll method with filters and pagination parameters
+  - Define ListFilters interface with status, urgencyLevel, dateFrom, dateTo, and patientName fields
+  - Define Pagination interface
+  - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3_
+
+- [ ] 3. Implement extended repository methods in TypeORM repository
+  - Implement findById method using TypeORM with eager loading of relations (symptoms, suggestedExams, careInstructions, imageAnalyses, attachments, assignedDoctor)
+  - Implement findAll method with QueryBuilder for dynamic filtering
+  - Add conditional ordering logic (FIFO for PENDING, DESC for others)
+  - Add case-insensitive LIKE query for patient_name filter using LOWER() function
+  - Include LEFT JOIN for assigned doctor information
+  - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4_
+
+- [ ] 4. Create trya-backend HTTP client
+  - Create TryaBackendClient class in infrastructure/http
+  - Inject HttpService and ConfigService
+  - Implement method to call GET /platform/beneficiaries/:userId
+  - Implement method to call GET /platform/beneficiaries/:userId/files/:s3Key
+  - Add x-api-key header to all requests
+  - Handle HTTP errors and timeouts appropriately
+  - _Requirements: 5.1, 5.2, 5.6, 5.7, 6.1, 6.2, 6.5, 6.6, 10.1, 10.2, 10.3, 10.4, 10.5_
+
+- [ ] 5. Create TryaBackendIntegrationService
+  - Create service in application/services
+  - Inject TryaBackendClient
+  - Implement getBeneficiaryDetails method
+  - Implement getFileDownloadUrl method
+  - Map responses to appropriate DTOs
+  - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 6.1, 6.2, 6.3, 6.4, 6.5, 10.1, 10.2, 10.3, 10.4_
+
+- [ ] 6. Create DTOs for list endpoint
+  - [ ] 6.1 Create ListMedicalApprovalRequestsDto
+    - Add optional status filter with enum validation
+    - Add optional urgency_level filter with enum validation
+    - Add optional date_from and date_to filters with ISO8601 validation
+    - Add optional patient_name filter with string validation and min length 2
+    - Add limit parameter with default 20, max 100
+    - Add offset parameter with default 0
+    - _Requirements: 1.2, 1.3, 1.4, 1.5_
+  - [ ] 6.2 Create MedicalApprovalRequestListItemDto
+    - Define fields: id, patient_name, urgency_level, chief_complaint, status, created_at, assigned_doctor
+    - _Requirements: 1.4_
+  - [ ] 6.3 Create ListMedicalApprovalRequestsResponseDto
+    - Define fields: items array, total, limit, offset
+    - _Requirements: 1.4_
+
+- [ ] 7. Create DTOs for get details endpoint
+  - Create GetMedicalApprovalRequestResponseDto
+  - Include all fields from domain entity
+  - Include symptoms array (objects with id, description, is_main)
+  - Include suggested_exams array (objects with id, exam_name, suggested_by)
+  - Include care_instructions array (objects with id, instruction, provided_by)
+  - Include nested image_analyses and attachments arrays
+  - Include assigned_doctor object if present
+  - _Requirements: 2.2, 2.3_
+
+- [ ] 8. Create DTOs for approve endpoint
+  - [ ] 8.1 Create ApproveMedicalApprovalRequestDto
+    - Add status field with enum validation (APPROVED or ADJUSTED)
+    - Add optional doctor_notes with max length validation
+    - Add optional doctor_suggested_exams array (will be converted to SuggestedExam entities with suggested_by='DOCTOR')
+    - Add optional doctor_care_instructions array (will be converted to CareInstruction entities with provided_by='DOCTOR')
+    - _Requirements: 4.2, 4.3, 4.4_
+  - [ ] 8.2 Create ApproveMedicalApprovalRequestResponseDto
+    - Define fields: id, status, doctor_notes, suggested_exams (array of objects with id, exam_name, suggested_by), care_instructions (array of objects with id, instruction, provided_by), updated_at
+    - _Requirements: 4.5_
+
+- [ ] 9. Create DTOs for attachment and beneficiary endpoints
+  - [ ] 9.1 Create GetAttachmentDownloadUrlResponseDto
+    - Define fields: url, expires_at
+    - _Requirements: 5.2_
+  - [ ] 9.2 Create GetBeneficiaryDetailsResponseDto
+    - Define fields: user_id, name, email, phone, birth_date, health_plan, chronic_conditions, medications, allergies
+    - _Requirements: 6.2_
+
+- [ ] 10. Implement ListMedicalApprovalRequestsUseCase
+  - Inject repository using token
+  - Implement execute method that accepts filters and pagination
+  - Convert DTO filters to domain filters
+  - Call repository findAll method
+  - Map results to response DTO with pagination metadata
+  - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7_
+
+- [ ] 11. Implement GetMedicalApprovalRequestUseCase
+  - Inject repository using token
+  - Implement execute method that accepts request ID
+  - Call repository findById with eager loading
+  - Throw MedicalApprovalRequestNotFoundError if not found
+  - Map result to response DTO including all relations
+  - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
+
+- [x] 12. Implement AssignMedicalApprovalRequestUseCase
+  - Inject repository using token
+  - Implement execute method that accepts request ID and doctor ID
+  - Retrieve request by ID
+  - Throw MedicalApprovalRequestNotFoundError if not found
+  - Validate current status is PENDING
+  - Throw InvalidStatusTransitionError if not PENDING
+  - Update assigned_doctor_id to authenticated doctor
+  - Update status to IN_REVIEW
+  - Save updated request
+  - Return updated request with doctor information
+  - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 7.2, 7.3, 7.4, 8.4_
+
+- [ ] 13. Implement ApproveMedicalApprovalRequestUseCase
+  - Inject repository using token
+  - Implement execute method that accepts request ID, doctor ID, and approval DTO
+  - Retrieve request by ID
+  - Throw MedicalApprovalRequestNotFoundError if not found
+  - Validate current status is IN_REVIEW
+  - Throw InvalidStatusTransitionError if not IN_REVIEW
+  - Validate authenticated doctor is assigned doctor
+  - Throw UnauthorizedApprovalError if not authorized
+  - Update status from DTO
+  - Update doctor_notes from DTO
+  - Convert doctor_suggested_exams array to SuggestedExam entities with suggested_by='DOCTOR' and add to request
+  - Convert doctor_care_instructions array to CareInstruction entities with provided_by='DOCTOR' and add to request
+  - Save updated request (cascade will save new exam and instruction records)
+  - Return updated request with all exams and instructions (both AI and DOCTOR)
+  - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 7.3, 7.4, 8.1, 8.2, 8.3, 8.5, 8.6_
+
+- [ ] 14. Implement GetAttachmentDownloadUrlUseCase
+  - Inject repository and TryaBackendIntegrationService
+  - Implement execute method that accepts request ID and attachment ID
+  - Retrieve request by ID
+  - Throw MedicalApprovalRequestNotFoundError if not found
+  - Find attachment in request.attachments by attachment ID
+  - Throw error if attachment not found
+  - Call integration service with user_id and s3_key
+  - Return pre-signed URL and expiration
+  - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7_
+
+- [ ] 15. Implement GetBeneficiaryDetailsUseCase
+  - Inject repository and TryaBackendIntegrationService
+  - Implement execute method that accepts request ID
+  - Retrieve request by ID
+  - Throw MedicalApprovalRequestNotFoundError if not found
+  - Call integration service with user_id from request
+  - Return beneficiary details from external API
+  - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
+
+- [ ] 16. Extend MedicalApprovalRequestsController
+  - Inject all six new use cases into existing controller
+  - Keep existing webhook endpoint with @Public() and ApiKeyGuard
+  - Add new doctor endpoints with @UseGuards(JwtAuthGuard, RolesGuard) and @Roles(UserRole.DOCTOR)
+  - _Requirements: 1.5, 2.5, 3.5, 4.6, 5.6, 6.5_
+
+- [ ] 17. Implement list endpoint in controller
+  - [ ] 17.1 Create GET /medical-approval-requests endpoint
+    - Accept query parameters using ListMedicalApprovalRequestsDto
+    - Call ListMedicalApprovalRequestsUseCase
+    - Return 200 with response DTO
+    - Add Swagger decorators for documentation
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6_
+  - [ ] 17.2 Add error handling for list endpoint
+    - Handle validation errors and return 400
+    - Handle database errors and return 500
+    - _Requirements: 1.6, 1.7_
+
+- [ ] 18. Implement get details endpoint in controller
+  - [ ] 18.1 Create GET /medical-approval-requests/:id endpoint
+    - Accept id parameter
+    - Call GetMedicalApprovalRequestUseCase
+    - Return 200 with response DTO
+    - Add Swagger decorators for documentation
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
+  - [ ] 18.2 Add error handling for get details endpoint
+    - Handle MedicalApprovalRequestNotFoundError and return 404
+    - Handle database errors and return 500
+    - _Requirements: 2.3, 2.5_
+
+- [x] 19. Implement assign endpoint in controller
+  - [x] 19.1 Create POST /medical-approval-requests/:id/assign endpoint
+    - Accept id parameter
+    - Extract doctor ID from @CurrentUser decorator
+    - Call AssignMedicalApprovalRequestUseCase
+    - Return 200 with updated request
+    - Add Swagger decorators for documentation
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
+  - [x] 19.2 Add error handling for assign endpoint
+    - Handle MedicalApprovalRequestNotFoundError and return 404
+    - Handle InvalidStatusTransitionError and return 400
+    - Handle database errors and return 500
+    - _Requirements: 3.3, 3.4, 3.6_
+
+- [ ] 20. Implement approve endpoint in controller
+  - [ ] 20.1 Create POST /medical-approval-requests/:id/approve endpoint
+    - Accept id parameter and ApproveMedicalApprovalRequestDto body
+    - Extract doctor ID from @CurrentUser decorator
+    - Call ApproveMedicalApprovalRequestUseCase
+    - Return 200 with updated request
+    - Add Swagger decorators for documentation
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8_
+  - [ ] 20.2 Add error handling for approve endpoint
+    - Handle MedicalApprovalRequestNotFoundError and return 404
+    - Handle InvalidStatusTransitionError and return 400
+    - Handle UnauthorizedApprovalError and return 403
+    - Handle validation errors and return 400
+    - Handle database errors and return 500
+    - _Requirements: 4.3, 4.4, 4.7, 4.8_
+
+- [ ] 21. Implement attachment download URL endpoint in controller
+  - [ ] 21.1 Create GET /medical-approval-requests/:id/attachments/:attachmentId/download-url endpoint
+    - Accept id and attachmentId parameters
+    - Call GetAttachmentDownloadUrlUseCase
+    - Return 200 with pre-signed URL
+    - Add Swagger decorators for documentation
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7_
+  - [ ] 21.2 Add error handling for attachment endpoint
+    - Handle MedicalApprovalRequestNotFoundError and return 404
+    - Handle attachment not found and return 404
+    - Handle trya-backend errors and return 502
+    - _Requirements: 5.3, 5.4, 5.5_
+
+- [ ] 22. Implement beneficiary details endpoint in controller
+  - [ ] 22.1 Create GET /medical-approval-requests/:id/beneficiary-details endpoint
+    - Accept id parameter
+    - Call GetBeneficiaryDetailsUseCase
+    - Return 200 with beneficiary details
+    - Add Swagger decorators for documentation
+    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
+  - [ ] 22.2 Add error handling for beneficiary endpoint
+    - Handle MedicalApprovalRequestNotFoundError and return 404
+    - Handle trya-backend errors and return 502
+    - _Requirements: 6.3, 6.4_
+
+- [ ] 23. Update MedicalApprovalRequestsModule
+  - Import HttpModule from @nestjs/axios
+  - Register TryaBackendClient as provider
+  - Register TryaBackendIntegrationService as provider
+  - Register all six new use cases as providers
+  - Controller already registered (MedicalApprovalRequestsController)
+  - _Requirements: 10.1, 10.2, 10.3_
+
+- [ ] 24. Add environment variables
+  - Add TRYA_BACKEND_URL to .env.example
+  - Add TRYA_BACKEND_API_KEY to .env.example
+  - Document environment variables in README or configuration docs
+  - _Requirements: 10.2, 10.3_
+
+- [ ]\* 25. Write unit tests for use cases
+  - [ ]\* 25.1 Test ListMedicalApprovalRequestsUseCase
+    - Test with no filters returns all requests
+    - Test with status filter returns filtered results
+    - Test with urgency filter returns filtered results
+    - Test with date range filter returns filtered results
+    - Test with patient_name filter returns case-insensitive partial matches
+    - Test pagination works correctly
+    - Test PENDING requests ordered ASC
+    - Test non-PENDING requests ordered DESC
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
+  - [ ]\* 25.2 Test GetMedicalApprovalRequestUseCase
+    - Test with valid ID returns complete request
+    - Test with invalid ID throws MedicalApprovalRequestNotFoundError
+    - _Requirements: 2.1, 2.2, 2.3_
+  - [ ]\* 25.3 Test AssignMedicalApprovalRequestUseCase
+    - Test assigning PENDING request succeeds
+    - Test assigning non-PENDING request throws InvalidStatusTransitionError
+    - Test status changes to IN_REVIEW
+    - Test assigned_doctor_id is set correctly
+    - _Requirements: 3.1, 3.2, 3.3_
+  - [ ]\* 25.4 Test ApproveMedicalApprovalRequestUseCase
+    - Test approving IN_REVIEW request by assigned doctor succeeds
+    - Test approving by non-assigned doctor throws UnauthorizedApprovalError
+    - Test approving non-IN_REVIEW request throws InvalidStatusTransitionError
+    - Test doctor_notes is saved correctly
+    - Test doctor_suggested_exams creates new SuggestedExam entities with suggested_by='DOCTOR'
+    - Test doctor_care_instructions creates new CareInstruction entities with provided_by='DOCTOR'
+    - Test AI-generated exams and instructions remain unchanged
+    - Test response includes both AI and DOCTOR items
+    - _Requirements: 4.1, 4.2, 4.3, 4.4_
+  - [ ]\* 25.5 Test GetAttachmentDownloadUrlUseCase
+    - Test with valid request and attachment returns URL
+    - Test with invalid request throws MedicalApprovalRequestNotFoundError
+    - Test with invalid attachment throws error
+    - Test trya-backend integration is called correctly
+    - _Requirements: 5.1, 5.2, 5.3, 5.4_
+  - [ ]\* 25.6 Test GetBeneficiaryDetailsUseCase
+    - Test with valid request returns beneficiary details
+    - Test with invalid request throws MedicalApprovalRequestNotFoundError
+    - Test trya-backend integration is called correctly
+    - _Requirements: 6.1, 6.2, 6.3_
+
+- [ ]\* 26. Write integration tests for endpoints
+  - [ ]\* 26.1 Test list endpoint
+    - Test GET /medical-approval-requests with valid JWT returns 200
+    - Test without JWT returns 401
+    - Test with non-DOCTOR role returns 403
+    - Test with filters (status, urgency, date range, patient_name) returns correct results
+    - Test patient_name filter performs case-insensitive partial match
+    - Test pagination works correctly
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7_
+  - [ ]\* 26.2 Test get details endpoint
+    - Test GET /medical-approval-requests/:id with valid JWT returns 200
+    - Test with invalid ID returns 404
+    - Test without JWT returns 401
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
+  - [ ]\* 26.3 Test assign endpoint
+    - Test POST /medical-approval-requests/:id/assign with PENDING request returns 200
+    - Test with non-PENDING request returns 400
+    - Test without JWT returns 401
+    - Test status changes to IN_REVIEW
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+  - [ ]\* 26.4 Test approve endpoint
+    - Test POST /medical-approval-requests/:id/approve by assigned doctor returns 200
+    - Test by non-assigned doctor returns 403
+    - Test with non-IN_REVIEW request returns 400
+    - Test with invalid body returns 400
+    - Test without JWT returns 401
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
+  - [ ]\* 26.5 Test attachment download URL endpoint
+    - Test GET /medical-approval-requests/:id/attachments/:attachmentId/download-url returns 200
+    - Test with invalid request returns 404
+    - Test with invalid attachment returns 404
+    - Test without JWT returns 401
+    - Mock trya-backend API calls
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
+  - [ ]\* 26.6 Test beneficiary details endpoint
+    - Test GET /medical-approval-requests/:id/beneficiary-details returns 200
+    - Test with invalid request returns 404
+    - Test without JWT returns 401
+    - Mock trya-backend API calls
+    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_

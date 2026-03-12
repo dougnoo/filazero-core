@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # Aplicação NestJS
+  nestjs-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: nestjs-bedrock-dev
+    ports:
+      - "3000:3000"    # Aplicação
+      - "9229:9229"    # Debug port
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=${PORT:-3000}
+      # AWS Credentials - substitua pelos seus valores
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_PROFILE=${AWS_PROFILE:-default}
+      - AWS_RUNTIME=${AWS_RUNTIME:-aws}
+      - AWS_AGENT_ID=${AWS_AGENT_ID:-your-agent-id}
+      - AWS_AGENT_ALIAS_ID=${AWS_AGENT_ALIAS_ID:-your-agent-alias-id}
+      - BEDROCK_REQUESTS_PER_MINUTE=${BEDROCK_REQUESTS_PER_MINUTE:-2}
+      - TRANSCRIBE_BUCKET_NAME=${TRANSCRIBE_BUCKET_NAME:-your-transcribe-bucket-name}
+      - TRANSCRIBE_LANGUAGE_CODE=${TRANSCRIBE_LANGUAGE_CODE:-pt-BR}
+      - TRANSCRIBE_ENABLE_SPEAKER_LABELS=${TRANSCRIBE_ENABLE_SPEAKER_LABELS:-false}
+      - TRANSCRIBE_MAX_ALTERNATIVES=${TRANSCRIBE_MAX_ALTERNATIVES:-2}
+      - TRANSCRIBE_TIMEOUT_MS=${TRANSCRIBE_TIMEOUT_MS:-30000}
+      - AWS_AGENT_ID_TENANT_1=${AWS_AGENT_ID_TENANT_1:-your-agent-id-tenant-1}
+      - AWS_AGENT_ALIAS_ID_TENANT_1=${AWS_AGENT_ALIAS_ID_TENANT_1:-your-agent-alias-id-tenant-1}
+      - AWS_AGENT_ID_TENANT_2=${AWS_AGENT_ID_TENANT_2:-your-agent-id-tenant-2}
+      - AWS_AGENT_ALIAS_ID_TENANT_2=${AWS_AGENT_ALIAS_ID_TENANT_2:-your-agent-alias-id-tenant-2}      
+    volumes:
+      # Hot reload - montar código fonte
+      - ./src:/app/src:ro
+      - ./public:/app/public:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+      - ./tsconfig.build.json:/app/tsconfig.build.json:ro
+      # AWS credentials (para desenvolvimento local)
+      - ~/.aws:/home/nestjs/.aws:ro
+    networks:
+      - bedrock-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Redis (opcional - para cache de sessões)
+  redis:
+    image: redis:7-alpine
+    container_name: nestjs-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - bedrock-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Nginx (opcional - proxy reverso)
+  nginx:
+    image: nginx:alpine
+    container_name: nestjs-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - nestjs-app
+    networks:
+      - bedrock-network
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  bedrock-network:
+    driver: bridge

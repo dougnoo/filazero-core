@@ -1,0 +1,7 @@
+export enum UrgencyLevel {
+  EMERGENCY = 'EMERGENCY',
+  VERY_URGENT = 'VERY_URGENT',
+  URGENT = 'URGENT',
+  STANDARD = 'STANDARD',
+  NON_URGENT = 'NON_URGENT',
+}

@@ -1,0 +1,102 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: handslab-trya-platform-api-dev
+    restart: unless-stopped
+    ports:
+      - '${PORT:-3000}:3000'
+    environment:
+      # Application
+      NODE_ENV: development
+      PORT: ${PORT:-3000}
+
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-in-production}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-3600}
+
+      # Notification
+      NOTIFICATION_SERVICE: ${NOTIFICATION_SERVICE:-ses}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000/login}
+
+      # CORS
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      CORS_CREDENTIALS: ${CORS_CREDENTIALS:-true}
+
+      # AWS General
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_PROFILE: ${AWS_PROFILE}
+      # AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are not needed when using AWS SSO
+      # If you need to use fixed credentials, uncomment the lines below and fill them
+      #AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      #AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+
+      # AWS Cognito
+      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID}
+      COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID}
+      COGNITO_CLIENT_SECRET: ${COGNITO_CLIENT_SECRET}
+
+      # AWS SES (optional - only required if NOTIFICATION_SERVICE=ses)
+      AWS_SES_FROM_EMAIL: ${AWS_SES_FROM_EMAIL}
+      AWS_SES_FROM_NAME: ${AWS_SES_FROM_NAME:-Trya}
+
+      # AWS S3
+      AWS_S3_BUCKET_NAME: ${AWS_S3_BUCKET_NAME}
+      
+      # OTP Configuration
+      DYNAMODB_OTP_TABLE_NAME: ${DYNAMODB_OTP_TABLE_NAME:-platform-otp-codes}
+
+      # Integration API Key
+      TRYA_PLATFORM_API_KEY: ${TRYA_PLATFORM_API_KEY}
+
+      # Google Places API
+      GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY}
+
+      # Database
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-trya_platform}
+      DB_SCHEMA: ${DB_SCHEMA:-public}
+    networks:
+      - trya-network-dev
+    volumes:
+      # Mount source code for hot reload
+      - ./src:/app/src
+      - ./package.json:/app/package.json
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./nest-cli.json:/app/nest-cli.json
+      # Prevent node_modules from being overwritten
+      - /app/node_modules
+      # Mount AWS credentials for SSO (if using AWS SSO)
+      # Linux/Mac: Use these lines (default)
+      - ${HOME}/.aws:/root/.aws:ro
+      - ${HOME}/.aws/sso/cache:/root/.aws/sso/cache:ro
+      # Windows: Comment the lines above and uncomment these lines
+      # - ${USERPROFILE}\.aws:/root/.aws:ro
+      # - ${USERPROFILE}\.aws\sso\cache:/root/.aws/sso/cache:ro
+    command: npm run start:dev
+
+  postgres:
+    image: postgres:18-alpine
+    container_name: handslab-trya-platform-db-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-trya_platform}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - '${DB_PORT:-5432}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - trya-network-dev
+
+networks:
+  trya-network-dev:
+    driver: bridge
+
+volumes:
+  postgres-data:

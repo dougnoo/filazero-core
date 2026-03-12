@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Multi-Tenant WebSocket</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .chat-container { border: 1px solid #ccc; height: 400px; padding: 10px; overflow-y: scroll; background: #f9f9f9; }
+        .message { margin: 5px 0; padding: 5px; border-radius: 5px; }
+        .user-message { background: #007bff; color: white; text-align: right; }
+        .bot-message { background: #e9ecef; color: #333; }
+        .system-message { background: #ffc107; color: #856404; font-style: italic; }
+        .error-message { background: #dc3545; color: white; }
+        .input-container { margin: 10px 0; }
+        input, select, button { margin: 5px; padding: 8px; }
+        #messageInput { width: 300px; }
+        .tenant-info { background: #e7f3ff; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
+        .status { font-weight: bold; }
+        .status.connected { color: green; }
+        .status.disconnected { color: red; }
+        .audio-controls { background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .record-button { background: #dc3545; color: white; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 16px; cursor: pointer; margin: 0 10px; }
+        .record-button:hover { background: #c82333; }
+        .record-button.recording { background: #28a745; animation: pulse 1s infinite; }
+        .record-button:disabled { background: #6c757d; cursor: not-allowed; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .audio-info { font-size: 12px; color: #666; margin: 5px 0; }
+        .audio-preview { margin: 10px 0; }
+        .audio-format-select { margin: 5px; }
+        .image-controls { background: #fff3cd; padding: 10px; border-radius: 5px; margin: 10px 0; border: 1px solid #ffeaa7; }
+        .medical-disclaimer { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin: 10px 0; font-size: 12px; border: 1px solid #f5c6cb; }
+        .image-preview { margin: 10px 0; max-width: 300px; }
+        .image-preview img { max-width: 100%; height: auto; border-radius: 5px; border: 1px solid #ddd; }
+        .consent-checkbox { margin: 10px 0; }
+        .consent-checkbox input { margin-right: 8px; }
+        .urgency-level { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+        .urgency-low { background: #d4edda; color: #155724; }
+        .urgency-medium { background: #fff3cd; color: #856404; }
+        .urgency-high { background: #f8d7da; color: #721c24; }
+        .urgency-critical { background: #721c24; color: white; }
+        .connection-status { background: #e3f2fd; padding: 10px; border-radius: 5px; margin: 10px 0; border: 1px solid #bbdefb; }
+        .connection-status h3 { margin: 0 0 10px 0; color: #1976d2; }
+        .status-item { margin: 5px 0; font-family: monospace; }
+        .ping-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+        .ping-good { background: #4caf50; }
+        .ping-warning { background: #ff9800; }
+        .ping-error { background: #f44336; }
+    </style>
+</head>
+<body>
+    <h1>Chat Multi-Tenant WebSocket Test</h1>
+    
+    <div class="tenant-info">
+        <label>Tenant ID:</label>
+        <select id="tenantSelect">
+            <option value="tenant-operadora-1">Operadora ABC (tenant-operadora-1)</option>
+            <option value="tenant-operadora-2">Operadora XYZ (tenant-operadora-2)</option>
+            <option value="tenant-test">Tenant Test (tenant-test)</option>
+        </select>
+        <button onclick="connect()">Conectar</button>
+        <button onclick="disconnect()">Desconectar</button>
+        <div>Status: <span id="status" class="status disconnected">Desconectado</span></div>
+        <div>Tenant: <span id="tenantInfo">-</span></div>
+        <div>Session ID: <span id="sessionInfo">-</span></div>
+    </div>
+
+    <div class="image-controls" style="background: #d1ecf1; border-color: #bee5eb;">
+        <h3>📍 Geolocalização</h3>
+        <div style="margin: 10px 0;">
+            <button onclick="getMyLocation()" id="locationButton" disabled style="background: #17a2b8; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                📍 Obter Minha Localização
+            </button>
+            <button onclick="clearLocation()" id="clearLocationButton" disabled style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-left: 5px;">
+                Limpar
+            </button>
+        </div>
+        <div id="locationInfo" style="margin: 10px 0; font-size: 14px; display: none;">
+            <div><strong>📍 Localização:</strong></div>
+            <div style="margin-left: 20px;">
+                <div>Latitude: <span id="userLatitude">-</span></div>
+                <div>Longitude: <span id="userLongitude">-</span></div>
+                <div style="margin-top: 5px; color: #0c5460;">
+                    ✅ Localização será enviada com suas mensagens para buscar locais próximos
+                </div>
+            </div>
+        </div>
+        <div id="locationError" style="margin: 10px 0; color: #721c24; display: none;">
+            ⚠️ <span id="locationErrorMessage"></span>
+        </div>
+    </div>
+
+    <div class="chat-container" id="chatContainer"></div>
+    
+    <div class="input-container">
+        <input type="text" id="messageInput" placeholder="Digite sua mensagem..." disabled>
+        <select id="modelSelect" disabled>
+            <option value="amazon.titan-text-lite-v1">Titan Text Lite</option>
+            <option value="anthropic.claude-3-5-haiku-20241022-v1:0">Claude 3.5 Haiku</option>
+            <option value="anthropic.claude-3-5-sonnet-20241022-v2:0">Claude 3.5 Sonnet</option>
+        </select>
+        <button onclick="sendMessage()" id="sendButton" disabled>Enviar Texto</button>
+    </div>
+
+    <div class="audio-controls">
+        <h3>🎤 Mensagem por Voz</h3>
+        <div>
+            <button class="record-button" id="recordButton" onclick="toggleRecording()" disabled>🎤</button>
+            <span id="recordingStatus">Clique para gravar</span>
+        </div>
+        <div class="audio-info">
+            <select id="audioFormat" class="audio-format-select" disabled>
+                <option value="audio/webm">WebM (Chrome/Firefox)</option>
+                <option value="audio/mp4">MP4 (Safari)</option>
+                <option value="audio/wav">WAV (Universal)</option>
+            </select>
+            <span id="audioInfo">Nenhum áudio gravado</span>
+        </div>
+        <div class="audio-preview" id="audioPreview" style="display: none;">
+            <audio controls id="audioPlayback"></audio>
+            <button onclick="sendAudioMessage()" id="sendAudioButton" disabled>Enviar Áudio</button>
+            <button onclick="clearAudio()" id="clearAudioButton" disabled>Limpar</button>
+        </div>
+    </div>
+
+    <div class="image-controls">
+        <h3>🏥 Imagem Médica (Ferimentos/Machucados)</h3>
+        
+        <div class="medical-disclaimer">
+            ⚠️ <strong>AVISO MÉDICO IMPORTANTE:</strong><br>
+            • Esta análise é apenas para orientação preliminar<br>
+            • NÃO substitui consulta médica profissional<br>
+            • Em emergências, ligue 192 (SAMU)<br>
+            • Para ferimentos graves, procure atendimento imediato
+        </div>
+
+        <div class="consent-checkbox">
+            <input type="checkbox" id="medicalConsent" disabled>
+            <label for="medicalConsent">
+                <strong>Eu declaro que:</strong> Tenho consentimento para enviar esta imagem médica e entendo que 
+                esta análise não substitui avaliação médica profissional.
+            </label>
+        </div>
+
+        <div>
+            <input type="file" id="imageInput" accept="image/jpeg,image/jpg,image/png" disabled style="margin: 5px;">
+            <button onclick="clearImage()" id="clearImageButton" disabled>Limpar Imagem</button>
+        </div>
+
+        <div class="image-preview" id="imagePreview" style="display: none;">
+            <img id="imageDisplay" alt="Preview da imagem">
+            <div id="imageInfo">Nenhuma imagem selecionada</div>
+            <button onclick="sendImageMessage()" id="sendImageButton" disabled>Enviar Imagem para Análise</button>
+        </div>
+    </div>
+
+    <div class="input-container">
+        <h3>Comandos Administrativos (Enterprise apenas):</h3>
+        <button onclick="getStats()" disabled id="statsButton">Obter Estatísticas</button>
+        <button onclick="broadcastMessage()" disabled id="broadcastButton">Broadcast</button>
+        <button onclick="sendManualKeepAlive()" disabled id="keepAliveButton">Keep-Alive Manual</button>
+    </div>
+
+    <div class="input-container">
+        <h3>📝 Atalhos de Teclado:</h3>
+        <div class="audio-info">
+            <strong>Enter:</strong> Enviar mensagem de texto<br>
+            <strong>Ctrl + R:</strong> Iniciar gravação de áudio<br>
+            <strong>Escape:</strong> Parar gravação de áudio<br>
+            <strong>Ctrl + K:</strong> Enviar keep-alive manual<br>
+            <strong>Ctrl + L:</strong> Obter localização GPS
+        </div>
+    </div>
+
+    <div class="connection-status">
+        <h3>🔄 Status da Conexão WebSocket</h3>
+        <div class="status-item">
+            <span class="ping-indicator" id="pingIndicator"></span>
+            <strong>Keep-Alive:</strong> <span id="keepAliveStatus">Inativo</span>
+        </div>
+        <div class="status-item">
+            <strong>Última atividade:</strong> <span id="lastActivity">-</span>
+        </div>
+        <div class="status-item">
+            <strong>Reconexões:</strong> <span id="reconnectCount">0</span>
+        </div>
+        <div class="status-item">
+            <strong>Ping/Pong:</strong> <span id="pingStatus">-</span>
+        </div>
+    </div>
+
+    <script>
+        let socket = null;
+        let currentTenant = null;
+        let sessionId = null;
+        
+        // Variáveis para gravação de áudio
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+        let recordedBlob = null;
+        
+        // Variáveis para imagens médicas
+        let selectedImageFile = null;
+        let imageBase64 = null;
+        
+        // Variáveis para geolocalização
+        let userLatitude = null;
+        let userLongitude = null;
+
+        function addMessage(message, type) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            messageDiv.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong> - ${message}`;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function updateStatus(connected, tenantName = '', sessionIdValue = '') {
+            const statusElement = document.getElementById('status');
+            const tenantElement = document.getElementById('tenantInfo');
+            const sessionElement = document.getElementById('sessionInfo');
+            
+            statusElement.textContent = connected ? 'Conectado' : 'Desconectado';
+            statusElement.className = `status ${connected ? 'connected' : 'disconnected'}`;
+            tenantElement.textContent = tenantName || '-';
+            sessionElement.textContent = sessionIdValue || '-';
+            
+            // Habilitar/desabilitar controles
+            document.getElementById('messageInput').disabled = !connected;
+            document.getElementById('modelSelect').disabled = !connected;
+            document.getElementById('sendButton').disabled = !connected;
+            document.getElementById('statsButton').disabled = !connected;
+            document.getElementById('broadcastButton').disabled = !connected;
+            document.getElementById('keepAliveButton').disabled = !connected;
+            
+            // Controles de áudio
+            document.getElementById('recordButton').disabled = !connected;
+            document.getElementById('audioFormat').disabled = !connected;
+            document.getElementById('sendAudioButton').disabled = !connected || !recordedBlob;
+            document.getElementById('clearAudioButton').disabled = !connected || !recordedBlob;
+            
+            // Controles de imagem
+            document.getElementById('imageInput').disabled = !connected;
+            document.getElementById('medicalConsent').disabled = !connected;
+            document.getElementById('clearImageButton').disabled = !connected || !selectedImageFile;
+            document.getElementById('sendImageButton').disabled = !connected || !selectedImageFile || !document.getElementById('medicalConsent').checked;
+            
+            // Controles de localização
+            document.getElementById('locationButton').disabled = !connected;
+            document.getElementById('clearLocationButton').disabled = !connected || (userLatitude === null && userLongitude === null);
+        }
+
+        async function connect() {
+            if (socket && socket.connected) {
+                addMessage('Já conectado!', 'system');
+                return;
+            }
+
+            currentTenant = document.getElementById('tenantSelect').value;
+            
+            addMessage(`Conectando ao tenant: ${currentTenant}...`, 'system');
+            
+            // Solicitar permissão para microfone
+            try {
+                await requestMicrophonePermission();
+                addMessage('✅ Permissão de microfone concedida', 'system');
+            } catch (error) {
+                addMessage(`⚠️ Erro ao solicitar microfone: ${error.message}`, 'system');
+            }
+            
+            socket = io('http://localhost:3000/chat', {
+                query: {
+                    tenantId: currentTenant
+                },
+                // Configurações para estabilidade de conexão
+                transports: ['websocket', 'polling'],
+                upgrade: true,
+                rememberUpgrade: true,
+                timeout: 20000,
+                forceNew: false,
+                autoConnect: true,
+                reconnection: true,
+                reconnectionAttempts: 5,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000,
+                randomizationFactor: 0.5
+            });
+
+            socket.on('connect', () => {
+                addMessage('Conectado ao servidor!', 'system');
+                trackActivity();
+            });
+
+            socket.on('session-created', (data) => {
+                sessionId = data.sessionId;
+                addMessage(`Sessão criada: ${data.sessionId}`, 'system');
+                addMessage(`Tenant: ${data.tenantName} (${data.tenantId})`, 'system');
+                updateStatus(true, data.tenantName, data.sessionId);
+                
+                // Iniciar sistema de keep-alive após conexão estabelecida
+                setupKeepAlive();
+                addMessage('🔄 Sistema de keep-alive ativado para manter conexão estável', 'system');
+            });
+
+            socket.on('connection-error', (data) => {
+                addMessage(`Erro de conexão: ${data.message}`, 'error');
+                updateStatus(false);
+            });
+
+            socket.on('chat-response', (data) => {
+                let botMessage = `🤖 ${data.answer}`;
+                
+                // Mostrar análise básica da imagem se disponível
+                if (data.imageAnalysis) {
+                    const urgencyClass = `urgency-${data.imageAnalysis.urgencyLevel.toLowerCase()}`;
+                    botMessage += `
+                    
+<div style="margin-top: 10px; padding: 10px; border-radius: 5px; background: #f8f9fa;">
+    <strong>📊 Análise Básica da Imagem:</strong><br>
+    <span class="${urgencyClass}" style="display: inline-block; padding: 2px 6px; border-radius: 3px; margin: 5px 0;">
+        Urgência: ${data.imageAnalysis.urgencyLevel}
+    </span><br>
+    Labels detectados: ${data.imageAnalysis.detectedLabels || 0}<br>
+    Palavras-chave médicas: ${data.imageAnalysis.medicalKeywords || 0}
+</div>`;
+                }
+                
+                addMessage(botMessage, 'bot');
+            });
+
+            socket.on('chat-error', (data) => {
+                addMessage(`❌ Erro: ${data.message}`, 'error');
+            });
+
+            socket.on('bot-typing', (data) => {
+                if (data.isTyping) {
+                    addMessage(`🤖 ${data.message}`, 'system');
+                }
+            });
+
+            socket.on('admin-stats', (data) => {
+                addMessage(`📊 Estatísticas: ${JSON.stringify(data, null, 2)}`, 'system');
+            });
+
+            socket.on('admin-broadcast', (data) => {
+                addMessage(`📢 Broadcast de ${data.from}: ${data.message}`, 'system');
+            });
+
+            socket.on('admin-error', (data) => {
+                addMessage(`🚫 Admin Error: ${data.message}`, 'error');
+            });
+
+            // ==================== HANDLERS DE KEEP-ALIVE ====================
+            
+            // Responder aos pings do servidor para manter conexão viva
+            socket.on('ping', (data) => {
+                const pingTime = Date.now() - (data.timestamp || Date.now());
+                console.log('Ping recebido do servidor:', data);
+                
+                // Atualizar status visual
+                updatePingStatus(`Ping recebido (${pingTime}ms)`);
+                trackActivity();
+                
+                socket.emit('pong', { 
+                    timestamp: Date.now(),
+                    receivedAt: data.timestamp,
+                    responseTime: pingTime
+                });
+            });
+
+            // Avisos de timeout de conexão
+            socket.on('connection-timeout', (data) => {
+                console.warn('Aviso de timeout de conexão:', data);
+                addMessage(`⚠️ Conexão inativa detectada: ${data.message}`, 'system');
+                // Enviar keep-alive para manter conexão
+                socket.emit('keep-alive', { timestamp: Date.now() });
+            });
+
+            // Handler para eventos de reconexão
+            socket.on('reconnect', (attemptNumber) => {
+                reconnectCount++;
+                addMessage(`🔄 Reconectado ao servidor (tentativa ${attemptNumber})`, 'system');
+                addMessage('✅ Conexão WebSocket restaurada', 'system');
+                trackActivity();
+                
+                // Reativar keep-alive após reconexão
+                setupKeepAlive();
+            });
+
+            socket.on('reconnect_attempt', (attemptNumber) => {
+                addMessage(`🔄 Tentando reconectar... (${attemptNumber}/5)`, 'system');
+            });
+
+            socket.on('reconnect_error', (error) => {
+                addMessage(`❌ Erro na reconexão: ${error.message}`, 'error');
+            });
+
+            socket.on('reconnect_failed', () => {
+                addMessage('❌ Falha na reconexão após 5 tentativas', 'error');
+                addMessage('🔄 Recarregue a página para tentar novamente', 'system');
+            });
+
+            socket.on('disconnect', (reason) => {
+                addMessage(`Desconectado do servidor: ${reason}`, 'system');
+                updateStatus(false);
+                // Parar gravação se estiver ativa
+                if (isRecording) {
+                    stopRecording();
+                }
+                
+                // Se desconexão for por timeout, avisar
+                if (reason === 'ping timeout') {
+                    addMessage('⚠️ Desconexão por timeout de ping/pong', 'system');
+                }
+            });
+        }
+
+        function disconnect() {
+            if (socket) {
+                // Limpar interval de keep-alive se existir
+                if (window.keepAliveInterval) {
+                    clearInterval(window.keepAliveInterval);
+                    window.keepAliveInterval = null;
+                }
+                
+                socket.disconnect();
+                socket = null;
+                currentTenant = null;
+                sessionId = null;
+                updateStatus(false);
+            }
+        }
+
+        // ==================== SISTEMA DE KEEP-ALIVE AUTOMÁTICO ====================
+        
+        function setupKeepAlive() {
+            // Keep-alive automático a cada 30 segundos
+            if (window.keepAliveInterval) {
+                clearInterval(window.keepAliveInterval);
+            }
+            
+            window.keepAliveInterval = setInterval(() => {
+                if (socket && socket.connected) {
+                    socket.emit('keep-alive', { timestamp: Date.now() });
+                    console.log('Keep-alive enviado automaticamente');
+                }
+            }, 30000); // 30 segundos
+            
+            console.log('✅ Sistema de keep-alive automático ativado (30s)');
+        }
+
+        function sendManualKeepAlive() {
+            if (socket && socket.connected) {
+                socket.emit('keep-alive', { 
+                    timestamp: Date.now(),
+                    manual: true 
+                });
+                addMessage('📡 Keep-alive manual enviado', 'system');
+            }
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const modelSelect = document.getElementById('modelSelect');
+            const message = messageInput.value.trim();
+            
+            if (!message || !socket || !currentTenant) return;
+
+            addMessage(`👤 ${message}`, 'user');
+            trackActivity(); // Rastrear atividade
+            
+            const messageData = {
+                message: message,
+                model: modelSelect.value,
+                tenantId: currentTenant,
+                sessionId: sessionId
+            };
+
+            // Adicionar geolocalização se disponível
+            if (userLatitude !== null && userLongitude !== null) {
+                messageData.latitude = userLatitude;
+                messageData.longitude = userLongitude;
+                console.log('📍 Enviando com localização:', userLatitude, userLongitude);
+            }
+            
+            socket.emit('chat-message', messageData);
+
+            messageInput.value = '';
+        }
+
+        function getStats() {
+            if (socket && currentTenant) {
+                socket.emit('admin-command', {
+                    command: 'get-stats'
+                });
+            }
+        }
+
+        function broadcastMessage() {
+            const message = prompt('Digite a mensagem para broadcast:');
+            if (message && socket && currentTenant) {
+                socket.emit('admin-command', {
+                    command: 'broadcast',
+                    tenantId: currentTenant,
+                    params: { message }
+                });
+            }
+        }
+
+        // ==================== FUNÇÕES DE ÁUDIO ====================
+        
+        async function requestMicrophonePermission() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    } 
+                });
+                // Parar stream imediatamente após obter permissão
+                stream.getTracks().forEach(track => track.stop());
+                return true;
+            } catch (error) {
+                console.error('Erro ao solicitar microfone:', error);
+                if (error.name === 'NotAllowedError') {
+                    throw new Error('Permissão de microfone negada. Habilite o microfone nas configurações do navegador.');
+                } else if (error.name === 'NotFoundError') {
+                    throw new Error('Nenhum microfone encontrado.');
+                } else {
+                    throw new Error('Erro ao acessar microfone: ' + error.message);
+                }
+            }
+        }
+
+        async function toggleRecording() {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                await startRecording();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                const audioFormat = document.getElementById('audioFormat').value;
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    } 
+                });
+
+                // Determinar o tipo MIME baseado na seleção e suporte do navegador
+                let mimeType = audioFormat;
+                if (!MediaRecorder.isTypeSupported(mimeType)) {
+                    // Fallback para formatos suportados
+                    if (MediaRecorder.isTypeSupported('audio/webm')) {
+                        mimeType = 'audio/webm';
+                    } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                        mimeType = 'audio/mp4';
+                    } else {
+                        mimeType = 'audio/wav';
+                    }
+                    addMessage(`⚠️ Formato ${audioFormat} não suportado, usando ${mimeType}`, 'system');
+                }
+
+                mediaRecorder = new MediaRecorder(stream, { mimeType });
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: mimeType });
+                    recordedBlob = audioBlob;
+                    
+                    // Criar URL para preview
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audioPlayback = document.getElementById('audioPlayback');
+                    audioPlayback.src = audioUrl;
+                    
+                    // Mostrar controles de preview
+                    document.getElementById('audioPreview').style.display = 'block';
+                    document.getElementById('sendAudioButton').disabled = false;
+                    document.getElementById('clearAudioButton').disabled = false;
+                    
+                    // Atualizar info do áudio
+                    const durationEstimate = audioChunks.length * 0.1; // Estimativa baseada nos chunks
+                    document.getElementById('audioInfo').textContent = 
+                        `Áudio gravado: ${(audioBlob.size / 1024).toFixed(1)} KB, ~${durationEstimate.toFixed(1)}s`;
+                    
+                    // Parar stream
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    addMessage('🎤 Gravação concluída! Você pode ouvir o preview e enviar.', 'system');
+                };
+
+                mediaRecorder.onerror = (event) => {
+                    addMessage(`❌ Erro na gravação: ${event.error}`, 'error');
+                    stopRecording();
+                };
+
+                mediaRecorder.start(100); // Capturar dados a cada 100ms
+                isRecording = true;
+                
+                // Atualizar UI
+                const recordButton = document.getElementById('recordButton');
+                recordButton.classList.add('recording');
+                recordButton.textContent = '⏹️';
+                document.getElementById('recordingStatus').textContent = 'Gravando... (clique para parar)';
+                
+                addMessage('🎤 Iniciando gravação...', 'system');
+                
+            } catch (error) {
+                addMessage(`❌ Erro ao iniciar gravação: ${error.message}`, 'error');
+                console.error('Erro de gravação:', error);
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                
+                // Atualizar UI
+                const recordButton = document.getElementById('recordButton');
+                recordButton.classList.remove('recording');
+                recordButton.textContent = '🎤';
+                document.getElementById('recordingStatus').textContent = 'Clique para gravar';
+            }
+        }
+
+        async function sendAudioMessage() {
+            if (!recordedBlob || !socket || !currentTenant || !sessionId) {
+                addMessage('❌ Não é possível enviar áudio: dados incompletos', 'error');
+                return;
+            }
+
+            try {
+                // Converter blob para base64
+                const base64Audio = await blobToBase64(recordedBlob);
+                const audioMimeType = recordedBlob.type;
+                
+                addMessage(`🎤 Enviando mensagem de áudio (${(recordedBlob.size / 1024).toFixed(1)} KB)...`, 'user');
+                
+                const messageData = {
+                    message: '', // Mensagem vazia para áudio
+                    model: document.getElementById('modelSelect').value,
+                    tenantId: currentTenant,
+                    sessionId: sessionId,
+                    audioData: base64Audio,
+                    audioMimeType: audioMimeType
+                };
+
+                // Adicionar geolocalização se disponível
+                if (userLatitude !== null && userLongitude !== null) {
+                    messageData.latitude = userLatitude;
+                    messageData.longitude = userLongitude;
+                    console.log('📍 Enviando áudio com localização:', userLatitude, userLongitude);
+                }
+                
+                socket.emit('chat-message', messageData);
+
+                // Limpar áudio após enviar
+                clearAudio();
+                
+            } catch (error) {
+                addMessage(`❌ Erro ao enviar áudio: ${error.message}`, 'error');
+                console.error('Erro ao enviar áudio:', error);
+            }
+        }
+
+        function clearAudio() {
+            recordedBlob = null;
+            audioChunks = [];
+            
+            // Limpar preview
+            const audioPlayback = document.getElementById('audioPlayback');
+            if (audioPlayback.src) {
+                URL.revokeObjectURL(audioPlayback.src);
+                audioPlayback.src = '';
+            }
+            
+            // Esconder controles
+            document.getElementById('audioPreview').style.display = 'none';
+            document.getElementById('sendAudioButton').disabled = true;
+            document.getElementById('clearAudioButton').disabled = true;
+            
+            // Atualizar info
+            document.getElementById('audioInfo').textContent = 'Nenhum áudio gravado';
+            
+            addMessage('🗑️ Áudio limpo', 'system');
+        }
+
+        function blobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const base64 = reader.result.split(',')[1]; // Remove o prefixo data:...;base64,
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        // Verificar suporte do navegador
+        function checkBrowserSupport() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                addMessage('❌ Seu navegador não suporta gravação de áudio', 'error');
+                document.getElementById('recordButton').disabled = true;
+                return false;
+            }
+
+            if (!MediaRecorder) {
+                addMessage('❌ Seu navegador não suporta MediaRecorder', 'error');
+                document.getElementById('recordButton').disabled = true;
+                return false;
+            }
+
+            // Verificar formatos suportados
+            const formats = ['audio/webm', 'audio/mp4', 'audio/wav'];
+            const supported = formats.filter(format => MediaRecorder.isTypeSupported(format));
+            
+            if (supported.length === 0) {
+                addMessage('❌ Nenhum formato de áudio suportado', 'error');
+                document.getElementById('recordButton').disabled = true;
+                return false;
+            }
+
+            addMessage(`✅ Formatos de áudio suportados: ${supported.join(', ')}`, 'system');
+            return true;
+        }
+
+        // Enter para enviar mensagem
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Atalhos de teclado
+        document.addEventListener('keydown', function(e) {
+            // Ctrl + R para gravar (apenas se conectado e não gravando)
+            if (e.ctrlKey && e.key === 'r' && !isRecording && socket && socket.connected) {
+                e.preventDefault();
+                startRecording();
+            }
+            // Escape para parar gravação
+            else if (e.key === 'Escape' && isRecording) {
+                e.preventDefault();
+                stopRecording();
+            }
+            // Ctrl + K para keep-alive manual
+            else if (e.ctrlKey && e.key === 'k' && socket && socket.connected) {
+                e.preventDefault();
+                sendManualKeepAlive();
+            }
+        });
+
+        // ==================== MONITORAMENTO DE CONEXÃO ====================
+        
+        let reconnectCount = 0;
+        let lastActivityTime = null;
+
+        function updateConnectionStatus() {
+            const keepAliveStatus = document.getElementById('keepAliveStatus');
+            const lastActivity = document.getElementById('lastActivity');
+            const reconnectCountEl = document.getElementById('reconnectCount');
+            const pingIndicator = document.getElementById('pingIndicator');
+            
+            if (socket && socket.connected) {
+                keepAliveStatus.textContent = window.keepAliveInterval ? 'Ativo (30s)' : 'Inativo';
+                keepAliveStatus.style.color = window.keepAliveInterval ? 'green' : 'orange';
+                pingIndicator.className = 'ping-indicator ping-good';
+            } else {
+                keepAliveStatus.textContent = 'Desconectado';
+                keepAliveStatus.style.color = 'red';
+                pingIndicator.className = 'ping-indicator ping-error';
+                document.getElementById('pingStatus').textContent = 'Desconectado';
+            }
+            
+            lastActivity.textContent = lastActivityTime ? 
+                new Date(lastActivityTime).toLocaleTimeString() : '-';
+            reconnectCountEl.textContent = reconnectCount;
+        }
+
+        function updatePingStatus(message) {
+            const pingStatus = document.getElementById('pingStatus');
+            const pingIndicator = document.getElementById('pingIndicator');
+            
+            pingStatus.textContent = `${message} - ${new Date().toLocaleTimeString()}`;
+            
+            // Piscar indicador para mostrar atividade
+            pingIndicator.className = 'ping-indicator ping-warning';
+            setTimeout(() => {
+                if (socket && socket.connected) {
+                    pingIndicator.className = 'ping-indicator ping-good';
+                }
+            }, 200);
+        }
+
+        function trackActivity() {
+            lastActivityTime = Date.now();
+            updateConnectionStatus();
+        }
+
+        // Atualizar status a cada 5 segundos
+        setInterval(updateConnectionStatus, 5000);
+
+        // ==================== FUNÇÕES DE IMAGEM MÉDICA ====================
+        
+        function setupImageHandlers() {
+            const imageInput = document.getElementById('imageInput');
+            const medicalConsent = document.getElementById('medicalConsent');
+            
+            imageInput.addEventListener('change', handleImageSelection);
+            medicalConsent.addEventListener('change', updateImageControls);
+        }
+
+        function handleImageSelection(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validar tipo de arquivo
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+            if (!allowedTypes.includes(file.type)) {
+                addMessage('❌ Formato não suportado. Use apenas JPEG ou PNG.', 'error');
+                clearImage();
+                return;
+            }
+
+            // Validar tamanho (máximo 10MB)
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            if (file.size > maxSize) {
+                addMessage('❌ Imagem muito grande. Máximo 10MB.', 'error');
+                clearImage();
+                return;
+            }
+
+            selectedImageFile = file;
+            
+            // Mostrar preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageDisplay = document.getElementById('imageDisplay');
+                const imagePreview = document.getElementById('imagePreview');
+                const imageInfo = document.getElementById('imageInfo');
+                
+                imageDisplay.src = e.target.result;
+                imageBase64 = e.target.result; // Armazenar base64 completo
+                
+                imagePreview.style.display = 'block';
+                imageInfo.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+                
+                updateImageControls();
+                addMessage(`📷 Imagem selecionada: ${file.name}`, 'system');
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        function updateImageControls() {
+            const hasImage = selectedImageFile !== null;
+            const hasConsent = document.getElementById('medicalConsent').checked;
+            const isConnected = socket && socket.connected;
+            
+            document.getElementById('clearImageButton').disabled = !hasImage || !isConnected;
+            document.getElementById('sendImageButton').disabled = !hasImage || !hasConsent || !isConnected;
+        }
+
+        function clearImage() {
+            selectedImageFile = null;
+            imageBase64 = null;
+            
+            document.getElementById('imageInput').value = '';
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('imageDisplay').src = '';
+            document.getElementById('imageInfo').textContent = 'Nenhuma imagem selecionada';
+            
+            updateImageControls();
+            addMessage('🗑️ Imagem removida', 'system');
+        }
+
+        async function sendImageMessage() {
+            if (!selectedImageFile || !imageBase64 || !socket || !currentTenant || !sessionId) {
+                addMessage('❌ Não é possível enviar imagem: dados incompletos', 'error');
+                return;
+            }
+
+            const hasConsent = document.getElementById('medicalConsent').checked;
+            if (!hasConsent) {
+                addMessage('❌ Consentimento médico é obrigatório para enviar imagens', 'error');
+                return;
+            }
+
+            try {
+                const message = document.getElementById('messageInput').value.trim() || 
+                               'Por favor, analise esta imagem médica e forneça orientações.';
+                
+                addMessage(`🏥 Enviando imagem para análise: ${selectedImageFile.name}`, 'user');
+                
+                const messageData = {
+                    message: message,
+                    model: document.getElementById('modelSelect').value,
+                    tenantId: currentTenant,
+                    sessionId: sessionId,
+                    imageData: imageBase64,
+                    imageMimeType: selectedImageFile.type,
+                    medicalConsent: true
+                };
+
+                // Adicionar geolocalização se disponível
+                if (userLatitude !== null && userLongitude !== null) {
+                    messageData.latitude = userLatitude;
+                    messageData.longitude = userLongitude;
+                    console.log('📍 Enviando imagem com localização:', userLatitude, userLongitude);
+                }
+                
+                socket.emit('chat-message', messageData);
+
+                // Limpar campos após enviar
+                document.getElementById('messageInput').value = '';
+                clearImage();
+                document.getElementById('medicalConsent').checked = false;
+                
+            } catch (error) {
+                addMessage(`❌ Erro ao enviar imagem: ${error.message}`, 'error');
+                console.error('Erro ao enviar imagem:', error);
+            }
+        }
+
+        function displayImageAnalysisResult(analysis) {
+            if (!analysis) return;
+
+            let urgencyColor = '#28a745'; // verde
+            if (analysis.urgencyLevel === 'MEDIUM') urgencyColor = '#ffc107'; // amarelo  
+            if (analysis.urgencyLevel === 'HIGH') urgencyColor = '#fd7e14'; // laranja
+            if (analysis.urgencyLevel === 'CRITICAL') urgencyColor = '#dc3545'; // vermelho
+
+            const analysisHtml = `
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid ${urgencyColor};">
+                    <h4 style="margin: 0 0 10px 0; color: #333;">📊 Análise da Imagem Médica</h4>
+                    
+                    <div style="margin: 8px 0;">
+                        <strong>Nível de Urgência:</strong> 
+                        <span style="background: ${urgencyColor}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;">
+                            ${analysis.urgencyLevel}
+                        </span>
+                    </div>
+                    
+                    <div style="margin: 8px 0;">
+                        <strong>Avaliação:</strong><br>
+                        <em>${analysis.medicalAssessment}</em>
+                    </div>
+                    
+                    ${analysis.detectedLabels > 0 ? `
+                    <div style="margin: 8px 0; font-size: 12px; color: #666;">
+                        • ${analysis.detectedLabels} características visuais identificadas<br>
+                        • ${analysis.medicalKeywords} palavras-chave médicas detectadas
+                    </div>
+                    ` : ''}
+                    
+                    <div style="background: #fff3cd; padding: 8px; border-radius: 4px; margin-top: 10px; font-size: 11px;">
+                        ⚠️ Esta análise é apenas orientativa. Sempre consulte um médico para diagnóstico adequado.
+                    </div>
+                </div>
+            `;
+
+            // Adicionar à conversa
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message system-message';
+            messageDiv.innerHTML = analysisHtml;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Função para mostrar disclaimer médico
+        function showMedicalDisclaimer() {
+            const disclaimer = `
+⚠️ DISCLAIMER MÉDICO IMPORTANTE:
+
+• Esta ferramenta utiliza inteligência artificial para análise preliminar
+• NÃO substitui consulta, diagnóstico ou tratamento médico profissional  
+• Sempre procure um médico qualificado para avaliação adequada
+• Em emergências: ligue 192 (SAMU) ou procure pronto-socorro
+• A precisão varia conforme qualidade e tipo da imagem
+• Não tome decisões médicas baseadas apenas nesta análise
+
+Use apenas como orientação sobre quando buscar atendimento médico.
+            `;
+            
+            addMessage(disclaimer, 'system');
+        }
+
+        // ==================== FUNÇÕES DE GEOLOCALIZAÇÃO ====================
+        
+        function getMyLocation() {
+            if (!navigator.geolocation) {
+                showLocationError('Geolocalização não suportada pelo seu navegador');
+                return;
+            }
+
+            addMessage('📍 Obtendo sua localização...', 'system');
+            document.getElementById('locationButton').disabled = true;
+            document.getElementById('locationButton').textContent = '⏳ Obtendo...';
+
+            navigator.geolocation.getCurrentPosition(
+                // Sucesso
+                (position) => {
+                    userLatitude = position.coords.latitude;
+                    userLongitude = position.coords.longitude;
+                    
+                    // Atualizar UI
+                    document.getElementById('userLatitude').textContent = userLatitude.toFixed(6);
+                    document.getElementById('userLongitude').textContent = userLongitude.toFixed(6);
+                    document.getElementById('locationInfo').style.display = 'block';
+                    document.getElementById('locationError').style.display = 'none';
+                    
+                    document.getElementById('locationButton').disabled = false;
+                    document.getElementById('locationButton').textContent = '📍 Obter Minha Localização';
+                    document.getElementById('clearLocationButton').disabled = false;
+                    
+                    addMessage(`✅ Localização obtida: ${userLatitude.toFixed(4)}, ${userLongitude.toFixed(4)}`, 'system');
+                    addMessage('📍 Suas próximas mensagens incluirão sua localização para buscar locais próximos', 'system');
+                },
+                // Erro
+                (error) => {
+                    let errorMessage = '';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = 'Permissão de localização negada. Habilite a localização nas configurações do navegador.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = 'Informações de localização indisponíveis.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = 'Tempo esgotado ao obter localização.';
+                            break;
+                        default:
+                            errorMessage = 'Erro desconhecido ao obter localização.';
+                    }
+                    
+                    showLocationError(errorMessage);
+                    document.getElementById('locationButton').disabled = false;
+                    document.getElementById('locationButton').textContent = '📍 Obter Minha Localização';
+                },
+                // Opções
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        function clearLocation() {
+            userLatitude = null;
+            userLongitude = null;
+            
+            document.getElementById('locationInfo').style.display = 'none';
+            document.getElementById('locationError').style.display = 'none';
+            document.getElementById('userLatitude').textContent = '-';
+            document.getElementById('userLongitude').textContent = '-';
+            document.getElementById('clearLocationButton').disabled = true;
+            
+            addMessage('🗑️ Localização removida', 'system');
+        }
+
+        function showLocationError(message) {
+            document.getElementById('locationError').style.display = 'block';
+            document.getElementById('locationErrorMessage').textContent = message;
+            addMessage(`❌ ${message}`, 'error');
+        }
+
+        // ==================== ATALHOS DE TECLADO ====================
+        
+        // Ctrl + L para obter localização
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'l') {
+                e.preventDefault();
+                if (socket && socket.connected) {
+                    getMyLocation();
+                }
+            }
+        });
+
+        // Inicializar
+        checkBrowserSupport();
+        setupImageHandlers();
+        updateStatus(false);
+    </script>
+</body>
+</html>

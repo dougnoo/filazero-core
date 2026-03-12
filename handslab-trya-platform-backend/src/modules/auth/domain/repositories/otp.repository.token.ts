@@ -1,0 +1,1 @@
+export const OTP_REPOSITORY_TOKEN = Symbol('OTP_REPOSITORY_TOKEN');

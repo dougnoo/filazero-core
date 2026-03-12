@@ -1,0 +1,43 @@
+# AWS Configuration
+aws_region = "us-east-1"
+environment = "dev"
+project_name = "trya-frontend"
+
+# VPC Configuration
+vpc_id = "vpc-xxxxxxxxxxxxxxxxx"
+public_subnet_ids = [
+  "subnet-xxxxxxxxxxxxxxxxx",
+  "subnet-yyyyyyyyyyyyyyyyy"
+]
+private_subnet_ids = [
+  "subnet-zzzzzzzzzzzzzzzzz",
+  "subnet-wwwwwwwwwwwwwwwww"
+]
+
+# SSL/TLS Configuration
+enable_https = true
+enable_https_redirect = true
+certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/xxxxx-xxxxx-xxxxx"
+# Ou deixe como null para usar certificado padrão do CloudFront
+
+# ECS Configuration
+task_cpu = 512
+task_memory = 1024
+desired_count = 1
+
+# Application Configuration
+next_public_api_url = "https://api.example.com"
+
+# CloudFront Configuration
+cloudfront_aliases = []
+# cloudfront_aliases = ["dev.trya.example.com"]
+cloudfront_use_default_certificate = true
+# cloudfront_acm_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/xxxxx"
+
+# Additional Tags
+tags = {
+  Team = "devops"
+  CostCenter = "engineering"
+}
+
+

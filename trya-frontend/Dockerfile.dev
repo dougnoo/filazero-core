@@ -1,0 +1,26 @@
+FROM node:23-alpine
+
+# Instalar dependências do sistema
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /app
+
+# Copiar arquivos de dependências
+COPY package.json package-lock.json* ./
+
+# Instalar dependências
+RUN npm ci --legacy-peer-deps
+
+# Copiar código fonte
+COPY . .
+
+# Expor porta
+EXPOSE 3000
+
+# Variáveis de ambiente
+ENV NODE_ENV=development
+ENV PORT=3000
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Comando para desenvolvimento com hot reload
+CMD ["npm", "run", "dev"]

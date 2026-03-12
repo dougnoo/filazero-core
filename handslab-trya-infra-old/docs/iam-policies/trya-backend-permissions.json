@@ -1,0 +1,75 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DynamoDB",
+            "Effect": "Allow",
+            "Action": [
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:Query",
+                "dynamodb:Scan"
+            ],
+            "Resource": [
+                "arn:aws:dynamodb:*:416684166863:table/*"
+            ]
+        },
+        {
+            "Sid": "S3",
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:DeleteObject",
+                "s3:ListBucket"
+            ],
+            "Resource": [
+                "arn:aws:s3:::trya-*",
+                "arn:aws:s3:::trya-*/*",
+                "arn:aws:s3:::broker-*",
+                "arn:aws:s3:::broker-*/*",
+                "arn:aws:s3:::grupotrigo-assets*",
+                "arn:aws:s3:::grupotrigo-assets*/*"
+            ]
+        },
+        {
+            "Sid": "Cognito",
+            "Effect": "Allow",
+            "Action": [
+                "cognito-idp:AdminCreateUser",
+                "cognito-idp:AdminDeleteUser",
+                "cognito-idp:AdminGetUser",
+                "cognito-idp:AdminUpdateUserAttributes",
+                "cognito-idp:AdminSetUserPassword",
+                "cognito-idp:AdminInitiateAuth",
+                "cognito-idp:AdminRespondToAuthChallenge",
+                "cognito-idp:ListUsers"
+            ],
+            "Resource": [
+                "arn:aws:cognito-idp:*:416684166863:userpool/*"
+            ]
+        },
+        {
+            "Sid": "SES",
+            "Effect": "Allow",
+            "Action": [
+                "ses:SendEmail",
+                "ses:SendRawEmail"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "Bedrock",
+            "Effect": "Allow",
+            "Action": [
+                "bedrock-runtime:InvokeModel",
+                "bedrock-runtime:InvokeModelWithResponseStream",
+                "bedrock:InvokeModel",
+                "bedrock:InvokeModelWithResponseStream"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

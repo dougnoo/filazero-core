@@ -1,0 +1,57 @@
+image: python:3.11
+
+definitions:
+  steps:
+    - step: &build
+        name: Build Lambda Package
+        caches:
+          - pip
+        script:
+          - pip install aws-sam-cli
+          - sam build
+          - cd .aws-sam/build/TriagemSaudeFunction
+          - zip -r /tmp/lambda-deploy.zip . -x "*.pyc" -x "*__pycache__*"
+        artifacts:
+          - /tmp/lambda-deploy.zip
+    
+    - step: &deploy-dev
+        name: Deploy to DEV
+        deployment: dev
+        script:
+          - pipe: atlassian/aws-lambda-deploy:1.8.0
+            variables:
+              AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+              AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+              AWS_DEFAULT_REGION: 'us-east-1'
+              FUNCTION_NAME: 'triagem-saude-agente-dev'
+              ZIP_FILE: '/tmp/lambda-deploy.zip'
+    
+    - step: &deploy-hml
+        name: Deploy to HML
+        deployment: hml
+        trigger: manual
+        script:
+          - pipe: atlassian/aws-lambda-deploy:1.8.0
+            variables:
+              AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+              AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+              AWS_DEFAULT_REGION: 'us-east-1'
+              FUNCTION_NAME: 'triagem-saude-agente-hml'
+              ZIP_FILE: '/tmp/lambda-deploy.zip'
+
+pipelines:
+  default:
+    - step: *build
+  
+  branches:
+    develop:
+      - step: *build
+      - step: *deploy-dev
+    
+    main:
+      - step: *build
+      - step: *deploy-hml
+  
+  pull-requests:
+    '**':
+      - step: *build

@@ -1,0 +1,4 @@
+export enum OtpType {
+  FIRST_LOGIN = 'FIRST_LOGIN',
+  PASSWORD_RESET = 'PASSWORD_RESET',
+}

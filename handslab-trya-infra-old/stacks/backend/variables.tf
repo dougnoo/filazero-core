@@ -1,0 +1,169 @@
+# ==============================================================================
+# Backend Stack Variables
+# ==============================================================================
+
+variable "project_name" {
+  description = "Name of the project"
+  type        = string
+  default     = "Trya"
+}
+
+variable "environment" {
+  description = "Environment name (dev, hml, prod)"
+  type        = string
+  validation {
+    condition     = contains(["dev", "hml", "prod"], var.environment)
+    error_message = "Environment must be dev, hml, or prod."
+  }
+}
+
+variable "aws_region" {
+  description = "AWS region for resources"
+  type        = string
+  default     = "sa-east-1"
+}
+
+variable "domain_name" {
+  description = "Root domain name"
+  type        = string
+  default     = "trya.com.br"
+}
+
+variable "state_bucket" {
+  description = "S3 bucket for Terraform state"
+  type        = string
+  default     = "trya-terraform-state"
+}
+
+variable "additional_tags" {
+  description = "Additional tags to apply to all resources"
+  type        = map(string)
+  default     = {}
+}
+
+# Container configuration
+variable "container_image" {
+  description = "Docker image for the backend container (leave empty to use ECR)"
+  type        = string
+  default     = ""
+}
+
+variable "container_port" {
+  description = "Port exposed by the backend container"
+  type        = number
+  default     = 3000
+}
+
+variable "cpu" {
+  description = "CPU units for backend container (1024 = 1 vCPU)"
+  type        = number
+  default     = 512
+}
+
+variable "memory" {
+  description = "Memory for backend container in MB"
+  type        = number
+  default     = 1024
+}
+
+# Scaling configuration
+variable "desired_count" {
+  description = "Desired number of backend tasks"
+  type        = number
+  default     = 1
+}
+
+variable "min_capacity" {
+  description = "Minimum number of backend tasks for auto scaling"
+  type        = number
+  default     = 1
+}
+
+variable "max_capacity" {
+  description = "Maximum number of backend tasks for auto scaling"
+  type        = number
+  default     = 3
+}
+
+# Health check
+variable "health_check_path" {
+  description = "Health check path for the backend"
+  type        = string
+  default     = "/health"
+}
+
+# Database configuration
+variable "db_instance_class" {
+  description = "RDS instance class"
+  type        = string
+  default     = "db.t4g.micro"
+}
+
+variable "db_allocated_storage" {
+  description = "Allocated storage for RDS in GB"
+  type        = number
+  default     = 20
+}
+
+variable "db_name" {
+  description = "Name of the database"
+  type        = string
+  default     = "trya"
+}
+
+variable "db_username" {
+  description = "Master username for RDS"
+  type        = string
+  default     = "trya_admin"
+  sensitive   = true
+}
+
+variable "db_multi_az" {
+  description = "Enable Multi-AZ for RDS"
+  type        = bool
+  default     = false
+}
+
+variable "db_backup_retention_period" {
+  description = "Backup retention period in days"
+  type        = number
+  default     = 7
+}
+
+variable "db_backup_window" {
+  description = "Preferred backup window"
+  type        = string
+  default     = "03:00-04:00"
+}
+
+variable "db_maintenance_window" {
+  description = "Preferred maintenance window"
+  type        = string
+  default     = "sun:04:00-sun:05:00"
+}
+
+# Environment variables
+variable "environment_variables" {
+  description = "Additional environment variables for the backend container"
+  type        = map(string)
+  default     = {}
+}
+
+# Secrets (from Secrets Manager or SSM)
+variable "secrets" {
+  description = "Additional secrets for the backend container (map of name to ARN)"
+  type        = map(string)
+  default     = {}
+}
+
+variable "aws_profile" {
+  description = "AWS CLI profile to use"
+  type        = string
+  default     = "skopia"
+}
+
+variable "name_suffix" {
+  description = "Suffix to append to resource names to avoid conflicts with existing resources"
+  type        = string
+  default     = ""
+}

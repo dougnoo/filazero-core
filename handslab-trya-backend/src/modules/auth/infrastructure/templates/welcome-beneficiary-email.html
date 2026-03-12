@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Bem-vindo ao {{APP_NAME}} - Seu Plano de Saúde</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+        font-family: "Montserrat", Arial, sans-serif;
+      }
+      .email-wrapper {
+        width: 100%;
+      }
+      .email-container {
+        width: 600px;
+        max-width: 600px;
+        margin: 20px auto;
+        background-color: #ffffff;
+        border-radius: 16px;
+        overflow: hidden;
+      }
+      .header-img-cell {
+        padding: 0;
+        line-height: 0;
+      }
+      .header-img {
+        display: block;
+        width: 600px;
+        max-width: 600px;
+        height: auto;
+        border: 0;
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+      }
+      .header-title-cell {
+        padding: 32px 32px 0 32px;
+        text-align: center;
+      }
+      .header-subtitle {
+        margin: 0 0 6px 0;
+        font-size: 11px;
+        color: #666666;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .header-title {
+        margin: 0;
+        font-size: 26px;
+        line-height: 32px;
+        color: #2f3237;
+        font-weight: 700;
+      }
+      .email-body {
+        padding: 32px 32px 40px 32px;
+        background-color: #ffffff;
+      }
+      .hello {
+        font-size: 16px;
+        color: #2f3237;
+        margin: 0 0 16px 0;
+        font-weight: 700;
+        line-height: 24px;
+      }
+      .paragraph {
+        font-size: 14px;
+        color: #2f3237;
+        margin: 0 0 20px 0;
+        line-height: 20px;
+      }
+      .credential-card {
+        width: 100%;
+        background-color: {{PRIMARY_COLOR_LIGHT}};
+        border-radius: 8px;
+        margin-bottom: 24px;
+      }
+      .credential-row td {
+        padding: 10px 16px 0 16px;
+        font-size: 14px;
+        color: #2f3237;
+        font-weight: 600;
+      }
+      .credential-row-last td {
+        padding-bottom: 14px;
+      }
+      .credential-value {
+        font-weight: 500;
+      }
+      .warning-box {
+        width: 100%;
+        background-color: #fbf1e7;
+        border-radius: 6px;
+        margin-bottom: 24px;
+      }
+      .warning-inner {
+        padding: 12px 16px;
+      }
+      .warning-table {
+        border-collapse: collapse;
+      }
+      .warning-icon-cell {
+        vertical-align: middle;
+        padding-right: 8px;
+      }
+      .warning-text-cell {
+        vertical-align: middle;
+      }
+      .warning-text {
+        margin: 0;
+        font-size: 13px;
+        color: #2f3237;
+      }
+      .steps-box {
+        width: 100%;
+        background-color: #fbf1e7;
+        border-radius: 6px;
+        margin-bottom: 28px;
+      }
+      .steps-inner {
+        padding: 18px 16px 12px 16px;
+      }
+      .steps-title {
+        margin: 0 0 12px 0;
+        font-size: 15px;
+        color: #2f3237;
+        font-weight: 700;
+      }
+      .steps-list {
+        margin: 0 0 0 18px;
+        padding: 0;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .button-wrapper {
+        text-align: center;
+        margin-bottom: 0;
+      }
+      .button-primary {
+        display: inline-block;
+        background-color: {{PRIMARY_COLOR}};
+        padding: 14px 42px;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 700;
+        color: {{BUTTON_TEXT_COLOR}};
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .email-footer {
+        background-color: #f8f9fa;
+        text-align: center;
+        padding: 24px 16px 32px 16px;
+        font-size: 14px;
+        color: #999999;
+        border-top: 1px solid #e0e0e0;
+      }
+      @media (max-width: 620px) {
+        .email-container {
+          width: 100% !important;
+          max-width: 100% !important;
+          border-radius: 0 !important;
+        }
+        .email-body {
+          padding: 24px 16px 32px 16px !important;
+        }
+        .header-img {
+          width: 100% !important;
+          max-width: 100% !important;
+        }
+      }
+    </style>
+  </head>
+  <body style="background-color:#f4f4f4;">
+    <table role="presentation" class="email-wrapper" cellspacing="0" cellpadding="0" border="0" width="100%">
+      <tr>
+        <td align="center">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" class="email-container">
+            <tr>
+              <td class="header-img-cell">
+                <img
+                  src="{{EMAIL_BANNER_SRC}}"
+                  alt="{{TENANT_DISPLAY_NAME}}"
+                  width="600"
+                  class="header-img"
+                />
+              </td>
+            </tr>
+            <tr>
+              <td class="header-title-cell">
+                <p class="header-subtitle">{{TENANT_DISPLAY_NAME}}</p>
+                <h1 class="header-title">Boas-vindas!</h1>
+              </td>
+            </tr>
+            <tr>
+              <td class="email-body">
+                <p class="hello">Olá, {{USER_NAME}}</p>
+                <p class="paragraph">
+                  Damos as boas-vindas ao {{APP_NAME}}!
+                </p>
+                <p class="paragraph" style="margin-bottom: 24px;">
+                  <strong>Sua conta foi criada com sucesso!</strong> Você agora tem acesso ao seu hub de saúde oferecido por
+                  <strong>{{TENANT_DISPLAY_NAME}}</strong>.
+                </p>
+                <table class="credential-card" cellpadding="0" cellspacing="0" role="presentation">
+                  <tr class="credential-row">
+                    <td>
+                      E-mail: <span class="credential-value">{{USER_EMAIL}}</span>
+                    </td>
+                  </tr>
+                  <tr class="credential-row credential-row-last">
+                    <td>
+                      Senha temporária: <span class="credential-value">{{TEMPORARY_PASSWORD}}</span>
+                    </td>
+                  </tr>
+                </table>
+                <table class="warning-box" cellpadding="0" cellspacing="0" role="presentation">
+                  <tr>
+                    <td class="warning-inner">
+                      <table class="warning-table" cellpadding="0" cellspacing="0" role="presentation">
+                        <tr>
+                          <td class="warning-icon-cell">
+                            <img
+                              src="{{EMAIL_ICON_IMPORTANT_SRC}}"
+                              width="20"
+                              height="20"
+                              alt="Importante"
+                              style="display:block; border:0;"
+                            />
+                          </td>
+                          <td class="warning-text-cell">
+                            <p class="warning-text">
+                              <strong>IMPORTANTE:</strong> Esta é uma senha temporária que deve ser alterada em seu primeiro login por questões de segurança.
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+                <table class="steps-box" cellpadding="0" cellspacing="0" role="presentation">
+                  <tr>
+                    <td class="steps-inner">
+                      <p class="steps-title">Próximos passos:</p>
+                      <ol class="steps-list">
+                        <li>Acesse a plataforma usando suas credenciais temporárias;</li>
+                        <li>Altere sua senha para uma mais segura;</li>
+                        <li>Complete seu perfil de saúde;</li>
+                        <li>Explore os serviços disponíveis.</li>
+                      </ol>
+                    </td>
+                  </tr>
+                </table>
+                <div class="button-wrapper">
+                  <a class="button-primary" href="{{LOGIN_URL}}">Acessar a plataforma</a>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="email-footer">
+                Este é um e-mail automático, por favor, não responda.<br />
+                © {{YEAR}} {{PLATFORM_NAME}}. Todos os direitos reservados.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

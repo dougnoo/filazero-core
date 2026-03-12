@@ -1,0 +1,342 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Agente de Triagem de Saúde - Lambda com LangChain e LangGraph
+
+Globals:
+  Function:
+    Timeout: 180  # Lambda pode executar até 180s (cold start em VPC + processamento)
+    Runtime: python3.11
+
+Resources:
+  # Tabela DynamoDB para armazenar sessoes
+  SessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'triagem-sessions-${Environment}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: session_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: session_id
+          KeyType: HASH
+      TimeToLiveSpecification:
+        Enabled: true
+        AttributeName: ttl
+
+  # Bucket S3 para armazenar audios de transcricao e imagens
+  TranscriptionBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'triagem-ia-${Environment}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # NAT Gateway para acesso a Internet de subnets privadas
+  NatGatewayEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayEIP.AllocationId
+      SubnetId: !Ref SubnetId2  # Subnet publica com Internet Gateway
+
+  # Route Table privada para subnet da Lambda
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcId
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-private-rt'
+
+  # Rota para Internet via NAT Gateway
+  PrivateRouteToInternet:
+    Type: AWS::EC2::Route
+    DependsOn: NatGateway
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  # Associa route table privada à subnet da Lambda
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetId1
+      RouteTableId: !Ref PrivateRouteTable
+
+  # Security Group unico para Lambda, ElastiCache e VPC Endpoints
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group para Lambda, ElastiCache e VPC Endpoints
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+
+  # Regra de ingress separada para evitar dependencia circular
+  LambdaSecurityGroupSelfIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref LambdaSecurityGroup
+      IpProtocol: -1
+      SourceSecurityGroupId: !Ref LambdaSecurityGroup
+      Description: Permite todo trafego interno do mesmo SG
+
+  # ElastiCache Serverless (Valkey)
+  CacheCluster:
+    Type: AWS::ElastiCache::ServerlessCache
+    Properties:
+      ServerlessCacheName: !Sub 'triagem-cache-${Environment}'
+      Engine: valkey
+      Description: Cache para sessoes de triagem
+      SecurityGroupIds:
+        - !Ref LambdaSecurityGroup
+      SubnetIds:
+        - !Ref SubnetId1
+        - !Ref SubnetId2
+
+  # VPC Endpoints para reduzir custos (sem NAT Gateway)
+  
+  # Endpoint para Bedrock Runtime
+  BedrockRuntimeEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.bedrock-runtime'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref LambdaSecurityGroup
+      SubnetIds:
+        - !Ref SubnetId1
+        - !Ref SubnetId2
+
+  # Endpoint para Bedrock Agent Runtime (Knowledge Base)
+  BedrockAgentEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.bedrock-agent-runtime'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref LambdaSecurityGroup
+      SubnetIds:
+        - !Ref SubnetId1
+        - !Ref SubnetId2
+
+  # Endpoint para DynamoDB (Gateway - SEM CUSTO)
+  DynamoDBEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.dynamodb'
+      VpcEndpointType: Gateway
+      RouteTableIds:
+        - !Ref RouteTableId
+        - !Ref PrivateRouteTable
+
+  # Endpoint para S3 (Gateway - SEM CUSTO)
+  S3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      VpcEndpointType: Gateway
+      RouteTableIds:
+        - !Ref RouteTableId
+        - !Ref PrivateRouteTable
+
+  # Endpoint para Transcribe
+  TranscribeEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.transcribe'
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref LambdaSecurityGroup
+      SubnetIds:
+        - !Ref SubnetId1
+        - !Ref SubnetId2
+
+  TriagemSaudeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'triagem-saude-agente-${Environment}'
+      CodeUri: .
+      Handler: src.lambda_handler.lambda_handler
+      Description: Lambda para triagem de saúde usando agentes LangChain
+      Timeout: 300  # 5 minutos (máximo para Lambda)
+      MemorySize: 1024  # Aumentado para melhor performance
+      EphemeralStorage:
+        Size: 512  # MB - espaço temporário adicional
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref LambdaSecurityGroup
+        SubnetIds:
+          - !Ref SubnetId1  # APENAS subnet privada com rota para NAT Gateway
+      Environment:
+        Variables:
+          BEDROCK_MODEL_ID: !Ref BedrockModelId
+          KNOWLEDGE_BASE_ID: !Ref KnowledgeBaseId
+          SESSIONS_TABLE_NAME: !Ref SessionsTable
+          BUCKET_NAME: !Sub 'triagem-ia-${Environment}'
+          STORAGE_BACKEND: hybrid
+          CACHE_ENDPOINT: !GetAtt CacheCluster.Endpoint.Address
+          CACHE_PORT: !GetAtt CacheCluster.Endpoint.Port
+          CACHE_TTL: '3600'
+          TRYA_API_PLATFORM_URL: !Ref TryaApiPlatformUrl
+          TRYA_API_PLATFORM_KEY: !Ref TryaApiPlatformKey
+          TENANT_API_URL: !Ref TenantApiUrl
+          TENANT_API_KEY: !Ref TenantApiKey
+      Policies:
+        - CloudWatchLogsFullAccess
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+                - bedrock:InvokeModelWithResponseStream
+              Resource: !Sub 'arn:aws:bedrock:${AWS::Region}::foundation-model/*'
+            - Effect: Allow
+              Action:
+                - bedrock:Retrieve
+                - bedrock-agent-runtime:Retrieve
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:DeleteItem
+                - dynamodb:Query
+              Resource: !GetAtt SessionsTable.Arn
+            # Permissoes para Amazon Transcribe
+            - Effect: Allow
+              Action:
+                - transcribe:StartTranscriptionJob
+                - transcribe:GetTranscriptionJob
+                - transcribe:DeleteTranscriptionJob
+              Resource: '*'
+            # Permissoes para S3 (bucket de transcricao)
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+                - s3:GetObject
+                - s3:DeleteObject
+              Resource: !Sub '${TranscriptionBucket.Arn}/*'
+            - Effect: Allow
+              Action:
+                - s3:ListBucket
+              Resource: !GetAtt TranscriptionBucket.Arn
+            # Permissoes para ElastiCache Serverless
+            - Effect: Allow
+              Action:
+                - elasticache:Connect
+              Resource: '*'
+            # Permissoes para VPC (necessario para Lambda em VPC)
+            - Effect: Allow
+              Action:
+                - ec2:CreateNetworkInterface
+                - ec2:DescribeNetworkInterfaces
+                - ec2:DeleteNetworkInterface
+              Resource: '*'
+
+Parameters:
+  BedrockModelId:
+    Type: String
+    Description: ID do modelo Bedrock
+    Default: anthropic.claude-3-5-sonnet-20240620-v1:0
+  
+  KnowledgeBaseId:
+    Type: String
+    Description: ID da Knowledge Base do Bedrock (opcional)
+    Default: "OAZCZQWBQY"
+  
+  TryaApiPlatformUrl:
+    Type: String
+    Description: URL base da API Trya
+  
+  TryaApiPlatformKey:
+    Type: String
+    Description: Chave de API para autenticação na Trya
+    
+  TenantApiUrl:
+    Type: String
+    Description: URL base da API do Tenant
+    
+  TenantApiKey:
+    Type: String
+    Description: Chave de API para autenticação no Tenant
+  
+  Environment:
+    Type: String
+    Description: Ambiente de deployment (dev, hml, prod)
+    Default: dev
+    AllowedValues:
+      - dev
+      - hml
+      - prod
+  
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC ID para ElastiCache e Lambda
+  
+  SubnetId1:
+    Type: AWS::EC2::Subnet::Id
+    Description: Subnet ID 1 (private subnet para Lambda)
+  
+  SubnetId2:
+    Type: AWS::EC2::Subnet::Id
+    Description: Subnet ID 2 (subnet publica para NAT Gateway)
+  
+  RouteTableId:
+    Type: String
+    Description: Route Table ID da subnet publica (para Gateway Endpoints S3 e DynamoDB)
+  
+Outputs:
+  TriagemSaudeFunctionArn:
+    Description: "ARN da funcao Lambda de triagem (invocar via AWS SDK)"
+    Value: !GetAtt TriagemSaudeFunction.Arn
+  
+  TriagemSaudeFunctionName:
+    Description: "Nome da funcao Lambda de triagem"
+    Value: !Ref TriagemSaudeFunction
+  
+  SessionsTableName:
+    Description: "Nome da tabela DynamoDB de sessoes"
+    Value: !Ref SessionsTable
+  
+  TranscriptionBucketName:
+    Description: "Nome do bucket S3 para audios de transcricao"
+    Value: !Ref TranscriptionBucket
+  
+  PrivateRouteTableId:
+    Description: "ID da Route Table privada criada"
+    Value: !Ref PrivateRouteTable
+  
+  CacheEndpoint:
+    Description: "Endpoint do ElastiCache Serverless (Valkey)"
+    Value: !GetAtt CacheCluster.Endpoint.Address
+  
+  CachePort:
+    Description: "Porta do ElastiCache Serverless"
+    Value: !GetAtt CacheCluster.Endpoint.Port
+  
+  NatGatewayId:
+    Description: "ID do NAT Gateway para acesso a Internet"
+    Value: !Ref NatGateway
+  
+  NatGatewayEIP:
+    Description: "IP publico do NAT Gateway"
+    Value: !Ref NatGatewayEIP

@@ -1,0 +1,38 @@
+BEM-VINDO AO {{APP_NAME}} - Dr(a). {{USER_NAME}}
+================================================
+
+Olá Dr(a). {{USER_NAME}}!
+
+Sua conta médica foi criada com sucesso.
+Você agora tem acesso completo à plataforma de gestão médica.
+
+INFORMAÇÕES DO MÉDICO:
+Nome: Dr(a). {{USER_NAME}}
+{{CRM_INFO}}
+{{SPECIALTY_INFO}}
+
+SUAS CREDENCIAIS DE ACESSO:
+Email: {{USER_EMAIL}}
+Senha Temporária: {{TEMPORARY_PASSWORD}}
+
+PRÓXIMOS PASSOS:
+1. Acesse a plataforma usando suas credenciais temporárias
+2. Altere sua senha para uma mais segura
+3. Complete seu perfil médico profissional
+4. Configure suas preferências de atendimento
+5. Comece a usar os recursos da plataforma
+
+IMPORTANTE:
+Esta é uma senha temporária que deve ser alterada no seu primeiro login.
+Mantenha suas credenciais seguras e não as compartilhe.
+Em caso de dúvidas, entre em contato com o suporte técnico.
+
+LINK PARA ACESSO:
+{{LOGIN_URL}}
+
+Se você tiver alguma dúvida sobre a plataforma ou precisar de ajuda,
+nossa equipe de suporte está sempre disponível para atendê-lo.
+
+================================================
+{{APP_NAME}} - Transformando a gestão médica com tecnologia de ponta
+© {{YEAR}} {{TENANT_DISPLAY_NAME}}. Todos os direitos reservados.

@@ -1,0 +1,47 @@
+version = 0.1
+
+[dev.deploy.parameters]
+stack_name = "triagem-saude-dev"
+resolve_s3 = true
+s3_prefix = "triagem-saude-dev"
+region = "us-east-1"
+profile = "skopia"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+disable_rollback = true
+parameter_overrides = "Environment=dev BedrockModelId=anthropic.claude-3-5-sonnet-20240620-v1:0 KnowledgeBaseId=OAZCZQWBQY VpcId=vpc-05550ca68ba305afb SubnetId1=subnet-0bee6b992a1e42a6b SubnetId2=subnet-0e24669b3bdad590a RouteTableId=rtb-09cc6ababc6566731 TryaApiPlatformUrl=https://platform-api.trya.ai TryaApiPlatformKey=Tr7revjJDZJaae3Xz5G7v8K3bH9mU6nYX TenantApiUrl=https://dev-api.trya.ai TenantApiKey=yEem5dI75RXZD5xtr120ZIytglk68tGwRbKL"
+image_repositories = []
+
+[prod.deploy.parameters]
+stack_name = "triagem-saude-prod"
+resolve_s3 = true
+s3_prefix = "triagem-saude-prod"
+region = "us-east-1"
+profile = "skopia"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+disable_rollback = false
+# IMPORTANTE: Preencher VpcId, SubnetId1, SubnetId2, RouteTableId e APIs do ambiente prod
+parameter_overrides = "Environment=prod BedrockModelId=anthropic.claude-3-5-sonnet-20240620-v1:0 KnowledgeBaseId=OAZCZQWBQY VpcId=PREENCHER SubnetId1=PREENCHER SubnetId2=PREENCHER RouteTableId=PREENCHER TryaApiPlatformUrl=https://platform-api.trya.ai TryaApiPlatformKey=PREENCHER TenantApiUrl=https://api.trya.ai TenantApiKey=PREENCHER"
+image_repositories = []
+
+# =============================================================================
+# Ambiente HML - CONTA AWS SEPARADA
+# =============================================================================
+# Para usar: sam deploy --config-env hml
+# Certifique-se de estar autenticado na conta HML
+# =============================================================================
+[hml.deploy.parameters]
+stack_name = "triagem-saude-hml"
+resolve_s3 = true
+s3_prefix = "triagem-saude-hml"
+region = "sa-east-1"
+profile = "skopia"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+disable_rollback = true
+parameter_overrides = "Environment=hml BedrockModelId=anthropic.claude-3-5-sonnet-20240620-v1:0 KnowledgeBaseId=OAZCZQWBQY VpcId=vpc-0804488640ddc9d96 SubnetId1=subnet-04a6861cb8daabc6d SubnetId2=subnet-0a02c4019ca1e0024 RouteTableId=rtb-00cd03a23c4dc5d07 TryaApiPlatformUrl=https://platform-api.trya.ai TryaApiPlatformKey=Tr7revjJDZJaae3Xz5G7v8K3bH9mU6nYX TenantApiUrl=https://hml-api.trya.ai TenantApiKey=yEem5dI75RXZD5xtr120ZIytglk68tGwRbKL"
+image_repositories = []
+
+[default.global.parameters]
+region = "us-east-1"

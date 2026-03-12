@@ -1,0 +1,361 @@
+# Implementation Plan
+
+- [x] 1. Set up module structure and shared enums
+  - Create users module directory structure following Clean Architecture
+  - Move UserRole enum to shared/domain/enums if not already there
+  - Create placeholder .gitkeep files for empty directories
+  - _Requirements: 1.1, 1.2, 12.1-12.12_
+
+- [x] 2. Implement domain layer entities and errors
+  - [x] 2.1 Create User domain entity
+    - Write User domain entity class with all required fields
+    - Include optional doctor relation property
+    - _Requirements: 1.1, 1.4_
+  - [x] 2.2 Create Doctor domain entity
+    - Write Doctor domain entity class with all required fields
+    - Include required user relation property
+    - _Requirements: 1.2, 1.3_
+  - [x] 2.3 Create domain error classes
+    - Implement UserAlreadyExistsError extending base Error
+    - Implement UserNotFoundError extending base Error
+    - Implement DoctorNotFoundError extending base Error
+    - Implement DatabaseSaveFailedError extending base Error
+    - _Requirements: 13.1-13.7_
+
+- [x] 3. Define repository interfaces and tokens
+  - [x] 3.1 Create IUserRepository interface and token
+    - Define interface with methods: userExists, createUser, assignRole, updateCustomAttribute, deleteUser, disableUser
+    - Create USER_REPOSITORY_TOKEN constant
+    - _Requirements: 12.1, 12.11_
+  - [x] 3.2 Create IUserDbRepository interface and token
+    - Define interface with methods: create, findById, findAll, update, deactivate
+    - Create USER_DB_REPOSITORY_TOKEN constant
+    - _Requirements: 12.2, 12.11_
+  - [x] 3.3 Create IDoctorRepository interface and token
+    - Define interface with methods: create, findById, findAll, update
+    - Create DOCTOR_REPOSITORY_TOKEN constant
+    - _Requirements: 12.3, 12.11_
+  - [x] 3.4 Create INotificationRepository interface and token
+    - Define interface with methods: sendWelcomeDoctorEmail, sendAdminNotification
+    - Create NOTIFICATION_REPOSITORY_TOKEN constant
+    - _Requirements: 12.4, 12.11_
+
+- [x] 4. Create TypeORM entities and database migrations
+  - [x] 4.1 Create User TypeORM entity
+    - Implement UserEntity with decorators for all fields
+    - Define one-to-one relationship with DoctorEntity
+    - Add unique index on cognitoId only
+    - Add constraints for role enum
+    - _Requirements: 1.1, 1.3, 1.4, 1.6_
+  - [x] 4.2 Create Doctor TypeORM entity
+    - Implement DoctorEntity with decorators for all fields
+    - Define one-to-one relationship with UserEntity using JoinColumn
+    - _Requirements: 1.2, 1.3, 1.5_
+  - [x] 4.3 Generate and review database migration
+    - Generate TypeORM migration for users and doctors tables
+    - Review migration SQL for cognitoId index and constraints
+    - _Requirements: 1.1, 1.2, 1.6_
+
+- [x] 5. Implement infrastructure mappers
+  - [x] 5.1 Create UserMapper
+    - Implement toDomain method to convert UserEntity to User
+    - Implement toEntity method to convert User to UserEntity
+    - _Requirements: 1.1_
+  - [x] 5.2 Create DoctorMapper
+    - Implement toDomain method to convert DoctorEntity to Doctor
+    - Implement toEntity method to convert Doctor to DoctorEntity
+    - _Requirements: 1.2_
+
+- [x] 6. Implement Cognito repository
+  - [x] 6.1 Create CognitoUserRepository
+    - Implement userExists method using Cognito AdminGetUser
+    - Implement createUser method using Cognito AdminCreateUser
+    - Implement assignRole method using Cognito AdminAddUserToGroup
+    - Implement updateCustomAttribute method using Cognito AdminUpdateUserAttributes
+    - Implement deleteUser method using Cognito AdminDeleteUser
+    - Implement disableUser method using Cognito AdminDisableUser
+    - Handle Cognito errors and map to domain errors
+    - _Requirements: 3.1-3.5, 10.2, 12.5_
+
+- [x] 7. Implement PostgreSQL repositories
+  - [x] 7.1 Create TypeORMUserDbRepository
+    - Implement create method with User entity creation
+    - Implement findById method with optional doctor relation loading
+    - Implement findAll method with QueryBuilder for filtering and pagination
+    - Implement update method for user fields
+    - Implement deactivate method to set active=false
+    - Use UserMapper for entity-domain conversions
+    - _Requirements: 5.1-5.7, 6.1-6.4, 10.1, 12.6_
+  - [x] 7.2 Create TypeORMDoctorRepository
+    - Implement create method with Doctor entity creation
+    - Implement findById method with user relation loading
+    - Implement findAll method with QueryBuilder for filtering, search, and pagination
+    - Implement update method for doctor fields
+    - Use DoctorMapper for entity-domain conversions
+    - _Requirements: 7.1-7.7, 8.1-8.3, 9.1-9.6, 12.7_
+
+- [x] 8. Implement notification repositories
+  - [x] 8.1 Create ConsoleNotificationRepository
+    - Implement sendWelcomeDoctorEmail to log formatted email to console
+    - Implement sendAdminNotification to log formatted email to console
+    - Format output with clear recipient, subject, and body sections
+    - _Requirements: 4.3, 4.7, 12.8_
+  - [x] 8.2 Create SESNotificationRepository
+    - Implement sendWelcomeDoctorEmail using AWS SES SendEmail
+    - Implement sendAdminNotification using AWS SES SendEmail
+    - Create HTML email templates for welcome and admin notifications
+    - Handle SES errors gracefully with logging
+    - _Requirements: 4.4, 12.9_
+
+- [x] 9. Create PasswordGeneratorService
+  - Implement generateTemporaryPassword method
+  - Generate random password with min 8 chars, uppercase, lowercase, number, special char
+  - Use crypto.randomBytes for secure randomness
+  - _Requirements: 3.3, 12.12_
+
+- [x] 10. Implement CreateDoctorUseCase
+  - [x] 10.1 Create CreateDoctorDto with validation
+    - Define DTO with fields: email, name, crm, specialty, phoneNumber, temporaryPassword (optional)
+    - Add class-validator decorators for all fields
+    - _Requirements: 3.12_
+  - [x] 10.2 Create CreateDoctorResponseDto
+    - Define response DTO with fields: id, email, name, crm, specialty
+    - _Requirements: 3.11_
+  - [x] 10.3 Implement CreateDoctorUseCase
+    - Inject IUserRepository, IUserDbRepository, IDoctorRepository, INotificationRepository, ConfigService, PasswordGeneratorService
+    - Check email exists using userExists, throw UserAlreadyExistsError if exists
+    - Generate or use provided temporary password
+    - Create user in Cognito with DOCTOR role
+    - Assign DOCTOR role in Cognito
+    - Create User record in PostgreSQL with cognitoId
+    - Create Doctor record in PostgreSQL with userId
+    - Update Cognito custom attribute user_id
+    - Send welcome email notification (catch and log errors)
+    - Implement rollback: delete Cognito user if PostgreSQL fails
+    - Log critical error if rollback fails with cleanup instructions
+    - Return CreateDoctorResponseDto
+    - _Requirements: 3.1-3.12, 4.1-4.8, 11.1-11.6_
+
+- [x] 11. Implement CreateAdminUseCase
+  - [x] 11.1 Create CreateAdminDto with validation
+    - Define DTO with fields: email, name, phoneNumber, temporaryPassword (optional)
+    - Add class-validator decorators
+    - _Requirements: 2.2_
+  - [x] 11.2 Create CreateAdminResponseDto
+    - Define response DTO with fields: id, email, name, role
+    - _Requirements: 2.5_
+  - [x] 11.3 Implement CreateAdminUseCase
+    - Similar flow to CreateDoctorUseCase but for ADMIN role
+    - No Doctor record creation
+    - Implement same rollback strategy
+    - _Requirements: 2.1-2.5, 11.1-11.6_
+
+- [x] 12. Implement ListUsersUseCase
+  - [x] 12.1 Create ListUsersDto with validation
+    - Define DTO with fields: page, limit, role, active, search
+    - Add class-validator decorators with defaults
+    - _Requirements: 5.2-5.5_
+  - [x] 12.2 Create ListUsersResponseDto
+    - Define response DTO with data array and pagination metadata
+    - _Requirements: 5.6_
+  - [x] 12.3 Implement ListUsersUseCase
+    - Inject IUserDbRepository
+    - Call findAll with filters and pagination
+    - Return paginated result with metadata
+    - _Requirements: 5.1-5.7_
+
+- [x] 13. Implement GetUserUseCase
+  - [x] 13.1 Create GetUserResponseDto
+    - Define response DTO with all user fields and optional doctor data
+    - _Requirements: 6.4_
+  - [x] 13.2 Implement GetUserUseCase
+    - Inject IUserDbRepository
+    - Call findById with eager loading of doctor relation
+    - Throw UserNotFoundError if not found
+    - Return user with doctor data if applicable
+    - _Requirements: 6.1-6.4_
+
+- [x] 14. Implement ListDoctorsUseCase
+  - [x] 14.1 Create ListDoctorsDto with validation
+    - Define DTO with fields: page, limit, specialty, active, search
+    - Add class-validator decorators with defaults
+    - _Requirements: 7.2-7.5_
+  - [x] 14.2 Create ListDoctorsResponseDto
+    - Define response DTO with data array and pagination metadata
+    - _Requirements: 7.7_
+  - [x] 14.3 Implement ListDoctorsUseCase
+    - Inject IDoctorRepository
+    - Call findAll with filters and pagination
+    - Return paginated result with user and doctor data
+    - _Requirements: 7.1-7.7_
+
+- [x] 15. Implement GetDoctorUseCase
+  - [x] 15.1 Create GetDoctorResponseDto
+    - Define response DTO with user and doctor fields
+    - _Requirements: 8.3_
+  - [x] 15.2 Implement GetDoctorUseCase
+    - Inject IDoctorRepository
+    - Call findById with user relation loading
+    - Throw DoctorNotFoundError if not found
+    - Return doctor with user data
+    - _Requirements: 8.1-8.3_
+
+- [x] 16. Implement UpdateDoctorUseCase
+  - [x] 16.1 Create UpdateDoctorDto with validation
+    - Define DTO with optional fields: name, phoneNumber, crm, specialty
+    - Add class-validator decorators
+    - _Requirements: 9.2_
+  - [x] 16.2 Create UpdateDoctorResponseDto
+    - Define response DTO with updated user and doctor fields
+    - _Requirements: 9.5_
+  - [x] 16.3 Implement UpdateDoctorUseCase
+    - Inject IUserDbRepository and IDoctorRepository
+    - Find doctor by ID, throw DoctorNotFoundError if not found
+    - Update User fields (name, phone) in transaction
+    - Update Doctor fields (crm, specialty) in transaction
+    - Return updated doctor with user data
+    - _Requirements: 9.1-9.6_
+
+- [x] 17. Implement DeactivateUserUseCase
+  - Inject IUserDbRepository and IUserRepository
+  - Find user by ID, throw UserNotFoundError if not found
+  - Set active=false in PostgreSQL using deactivate method
+  - Disable user in Cognito using disableUser method
+  - Implement rollback: set active=true if Cognito fails
+  - Handle idempotent behavior for already deactivated users
+  - _Requirements: 10.1-10.7, 11.1-11.6_
+
+- [x] 17.1 Implement ActivateUserUseCase
+  - Inject IUserDbRepository and IUserRepository
+  - Find user by ID, throw UserNotFoundError if not found
+  - Set active=true in PostgreSQL using reactivate method
+  - Enable user in Cognito using enableUser method
+  - Implement rollback: set active=false if Cognito fails
+  - Handle idempotent behavior for already active users
+  - _Requirements: 10.1-10.7, 11.1-11.6_
+
+- [x] 18. Create UsersController
+  - [x] 18.1 Implement POST /users endpoint
+    - Inject CreateAdminUseCase
+    - Apply JwtAuthGuard and RolesGuard with ADMIN role
+    - Add Swagger decorators (@ApiTags, @ApiOperation, @ApiResponse)
+    - Call CreateAdminUseCase.execute
+    - _Requirements: 2.1-2.5, 14.1-14.6, 15.1-15.2_
+  - [x] 18.2 Implement GET /users endpoint
+    - Inject ListUsersUseCase
+    - Apply JwtAuthGuard and RolesGuard with ADMIN role
+    - Add Swagger decorators
+    - Call ListUsersUseCase.execute
+    - _Requirements: 5.1-5.7, 14.1-14.6, 15.3_
+  - [x] 18.3 Implement GET /users/:id endpoint
+    - Inject GetUserUseCase
+    - Apply JwtAuthGuard and RolesGuard with ADMIN role
+    - Add Swagger decorators
+    - Call GetUserUseCase.execute
+    - _Requirements: 6.1-6.4, 14.1-14.6, 15.3_
+  - [x] 18.4 Implement DELETE /users/:id endpoint
+    - Inject DeactivateUserUseCase
+    - Apply JwtAuthGuard and RolesGuard with ADMIN role
+    - Add Swagger decorators
+    - Call DeactivateUserUseCase.execute
+    - _Requirements: 10.1-10.7, 14.1-14.6, 15.4_
+  - [x] 18.5 Implement PATCH /users/:id/activate endpoint
+    - Inject ActivateUserUseCase
+    - Apply JwtAuthGuard and RolesGuard with ADMIN role
+    - Add Swagger decorators
+    - Call ActivateUserUseCase.execute
+    - _Requirements: 10.1-10.7, 14.1-14.6, 15.4_
+
+- [x] 19. Create DoctorsController
+  - [x] 19.1 Implement POST /doctors endpoint
+    - Inject CreateDoctorUseCase
+    - Apply JwtAuthGuard and RolesGuard with ADMIN role
+    - Add Swagger decorators (@ApiTags, @ApiOperation, @ApiResponse)
+    - Call CreateDoctorUseCase.execute
+    - _Requirements: 3.1-3.12, 14.1-14.6, 15.2_
+  - [x] 19.2 Implement GET /doctors endpoint
+    - Inject ListDoctorsUseCase
+    - Apply JwtAuthGuard and RolesGuard with ADMIN role
+    - Add Swagger decorators
+    - Call ListDoctorsUseCase.execute
+    - _Requirements: 7.1-7.7, 14.1-14.6, 15.3_
+  - [x] 19.3 Implement GET /doctors/:id endpoint
+    - Inject GetDoctorUseCase
+    - Apply JwtAuthGuard and RolesGuard with ADMIN role
+    - Add Swagger decorators
+    - Call GetDoctorUseCase.execute
+    - _Requirements: 8.1-8.3, 14.1-14.6, 15.3_
+  - [x] 19.4 Implement PUT /doctors/:id endpoint
+    - Inject UpdateDoctorUseCase
+    - Apply JwtAuthGuard and RolesGuard with ADMIN role
+    - Add Swagger decorators
+    - Call UpdateDoctorUseCase.execute
+    - _Requirements: 9.1-9.7, 14.1-14.6, 15.4_
+
+- [x] 20. Configure UsersModule
+  - Import TypeOrmModule.forFeature with UserEntity and DoctorEntity
+  - Import ConfigModule
+  - Register USER_REPOSITORY_TOKEN with CognitoUserRepository
+  - Register USER_DB_REPOSITORY_TOKEN with TypeORMUserDbRepository
+  - Register DOCTOR_REPOSITORY_TOKEN with TypeORMDoctorRepository
+  - Register NOTIFICATION_REPOSITORY_TOKEN with factory based on NOTIFICATION_PROVIDER env var
+  - Register PasswordGeneratorService
+  - Register all use cases
+  - Register UsersController and DoctorsController
+  - Export repository tokens for potential reuse
+  - _Requirements: 12.5-12.11_
+
+- [x] 21. Add environment variables to configuration
+  - Add NOTIFICATION_PROVIDER to .env.example with default 'console'
+  - Add FRONTEND_URL to .env.example with default 'http://localhost:3000/login'
+  - Add AWS_SES_FROM_EMAIL to .env.example (optional)
+  - Add AWS_REGION to .env.example (optional)
+  - Update app.config.ts to include frontendUrl
+  - _Requirements: 4.2, 4.5_
+
+- [x] 22. Import UsersModule in AppModule
+  - Add UsersModule to imports array in AppModule
+  - Verify module loads correctly on application startup
+  - _Requirements: 1.1-1.5_
+
+- [x] 23. Create admin user seed script
+  - Create seed file at src/database/seeds/create-admin-user.seed.ts
+  - Inject CreateAdminUseCase
+  - Check if admin exists, skip if already created
+  - Create admin user with generated password
+  - Log admin credentials for initial access
+  - Add npm script 'seed:admin' to package.json
+  - _Requirements: 2.1-2.5_
+
+- [x] 24. Configure Docker containerization
+  - [x] 24.1 Create/update Dockerfile
+    - Create multi-stage Dockerfile for production build
+    - Include Node.js base image
+    - Copy package files and install dependencies
+    - Build application
+    - Set up production runtime
+    - _Requirements: N/A (Infrastructure)_
+  - [x] 24.2 Create/update docker-compose.yml
+    - Define app service with environment variables
+    - Define PostgreSQL service with volume persistence
+    - Define network configuration
+    - Set up health checks
+    - Configure port mappings
+    - _Requirements: N/A (Infrastructure)_
+  - [x] 24.3 Create docker-compose.dev.yml for development
+    - Define app service with hot reload volume mounts
+    - Define PostgreSQL service
+    - Include environment variables for development
+    - Configure NOTIFICATION_PROVIDER=console for dev
+    - _Requirements: 4.5 (Development configuration)_
+
+- [x] 25. Update README documentation
+  - Add prerequisites section (Docker, Node.js versions)
+  - Add environment setup instructions
+  - Document how to run with Docker Compose (development and production)
+  - Document how to run migrations
+  - Document how to run admin seed script
+  - Add API documentation link to Swagger
+  - Include example .env configuration
+  - Add troubleshooting section
+  - _Requirements: N/A (Documentation)_

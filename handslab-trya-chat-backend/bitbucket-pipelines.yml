@@ -1,0 +1,116 @@
+image: node:18-slim
+
+definitions:
+  services:
+    docker:
+      memory: 3000
+
+  steps:
+    - step: &validate-build
+        name: Validate Build (PR Check)
+        size: 2x
+        caches:
+          - node
+        script:
+          - echo "Validando build para Pull Request..."
+          - npm ci
+          - echo "Dependencias instaladas"
+          - npm run build
+          - echo "Build compilado com sucesso"
+
+    - step: &build-and-deploy
+        name: Build and Deploy
+        services:
+          - docker
+        caches:
+          - node
+          - docker
+        size: 2x
+        script:
+          # Debug: verificar variaveis
+          - echo "Ambiente = $BITBUCKET_DEPLOYMENT_ENVIRONMENT"
+          - echo "AWS_REGION = $AWS_REGION"
+          - echo "ECR_REGISTRY = $ECR_REGISTRY"
+          - echo "ECS_CLUSTER = $ECS_CLUSTER"
+          - echo "ECS_SERVICE = $ECS_SERVICE"
+          
+          # Gerar tag unica baseada no commit
+          - export IMAGE_TAG=$(echo $BITBUCKET_COMMIT | cut -c1-7)
+          - echo "IMAGE_TAG=$IMAGE_TAG"
+          
+          # Build da aplicacao
+          - npm ci --include=dev
+          - npm run build
+          
+          # Gerar task-definition.json
+          - apt-get update && apt-get install -y gettext-base
+          - chmod +x scripts/generate-task-definition.sh
+          - export IMAGE_TAG_FOR_TASK="$IMAGE_TAG"
+          - ./scripts/generate-task-definition.sh
+          
+          # Build da imagem Docker
+          - echo "Building Docker image..."
+          - docker build -t "$IMAGE_NAME:$IMAGE_TAG" -t "$IMAGE_NAME:latest" .
+          
+          # Push para ECR
+          - echo "Pushing to ECR..."
+          - export ECR_REGION="${ECR_REGION:-$AWS_REGION}"
+          - pipe: atlassian/aws-ecr-push-image:2.6.0
+            variables:
+              AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+              AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+              AWS_DEFAULT_REGION: $ECR_REGION
+              ECR_REGISTRY: $ECR_REGISTRY
+              ECR_REPOSITORY: $ECR_REPOSITORY
+              IMAGE_NAME: "$IMAGE_NAME"
+              TAGS: "$IMAGE_TAG latest"
+          
+          # Deploy no ECS
+          - echo "Deploying to ECS..."
+          - pipe: atlassian/aws-ecs-deploy:1.15.0
+            variables:
+              AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+              AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+              AWS_DEFAULT_REGION: $AWS_REGION
+              CLUSTER_NAME: $ECS_CLUSTER
+              SERVICE_NAME: $ECS_SERVICE
+              TASK_DEFINITION: task-definition.json
+              FORCE_NEW_DEPLOYMENT: "true"
+          
+          - echo "Deploy completed with image tag $IMAGE_TAG"
+
+pipelines:
+  pull-requests:
+    '**':
+      - step:
+          <<: *validate-build
+
+  branches:
+    development:
+      - step:
+          <<: *build-and-deploy
+          name: Build & Deploy (DEV)
+          deployment: Develop
+
+    # ========== STAGING / HML ==========
+    # IMPORTANTE: Este ambiente deploya para a CONTA AWS HML (separada)
+    # Configure as seguintes variaveis no Bitbucket Deployments > Staging:
+    #   - AWS_ACCESS_KEY_ID: Credenciais da conta HML
+    #   - AWS_SECRET_ACCESS_KEY: Credenciais da conta HML
+    #   - AWS_REGION: sa-east-1
+    #   - ECR_REGISTRY: <HML_ACCOUNT_ID>.dkr.ecr.sa-east-1.amazonaws.com
+    #   - ECR_REPOSITORY: trya-chat-backend-hml
+    #   - ECS_CLUSTER: trya-chat-backend-hml-cluster
+    #   - ECS_SERVICE: trya-chat-backend-hml-service
+    #   - IMAGE_NAME: trya-chat-backend-hml
+    staging:
+      - step:
+          <<: *build-and-deploy
+          name: Build & Deploy (HML)
+          deployment: Staging
+
+    main:
+      - step:
+          <<: *build-and-deploy
+          name: Build & Deploy (PROD)
+          deployment: Production

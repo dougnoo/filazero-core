@@ -1,0 +1,131 @@
+image: alpine/terragrunt:latest
+
+definitions:
+  steps:
+    - step: &terragrunt-plan
+        name: Terragrunt Plan
+        script:
+          - cd accounts/$ACCOUNT/stack
+          - terragrunt run-all plan --terragrunt-non-interactive
+        artifacts:
+          - accounts/$ACCOUNT/stack/**/.terraform.lock.hcl
+
+    - step: &terragrunt-apply
+        name: Terragrunt Apply
+        script:
+          - cd accounts/$ACCOUNT/stack
+          - terragrunt run-all apply --terragrunt-non-interactive -auto-approve
+        artifacts:
+          - accounts/$ACCOUNT/stack/**/.terraform.lock.hcl
+
+    - step: &terragrunt-destroy
+        name: Terragrunt Destroy
+        script:
+          - cd accounts/$ACCOUNT/stack
+          - terragrunt run-all destroy --terragrunt-non-interactive -auto-approve
+
+pipelines:
+  # Deploy manual de qualquer conta
+  custom:
+    deploy-account:
+      - variables:
+          - name: ACCOUNT
+            description: "Nome da conta (ex: admin-trya-dev)"
+      - step:
+          <<: *terragrunt-plan
+          name: Plan $ACCOUNT
+      - step:
+          <<: *terragrunt-apply
+          name: Apply $ACCOUNT
+          trigger: manual
+          deployment: $ACCOUNT
+
+    destroy-account:
+      - variables:
+          - name: ACCOUNT
+            description: "Nome da conta para destruir"
+      - step:
+          <<: *terragrunt-destroy
+          name: Destroy $ACCOUNT
+          trigger: manual
+
+  # Deploy automático por branch
+  branches:
+    # Branch main - deploy em produção
+    main:
+      - parallel:
+          - step:
+              <<: *terragrunt-apply
+              name: Deploy admin-trya-prod
+              deployment: admin-trya-prod
+              trigger: manual
+          - step:
+              <<: *terragrunt-apply
+              name: Deploy grupo-trigo-prod
+              deployment: grupo-trigo-prod
+              trigger: manual
+
+    # Branch staging - deploy em homologação
+    staging:
+      - parallel:
+          - step:
+              <<: *terragrunt-apply
+              name: Deploy admin-trya-hml
+              deployment: admin-trya-hml
+          - step:
+              <<: *terragrunt-apply
+              name: Deploy trya-saas-hml
+              deployment: trya-saas-hml
+          - step:
+              <<: *terragrunt-apply
+              name: Deploy grupo-trigo-hml
+              deployment: grupo-trigo-hml
+
+    # Branch development - deploy em dev
+    development:
+      - parallel:
+          - step:
+              <<: *terragrunt-apply
+              name: Deploy admin-trya-dev
+              deployment: admin-trya-dev
+          - step:
+              <<: *terragrunt-apply
+              name: Deploy trya-saas-dev
+              deployment: trya-saas-dev
+
+  # Pull requests - apenas plan
+  pull-requests:
+    '**':
+      - step:
+          name: Validate Terraform
+          script:
+            - |
+              # Detecta contas alteradas
+              CHANGED_ACCOUNTS=$(git diff --name-only origin/$BITBUCKET_PR_DESTINATION_BRANCH...HEAD | grep "accounts/" | cut -d'/' -f2 | sort -u | grep -v "_template")
+              
+              if [ -z "$CHANGED_ACCOUNTS" ]; then
+                echo "Nenhuma conta alterada"
+                exit 0
+              fi
+              
+              for ACCOUNT in $CHANGED_ACCOUNTS; do
+                echo "=== Validando $ACCOUNT ==="
+                cd accounts/$ACCOUNT/stack
+                terragrunt run-all validate --terragrunt-non-interactive
+                terragrunt run-all plan --terragrunt-non-interactive
+                cd ../../..
+              done
+
+# Configuração de deployments no Bitbucket:
+# 
+# Para cada conta, configurar em Repository Settings > Deployments:
+# 
+# Nome: admin-trya-dev
+# Environment type: Test
+# Variables:
+#   - ACCOUNT: admin-trya-dev
+#   - AWS_ACCESS_KEY_ID: (da conta admin-trya-dev)
+#   - AWS_SECRET_ACCESS_KEY: (da conta admin-trya-dev)
+#   - AWS_DEFAULT_REGION: us-east-1
+# 
+# Repetir para todas as contas...

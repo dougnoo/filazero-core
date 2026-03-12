@@ -1,0 +1,28 @@
+Bem-vindo ao {{APP_NAME}}!
+
+Olá {{USER_NAME}}!
+
+É com grande prazer que damos as boas-vindas ao {{APP_NAME}}!
+
+Sua conta de {{USER_ROLE}} foi criada com sucesso. Abaixo estão suas credenciais temporárias para o primeiro acesso:
+
+Email: {{USER_EMAIL}}
+Senha Temporária: {{TEMPORARY_PASSWORD}}
+Empresa: {{TENANT_DISPLAY_NAME}}
+
+IMPORTANTE:
+Esta é uma senha temporária que deve ser alterada no seu primeiro login por questões de segurança.
+
+PRÓXIMOS PASSOS:
+1. Acesse o sistema usando suas credenciais temporárias
+2. Você será solicitado a alterar sua senha
+3. Configure seu perfil pessoal
+4. Explore as funcionalidades disponíveis para sua função
+
+Link para login: {{LOGIN_URL}}
+
+Se você tiver alguma dúvida ou precisar de ajuda, não hesite em entrar em contato com nossa equipe de suporte.
+
+---
+Este é um email automático, por favor não responda.
+© {{YEAR}} {{TENANT_DISPLAY_NAME}}. Todos os direitos reservados.

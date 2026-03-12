@@ -1,0 +1,1 @@
+export const ZELO_REPOSITORY_TOKEN = Symbol('ZELO_REPOSITORY_TOKEN');

@@ -1,0 +1,16 @@
+{
+  "name": "Trya Backend",
+  "dockerComposeFile": "../docker-compose.local.yml",
+  "service": "app",
+  "workspaceFolder": "/app",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+  "postCreateCommand": "npm install",
+  "remoteUser": "root"
+}
