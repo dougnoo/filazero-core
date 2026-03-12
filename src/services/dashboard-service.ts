@@ -167,7 +167,10 @@ function generateMockDashboardData(): DashboardData {
 // ─── Service abstraction (ready for backend replacement) ───
 
 export async function fetchDashboardData(): Promise<DashboardData> {
-  // Simulates API latency
+  if (!isMockMode()) {
+    const { data } = await platformApi.get<DashboardData>('/manager/dashboard');
+    return data;
+  }
   await new Promise((r) => setTimeout(r, 400));
   return generateMockDashboardData();
 }

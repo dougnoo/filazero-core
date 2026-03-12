@@ -77,6 +77,7 @@ const MOCK_USERS: Record<string, AuthUser> = {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const loginWithCPF = useCallback(async (_cpf: string, _otp: string) => {
