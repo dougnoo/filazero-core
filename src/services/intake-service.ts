@@ -109,7 +109,16 @@ export async function sendIntakeMessage(
   userMessage: string,
   currentPhase: IntakePhase,
 ): Promise<{ reply: TriageMessage; nextPhase: IntakePhase }> {
-  // Simulate network latency (agent thinking time)
+  // ── Real backend path (chat-backend → chat-agents) ──
+  if (!isMockMode()) {
+    const { data } = await chatApi.post<{ reply: TriageMessage; nextPhase: IntakePhase }>(
+      `/intakes/${_intakeId}/messages`,
+      { content: userMessage, currentPhase },
+    );
+    return data;
+  }
+
+  // ── Mock path ──
   await new Promise((r) => setTimeout(r, 800 + Math.random() * 700));
 
   const nextPhase = getNextPhase(currentPhase);
