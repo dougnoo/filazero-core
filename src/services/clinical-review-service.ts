@@ -22,8 +22,11 @@ export interface ClinicalPackage {
  * In production: GET /api/professional/clinical-packages?status=pending
  */
 export async function getPendingClinicalPackages(): Promise<ClinicalPackage[]> {
+  if (!isMockMode()) {
+    const { data } = await tryaApi.get<ClinicalPackage[]>('/professional/clinical-packages?status=pending');
+    return data;
+  }
   await new Promise((r) => setTimeout(r, 400));
-
   const reviewableStatuses = new Set([
     CareJourneyStatus.TRIAGE_COMPLETE,
     CareJourneyStatus.EXAMS_PENDING,
