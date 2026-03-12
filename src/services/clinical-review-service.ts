@@ -46,6 +46,10 @@ export async function getPendingClinicalPackages(): Promise<ClinicalPackage[]> {
  * Fetches all clinical packages (including resolved) for history.
  */
 export async function getAllClinicalPackages(): Promise<ClinicalPackage[]> {
+  if (!isMockMode()) {
+    const { data } = await tryaApi.get<ClinicalPackage[]>('/professional/clinical-packages');
+    return data;
+  }
   await new Promise((r) => setTimeout(r, 400));
   return mockCareJourneys.map((journey) => ({
     journey,
