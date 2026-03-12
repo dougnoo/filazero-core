@@ -1,15 +1,16 @@
 /**
  * Clinical Review Service — Abstraction for professional clinical package review.
  * 
- * Currently returns mock data. Will be replaced by:
- * - trya-backend (clinical packages, validation actions)
- * - platform-backend (regulation, scheduling)
+ * Mock mode: returns local data.
+ * Real mode: calls trya-backend REST API.
  */
 
 import type { CareJourney } from '@/domain/types/care-journey';
 import type { ClinicalIntake } from '@/domain/types/clinical-intake';
 import { mockCareJourneys, mockClinicalIntake } from '@/lib/mock-clinical-data';
 import { CareJourneyStatus } from '@/domain/enums/care-journey-status';
+import { isMockMode } from '@/lib/env';
+import { tryaApi } from '@/lib/api-client';
 
 export interface ClinicalPackage {
   journey: CareJourney;
