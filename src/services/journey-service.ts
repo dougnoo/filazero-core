@@ -27,6 +27,10 @@ export async function getCitizenJourneys(citizenId: string): Promise<CareJourney
  * Fetches a single journey by ID.
  */
 export async function getJourneyById(journeyId: string): Promise<CareJourney | null> {
+  if (!isMockMode()) {
+    const { data } = await tryaApi.get<CareJourney>(`/journeys/${journeyId}`);
+    return data;
+  }
   await new Promise((r) => setTimeout(r, 300));
   return mockCareJourneys.find((j) => j.id === journeyId) ?? null;
 }
