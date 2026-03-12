@@ -1,5 +1,7 @@
-import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, useEffect, ReactNode } from 'react';
 import { UserRole } from '@/domain/enums/user-role';
+import { setSessionAccessor } from '@/lib/api-client';
+import { env } from '@/lib/env';
 
 // ─── Auth Types ─────────────────────────────────────────────────
 // Structured to map 1:1 to Cognito session later.
