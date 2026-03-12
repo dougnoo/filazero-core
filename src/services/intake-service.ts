@@ -138,7 +138,16 @@ export async function generateIntakeResult(
   _intakeId: string,
   messages: TriageMessage[],
 ): Promise<ClinicalIntake> {
-  // Simulate AI processing time
+  // ── Real backend path ──
+  if (!isMockMode()) {
+    const { data } = await chatApi.post<ClinicalIntake>(
+      `/intakes/${_intakeId}/generate`,
+      { messages },
+    );
+    return data;
+  }
+
+  // ── Mock path ──
   await new Promise((r) => setTimeout(r, 2000));
 
   // Return mock structured result (mirrors mock-clinical-data patterns)
