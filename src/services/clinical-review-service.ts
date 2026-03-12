@@ -79,6 +79,10 @@ export interface ValidationPayload {
  * In production: POST /api/professional/validate
  */
 export async function submitValidation(payload: ValidationPayload): Promise<{ success: boolean }> {
+  if (!isMockMode()) {
+    const { data } = await tryaApi.post<{ success: boolean }>('/professional/validate', payload);
+    return data;
+  }
   await new Promise((r) => setTimeout(r, 600));
   console.log('[clinical-review-service] Validation submitted:', payload);
   return { success: true };
