@@ -1,1 +1,0 @@
-export const TENANT_REPOSITORY_TOKEN = Symbol('TENANT_REPOSITORY');

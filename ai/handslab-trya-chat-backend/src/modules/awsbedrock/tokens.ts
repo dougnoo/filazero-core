@@ -1,4 +1,0 @@
-// Dependency injection tokens for the AWS Bedrock module
-export const BEDROCK_CLIENT_TOKEN = 'BEDROCK_CLIENT';
-export const RATE_LIMIT_SERVICE_TOKEN = 'RATE_LIMIT_SERVICE';
-export const AUDIO_TRANSCRIPTION_SERVICE_TOKEN = 'AUDIO_TRANSCRIPTION_SERVICE';
