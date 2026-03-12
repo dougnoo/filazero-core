@@ -101,21 +101,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     setUser(null);
+    setToken(null);
   }, []);
 
   const hasRole = useCallback((role: UserRole) => {
     return user?.role === role;
   }, [user]);
 
+  // Wire up API client session accessor
+  useEffect(() => {
+    setSessionAccessor(() => ({
+      token,
+      municipalityId: user?.municipalityId ?? null,
+      unitId: user?.unitId ?? null,
+    }));
+  }, [token, user]);
+
   const value = useMemo<AuthContextType>(() => ({
     user,
     isAuthenticated: !!user,
     isLoading,
+    token,
     loginWithCPF,
     loginWithCredentials,
     logout,
     hasRole,
-  }), [user, isLoading, loginWithCPF, loginWithCredentials, logout, hasRole]);
+  }), [user, isLoading, token, loginWithCPF, loginWithCredentials, logout, hasRole]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
