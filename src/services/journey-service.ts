@@ -1,16 +1,15 @@
 /**
  * Journey Service — Abstraction for fetching citizen care journey data.
  * 
- * Currently returns mock data. Will be replaced by:
- * - trya-backend (journey state, steps, status)
- * - trya-platform-backend (regulation, scheduling)
- * 
- * Contract: fetch active journeys for a citizen, return CareJourney[].
+ * Mock mode: returns local data.
+ * Real mode: calls trya-backend REST API.
  */
 
 import type { CareJourney } from '@/domain/types/care-journey';
 import type { ClinicalIntake } from '@/domain/types/clinical-intake';
 import { mockCareJourneys, mockClinicalIntake } from '@/lib/mock-clinical-data';
+import { isMockMode } from '@/lib/env';
+import { tryaApi } from '@/lib/api-client';
 
 /**
  * Fetches active care journeys for the current citizen.
