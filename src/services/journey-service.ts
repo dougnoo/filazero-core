@@ -38,7 +38,11 @@ export async function getJourneyById(journeyId: string): Promise<CareJourney | n
 /**
  * Fetches the clinical intake associated with a journey.
  */
-export async function getIntakeForJourney(_intakeId: string): Promise<ClinicalIntake | null> {
+export async function getIntakeForJourney(intakeId: string): Promise<ClinicalIntake | null> {
+  if (!isMockMode()) {
+    const { data } = await tryaApi.get<ClinicalIntake>(`/intakes/${intakeId}`);
+    return data;
+  }
   await new Promise((r) => setTimeout(r, 200));
   return mockClinicalIntake;
 }
