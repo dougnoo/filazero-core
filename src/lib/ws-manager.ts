@@ -67,7 +67,7 @@ export class WSManager {
   on(event: 'message', handler: MessageHandler): () => void;
   on(event: 'status', handler: StatusHandler): () => void;
   on(event: 'error', handler: ErrorHandler): () => void;
-  on(event: string, handler: (...args: unknown[]) => void): () => void {
+  on(event: 'message' | 'status' | 'error', handler: MessageHandler | StatusHandler | ErrorHandler): () => void {
     const set = event === 'message' ? this.messageHandlers
       : event === 'status' ? this.statusHandlers
       : this.errorHandlers;
