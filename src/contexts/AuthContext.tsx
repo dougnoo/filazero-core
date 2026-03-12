@@ -20,6 +20,8 @@ export interface AuthState {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  /** JWT access token (populated when using real Cognito auth) */
+  token: string | null;
 }
 
 interface AuthActions {
