@@ -50,7 +50,11 @@ export async function getIntakeForJourney(intakeId: string): Promise<ClinicalInt
 /**
  * Fetches all journeys (active + resolved) for history display.
  */
-export async function getCitizenJourneyHistory(_citizenId: string): Promise<CareJourney[]> {
+export async function getCitizenJourneyHistory(citizenId: string): Promise<CareJourney[]> {
+  if (!isMockMode()) {
+    const { data } = await tryaApi.get<CareJourney[]>(`/citizens/${citizenId}/journeys`);
+    return data;
+  }
   await new Promise((r) => setTimeout(r, 400));
   return mockCareJourneys;
 }
