@@ -61,6 +61,14 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Manchester risk level colors
+        risk: {
+          emergency: "#DC2626",
+          "very-urgent": "#EA580C",
+          urgent: "#CA8A04",
+          "less-urgent": "#16A34A",
+          "non-urgent": "#2563EB",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
