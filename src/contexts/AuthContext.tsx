@@ -1,5 +1,7 @@
-import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, useEffect, ReactNode } from 'react';
 import { UserRole } from '@/domain/enums/user-role';
+import { setSessionAccessor } from '@/lib/api-client';
+import { env } from '@/lib/env';
 
 // ─── Auth Types ─────────────────────────────────────────────────
 // Structured to map 1:1 to Cognito session later.
@@ -18,6 +20,8 @@ export interface AuthState {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  /** JWT access token (populated when using real Cognito auth) */
+  token: string | null;
 }
 
 interface AuthActions {
@@ -73,6 +77,7 @@ const MOCK_USERS: Record<string, AuthUser> = {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const loginWithCPF = useCallback(async (_cpf: string, _otp: string) => {
@@ -96,21 +101,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     setUser(null);
+    setToken(null);
   }, []);
 
   const hasRole = useCallback((role: UserRole) => {
     return user?.role === role;
   }, [user]);
 
+  // Wire up API client session accessor
+  useEffect(() => {
+    setSessionAccessor(() => ({
+      token,
+      municipalityId: user?.municipalityId ?? null,
+      unitId: user?.unitId ?? null,
+    }));
+  }, [token, user]);
+
   const value = useMemo<AuthContextType>(() => ({
     user,
     isAuthenticated: !!user,
     isLoading,
+    token,
     loginWithCPF,
     loginWithCredentials,
     logout,
     hasRole,
-  }), [user, isLoading, loginWithCPF, loginWithCredentials, logout, hasRole]);
+  }), [user, isLoading, token, loginWithCPF, loginWithCredentials, logout, hasRole]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

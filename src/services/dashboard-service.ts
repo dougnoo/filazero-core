@@ -1,6 +1,7 @@
 import { RiskLevel } from '@/domain/enums/risk-level';
 import { CareJourneyStatus } from '@/domain/enums/care-journey-status';
-
+import { isMockMode } from '@/lib/env';
+import { platformApi } from '@/lib/api-client';
 // ─── Types for dashboard metrics ───
 
 export interface DashboardKPIs {
@@ -166,7 +167,10 @@ function generateMockDashboardData(): DashboardData {
 // ─── Service abstraction (ready for backend replacement) ───
 
 export async function fetchDashboardData(): Promise<DashboardData> {
-  // Simulates API latency
+  if (!isMockMode()) {
+    const { data } = await platformApi.get<DashboardData>('/manager/dashboard');
+    return data;
+  }
   await new Promise((r) => setTimeout(r, 400));
   return generateMockDashboardData();
 }

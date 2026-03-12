@@ -17,6 +17,8 @@
 import type { ClinicalIntake } from '@/domain/types/clinical-intake';
 import type { TriageMessage } from '@/domain/types/triage';
 import { RiskLevel } from '@/domain/enums/risk-level';
+import { isMockMode } from '@/lib/env';
+import { chatApi } from '@/lib/api-client';
 
 // ─── Intake Phases ───
 export type IntakePhase =
@@ -107,7 +109,16 @@ export async function sendIntakeMessage(
   userMessage: string,
   currentPhase: IntakePhase,
 ): Promise<{ reply: TriageMessage; nextPhase: IntakePhase }> {
-  // Simulate network latency (agent thinking time)
+  // ── Real backend path (chat-backend → chat-agents) ──
+  if (!isMockMode()) {
+    const { data } = await chatApi.post<{ reply: TriageMessage; nextPhase: IntakePhase }>(
+      `/intakes/${_intakeId}/messages`,
+      { content: userMessage, currentPhase },
+    );
+    return data;
+  }
+
+  // ── Mock path ──
   await new Promise((r) => setTimeout(r, 800 + Math.random() * 700));
 
   const nextPhase = getNextPhase(currentPhase);
@@ -127,7 +138,16 @@ export async function generateIntakeResult(
   _intakeId: string,
   messages: TriageMessage[],
 ): Promise<ClinicalIntake> {
-  // Simulate AI processing time
+  // ── Real backend path ──
+  if (!isMockMode()) {
+    const { data } = await chatApi.post<ClinicalIntake>(
+      `/intakes/${_intakeId}/generate`,
+      { messages },
+    );
+    return data;
+  }
+
+  // ── Mock path ──
   await new Promise((r) => setTimeout(r, 2000));
 
   // Return mock structured result (mirrors mock-clinical-data patterns)
