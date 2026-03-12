@@ -1,6 +1,7 @@
 import { RiskLevel } from '@/domain/enums/risk-level';
 import { CareJourneyStatus } from '@/domain/enums/care-journey-status';
-
+import { isMockMode } from '@/lib/env';
+import { platformApi } from '@/lib/api-client';
 // ─── Types for dashboard metrics ───
 
 export interface DashboardKPIs {
