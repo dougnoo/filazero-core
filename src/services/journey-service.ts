@@ -14,9 +14,12 @@ import { tryaApi } from '@/lib/api-client';
 /**
  * Fetches active care journeys for the current citizen.
  */
-export async function getCitizenJourneys(_citizenId: string): Promise<CareJourney[]> {
+export async function getCitizenJourneys(citizenId: string): Promise<CareJourney[]> {
+  if (!isMockMode()) {
+    const { data } = await tryaApi.get<CareJourney[]>(`/citizens/${citizenId}/journeys?status=active`);
+    return data;
+  }
   await new Promise((r) => setTimeout(r, 400));
-  // Return first two as "active" for the mock citizen
   return mockCareJourneys.filter((j) => !j.resolvedAt).slice(0, 2);
 }
 
