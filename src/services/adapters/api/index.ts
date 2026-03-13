@@ -14,11 +14,11 @@ export { ApiPatientService } from './patient-service.api';
 // chat-backend — REAL (Phase 7)
 export { ApiIntakeService } from './intake-service.api';
 
+// trya-backend — REAL (Phase 8)
+export { ApiClinicalReviewService } from './clinical-review-service.api';
+
 // trya-backend — stubs (future)
-export {
-  ApiClinicalReviewService,
-  ApiExamService,
-} from './trya-backend.stub';
+export { ApiExamService } from './trya-backend.stub';
 
 // trya-backend — REAL (Phase 7)
 export { ApiJourneyService } from './journey-service.api';

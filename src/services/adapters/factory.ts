@@ -252,7 +252,10 @@ export function createJourneyService(): IJourneyService {
 /** trya-backend → Clinical review & validation */
 export function createClinicalReviewService(): IClinicalReviewService {
   if (!isTryaMockMode()) {
-    console.warn('[factory] ApiClinicalReviewService is a stub — falling back to mock');
+    console.info('[factory] ✅ ClinicalReviewService → API (with resilient fallback)');
+    const api = new ApiClinicalReviewService();
+    const mock = new MockClinicalReviewService();
+    return new ResilientClinicalReviewService(api, mock);
   }
   return new MockClinicalReviewService();
 }
