@@ -13,7 +13,7 @@ export default function CitizenLogin() {
   const location = useLocation();
   const { loginWithCPF, isLoading } = useAuth();
 
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/';
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/app';
 
   const formatCPF = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 11);

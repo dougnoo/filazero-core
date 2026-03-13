@@ -1292,7 +1292,7 @@ function DemoSection() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {channels.map((ch) => (
             <Card key={ch.label} className="group cursor-pointer hover:shadow-lg transition-all hover:border-primary/30"
-              onClick={() => navigate(ch.path)}>
+              onClick={() => handleDemoLogin(ch.role)}>
               <CardContent className="p-6 space-y-4">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${ch.color}`}>
                   <ch.icon className="h-6 w-6" />

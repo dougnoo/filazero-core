@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import { MessageSquare, Route as RouteIcon, Shield, ArrowRight, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { AppShell } from '@/components/layout/AppShell';
+import { UserRole } from '@/domain/enums/user-role';
 
 export default function CitizenHome() {
   const { isAuthenticated, user } = useAuth();
