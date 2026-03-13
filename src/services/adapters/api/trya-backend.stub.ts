@@ -8,8 +8,7 @@
  * Auth: Bearer JWT + X-Municipality-Id + X-Unit-Id (via api-client.ts)
  */
 
-import { tryaApi } from '@/lib/api-client';
-import type { Case, Patient } from '@/domain/types/case';
+import type { Patient } from '@/domain/types/case';
 import type { CareJourney } from '@/domain/types/care-journey';
 import type { ClinicalIntake, ExamSuggestion } from '@/domain/types/clinical-intake';
 import type {
@@ -18,16 +17,13 @@ import type {
   ClinicalPackageListParams,
   JourneyListParams,
 } from '@/domain/contracts/trya-backend';
-import type { CaseStatus } from '@/domain/enums/case-status';
-import type { CaseFilters } from '@/services/case-service';
 import type { ClinicalPackage } from '@/services/clinical-review-service';
 import type {
-  ICaseService,
   IPatientService,
   IJourneyService,
   IClinicalReviewService,
   IExamService,
-} from '../types';
+} from '@/services/adapters/types';
 
 const NOT_IMPL = (method: string) =>
   new Error(`[ApiStub] ${method} not implemented — connect trya-backend first`);
