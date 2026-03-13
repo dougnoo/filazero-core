@@ -3,24 +3,19 @@
  *
  * Decision tree:
  *   if DEMO_MODE → always mock (zero network calls)
- *   else if granular flag + URL configured → API impl (stub throws for now)
+ *   else if granular flag + URL configured → API impl (with resilient fallback)
  *   else → mock
+ *
+ * Phase 7: CaseService is the first real integration.
+ *   Uses ResilientCaseService for automatic fallback to mock on API failure.
  *
  * ─── Backend Module Mapping ────────────────────────────────────────
  *
- * trya-backend:     CaseService, PatientService, JourneyService,
+ * trya-backend:     CaseService ✅ (real), PatientService, JourneyService,
  *                   ClinicalReviewService, ExamService
  * chat-backend:     IntakeService
  * chat-agents:      ClinicalSummaryService, ReferralService
  * platform-backend: DashboardService
- *
- * ─── Integration Activation ───────────────────────────────────────
- *
- * To activate a real service:
- *   1. Set VITE_DEMO_MODE=false
- *   2. Set the granular flag (e.g. VITE_ENABLE_REAL_TRYA=true)
- *   3. Set the backend URL (e.g. VITE_TRYA_BACKEND_URL=...)
- *   4. Replace stub throw with real implementation in api/*.stub.ts
  */
 
 import {
@@ -78,7 +73,7 @@ import {
 
 import { mockClinicalIntake } from '@/mock';
 
-// ─── API stub imports ───────────────────────────────────────────
+// ─── API imports ────────────────────────────────────────────────
 
 import {
   ApiCaseService,
@@ -91,6 +86,8 @@ import {
   ApiReferralService,
   ApiDashboardService,
 } from './api';
+
+import { ResilientCaseService } from './resilient-case-service';
 
 // ═══════════════════════════════════════════════════════════════════
 // §1 — Mock Adapters (delegate to existing service functions)
@@ -187,11 +184,20 @@ class MockDashboardService implements IDashboardService {
 // §2 — Factory Functions
 // ═══════════════════════════════════════════════════════════════════
 
-/** trya-backend → Case CRUD */
+/**
+ * trya-backend → Case CRUD
+ *
+ * Phase 7: First real integration.
+ * When DEMO_MODE=false + ENABLE_REAL_TRYA=true + TRYA_BACKEND_URL set:
+ *   → Uses ApiCaseService wrapped in ResilientCaseService
+ *   → If API fails, automatically falls back to mock (circuit breaker)
+ */
 export function createCaseService(): ICaseService {
   if (!isTryaMockMode()) {
-    console.warn('[factory] ApiCaseService is a stub — falling back to mock');
-    // TODO: return new ApiCaseService() when implemented
+    console.info('[factory] ✅ CaseService → API (with resilient fallback)');
+    const api = new ApiCaseService();
+    const mock = new MockCaseService();
+    return new ResilientCaseService(api, mock);
   }
   return new MockCaseService();
 }

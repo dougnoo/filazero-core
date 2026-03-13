@@ -1,16 +1,15 @@
 /**
- * API Stub Providers — Barrel export.
+ * API Providers — Barrel export.
  *
- * All classes are stubs that throw on invocation.
- * They exist to:
- *   1. Validate interface compliance at compile time
- *   2. Provide clear error messages if accidentally activated
- *   3. Document the expected API endpoints and payloads
+ * ApiCaseService: REAL implementation (Phase 7)
+ * All others: stubs that throw on invocation (future phases)
  */
 
-// trya-backend (handslab-trya-backend)
+// trya-backend — REAL (Phase 7)
+export { ApiCaseService } from './case-service.api';
+
+// trya-backend — stubs (future)
 export {
-  ApiCaseService,
   ApiPatientService,
   ApiJourneyService,
   ApiClinicalReviewService,
