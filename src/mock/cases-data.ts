@@ -22,6 +22,10 @@ export const mockPatients: Patient[] = [
   { id: 'c-5', fullName: 'Francisca Souza Pereira', cpf: '567.890.123-44', birthDate: '1970-07-08', gender: 'F' },
   { id: 'c-6', fullName: 'Roberto Nascimento', cpf: '678.901.234-55', birthDate: '1967-12-25', gender: 'M', chronicConditions: ['Diabetes tipo 2', 'Hipertensão'] },
   { id: 'c-7', fullName: 'Dona Tereza Almeida', cpf: '789.012.345-66', birthDate: '1958-02-14', gender: 'F' },
+  // Additional demo scenario patients
+  { id: 'c-8', fullName: 'Lucas Martins Costa', cpf: '890.123.456-77', birthDate: '2002-09-05', gender: 'M' },
+  { id: 'c-9', fullName: 'Sandra Regina Dias', cpf: '901.234.567-88', birthDate: '1985-04-18', gender: 'F', chronicConditions: ['Asma'] },
+  { id: 'c-10', fullName: 'José Antônio Ribeiro', cpf: '012.345.678-99', birthDate: '1950-01-22', gender: 'M', chronicConditions: ['DPOC', 'Cardiopatia'] },
 ];
 
 const patientsMap: Record<string, Patient> = Object.fromEntries(mockPatients.map((p) => [p.id, p]));
