@@ -31,6 +31,7 @@ import AdminDashboard from "./pages/admin/Dashboard";
 
 // Shared
 import NotFound from "./pages/NotFound";
+import LandingPage from "./pages/LandingPage";
 
 const queryClient = new QueryClient();
 
