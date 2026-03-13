@@ -110,7 +110,7 @@ export async function sendIntakeMessage(
   currentPhase: IntakePhase,
 ): Promise<{ reply: TriageMessage; nextPhase: IntakePhase }> {
   // ── Real backend path (chat-backend → chat-agents) ──
-  if (!isMockMode()) {
+  if (!isChatMockMode()) {
     const { data } = await chatApi.post<{ reply: TriageMessage; nextPhase: IntakePhase }>(
       `/intakes/${_intakeId}/messages`,
       { content: userMessage, currentPhase },
