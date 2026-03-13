@@ -7,6 +7,7 @@
  */
 
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { UserRole } from '@/domain/enums/user-role';
 import { useCaseStore } from '@/contexts/CaseStore';
@@ -19,7 +20,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { caseStatusConfig, CaseStatus } from '@/domain/enums/case-status';
 import { RiskLevel } from '@/domain/enums/risk-level';
-import { mockCareJourneys } from '@/mock/clinical-data';
+import { services } from '@/services/adapters';
+import type { CareJourney } from '@/domain/types/care-journey';
 import {
   ArrowLeft, ArrowRight, User, FileText, FlaskConical,
   Stethoscope, CheckCircle2, Clock, AlertTriangle,
