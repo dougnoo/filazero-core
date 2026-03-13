@@ -57,6 +57,22 @@ export function AppShell({ children, role = UserRole.CITIZEN }: AppShellProps) {
   if (isCitizen) {
     return (
       <div className="flex min-h-screen flex-col bg-background">
+        {/* Top bar with logout */}
+        <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4">
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
+              <span className="text-xs font-bold text-primary-foreground">FZ</span>
+            </div>
+            <span className="font-display text-base font-bold text-foreground">FilaZero</span>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Sair
+          </button>
+        </header>
         <main className="flex-1 pb-20">{children}</main>
         <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card shadow-lg">
           <div className="mx-auto flex max-w-lg items-center justify-around py-2">
