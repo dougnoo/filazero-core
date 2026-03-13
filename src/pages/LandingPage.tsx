@@ -130,7 +130,7 @@ function Navbar() {
 function HeroSection() {
   const navigate = useNavigate();
   return (
-    <section className="relative overflow-hidden bg-background min-h-[90vh] flex items-center">
+    <section id="hero" className="relative overflow-hidden bg-background min-h-[90vh] flex items-center pt-20">
       {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-accent/40 via-background to-secondary/5" />
       <div className="container relative z-10 py-16 md:py-24">
