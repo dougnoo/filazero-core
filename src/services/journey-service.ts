@@ -63,7 +63,7 @@ export async function getIntakeForJourney(intakeId: string): Promise<ClinicalInt
  * Backend: GET /api/citizens/:citizenId/journeys (no status filter)
  */
 export async function getCitizenJourneyHistory(citizenId: string): Promise<CareJourney[]> {
-  if (!isMockMode()) {
+  if (!isTryaMockMode()) {
     const { data } = await tryaApi.get<CareJourney[]>(`/citizens/${citizenId}/journeys`);
     return data;
   }

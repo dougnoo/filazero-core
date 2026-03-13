@@ -125,7 +125,7 @@ export async function getClinicalPackageById(journeyId: string): Promise<Clinica
  * Returns the new journey status and updated steps.
  */
 export async function submitValidation(payload: ValidationPayload): Promise<ValidationResponse> {
-  if (!isMockMode()) {
+  if (!isTryaMockMode()) {
     const { data } = await tryaApi.post<ValidationResponse>('/professional/validate', payload);
     return data;
   }
