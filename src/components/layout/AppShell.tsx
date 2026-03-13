@@ -11,7 +11,7 @@ interface AppShellProps {
 }
 
 const citizenNav = [
-  { label: 'Início', icon: Home, path: '/' },
+  { label: 'Início', icon: Home, path: '/app' },
   { label: 'Intake', icon: MessageSquare, path: '/intake' },
   { label: 'Jornada', icon: RouteIcon, path: '/minha-jornada' },
   { label: 'Perfil', icon: User, path: '/perfil' },
