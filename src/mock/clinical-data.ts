@@ -318,6 +318,7 @@ const mockIntake6: ClinicalIntake = {
     narrative: 'Paciente masculino, 58 anos, diabético tipo 2 há 8 anos, em uso de Metformina e Glibenclamida. Apresenta glicemia capilar >300mg/dL em 3 aferições no último mês. Queixa de formigamento bilateral em pés há 2 meses e episódios de visão embaçada. Suspeita de neuropatia e retinopatia diabética.',
     structuredFindings: ['Glicemia capilar >300mg/dL sustentada', 'Formigamento bilateral em MMII', 'Visão embaçada episódica', 'DM2 há 8 anos com tratamento oral'],
     suspectedConditions: ['Neuropatia diabética periférica', 'Retinopatia diabética', 'Descompensação metabólica'],
+    cid10Codes: ['E11.4', 'E11.3', 'E11.65'],
     relevantHistory: 'DM2 há 8 anos. HAS. Sem acompanhamento com endocrinologista.', riskFactors: ['DM2 longa duração', 'Glicemia descontrolada', 'Sem acompanhamento especializado'],
     generatedAt: daysAgo(5),
   },
