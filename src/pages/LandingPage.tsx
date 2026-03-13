@@ -28,7 +28,7 @@ import {
   ClipboardList,
   Timer,
   TrendingDown,
-  FunnelIcon,
+  
   Repeat,
   UserCheck,
   Hourglass,
