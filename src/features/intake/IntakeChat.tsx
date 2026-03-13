@@ -112,8 +112,9 @@ export function IntakeChat({ onComplete, citizenId = 'c-current', unitId = 'u-1'
 
         {/* Streaming preview */}
         {isAgentTyping && streamingText && (
-          <div className="flex justify-start">
-            <div className="max-w-[80%] rounded-2xl rounded-bl-sm bg-card px-4 py-3 text-sm leading-relaxed text-foreground shadow-sm">
+          <div className="flex items-end gap-2 justify-start">
+            <img src={drIaAvatar} alt="Dr. IA" className="h-8 w-8 shrink-0 rounded-full object-cover shadow-sm" />
+            <div className="max-w-[75%] rounded-2xl rounded-bl-sm bg-card px-4 py-3 text-sm leading-relaxed text-foreground shadow-sm">
               {streamingText}
               <span className="ml-1 inline-block h-4 w-0.5 animate-pulse bg-foreground/30" />
             </div>
@@ -122,7 +123,8 @@ export function IntakeChat({ onComplete, citizenId = 'c-current', unitId = 'u-1'
 
         {/* Typing indicator */}
         {isAgentTyping && !streamingText && (
-          <div className="flex justify-start">
+          <div className="flex items-end gap-2 justify-start">
+            <img src={drIaAvatar} alt="Dr. IA" className="h-8 w-8 shrink-0 rounded-full object-cover shadow-sm" />
             <div className="flex items-center gap-2 rounded-2xl rounded-bl-sm bg-card px-4 py-3 shadow-sm">
               <div className="flex gap-1">
                 <span className="h-2 w-2 rounded-full bg-muted-foreground/40 animate-bounce [animation-delay:0ms]" />
