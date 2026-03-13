@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Loader2, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ServerChatMessage } from '@/domain/types/chat-protocol';
+import drIaAvatar from '@/assets/dr-ia-avatar.png';
 import type { ClinicalIntake } from '@/domain/types/clinical-intake';
 import { useIntakeSession } from '@/hooks/use-intake-session';
 
@@ -111,8 +112,9 @@ export function IntakeChat({ onComplete, citizenId = 'c-current', unitId = 'u-1'
 
         {/* Streaming preview */}
         {isAgentTyping && streamingText && (
-          <div className="flex justify-start">
-            <div className="max-w-[80%] rounded-2xl rounded-bl-sm bg-card px-4 py-3 text-sm leading-relaxed text-foreground shadow-sm">
+          <div className="flex items-end gap-2 justify-start">
+            <img src={drIaAvatar} alt="Dr. IA" className="h-8 w-8 shrink-0 rounded-full object-cover shadow-sm" />
+            <div className="max-w-[75%] rounded-2xl rounded-bl-sm bg-card px-4 py-3 text-sm leading-relaxed text-foreground shadow-sm">
               {streamingText}
               <span className="ml-1 inline-block h-4 w-0.5 animate-pulse bg-foreground/30" />
             </div>
@@ -121,7 +123,8 @@ export function IntakeChat({ onComplete, citizenId = 'c-current', unitId = 'u-1'
 
         {/* Typing indicator */}
         {isAgentTyping && !streamingText && (
-          <div className="flex justify-start">
+          <div className="flex items-end gap-2 justify-start">
+            <img src={drIaAvatar} alt="Dr. IA" className="h-8 w-8 shrink-0 rounded-full object-cover shadow-sm" />
             <div className="flex items-center gap-2 rounded-2xl rounded-bl-sm bg-card px-4 py-3 shadow-sm">
               <div className="flex gap-1">
                 <span className="h-2 w-2 rounded-full bg-muted-foreground/40 animate-bounce [animation-delay:0ms]" />
@@ -172,9 +175,12 @@ function ChatHeader() {
       <button className="text-foreground">
         <Menu className="h-5 w-5" />
       </button>
-      <span className="font-[var(--font-display)] text-lg font-bold tracking-tight text-foreground">
-        trya
-      </span>
+      <div className="flex items-center gap-2">
+        <img src={drIaAvatar} alt="Dr. IA" className="h-7 w-7 rounded-full object-cover" />
+        <span className="font-[var(--font-display)] text-lg font-bold tracking-tight text-foreground">
+          Dr. IA Triagem
+        </span>
+      </div>
       <div className="w-5" />
     </div>
   );
@@ -186,10 +192,13 @@ function ChatBubble({ message }: { message: ServerChatMessage }) {
   const isUser = message.role === 'user';
 
   return (
-    <div className={cn('flex', isUser ? 'justify-end' : 'justify-start')}>
+    <div className={cn('flex items-end gap-2', isUser ? 'justify-end' : 'justify-start')}>
+      {!isUser && (
+        <img src={drIaAvatar} alt="Dr. IA" className="h-8 w-8 shrink-0 rounded-full object-cover shadow-sm" />
+      )}
       <div
         className={cn(
-          'max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
+          'max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
           isUser
             ? 'rounded-br-sm bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
             : 'rounded-bl-sm bg-card text-foreground shadow-sm'
