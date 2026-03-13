@@ -1,34 +1,54 @@
 /**
- * ApiIntakeService — Real implementation for chat-backend.
+ * ApiIntakeService — Real implementation using Supabase Edge Functions.
  *
  * Connects to:
- *   POST /api/clinical-chat     → send message (SSE streaming response)
- *   POST /api/clinical-result   → generate structured clinical result
+ *   POST /functions/v1/clinical-chat     → send message (SSE streaming response)
+ *   POST /functions/v1/clinical-result   → generate structured clinical result
  *
- * Base URL: env.CHAT_HTTP_URL
- * Auth: Bearer JWT + X-Municipality-Id + X-Unit-Id (via api-client.ts)
+ * Base URL: VITE_SUPABASE_URL (deployed edge functions)
+ * Auth: Bearer anon key
  *
  * ─── SSE Stream Handling ───────────────────────────────────────────
- * The chat-backend returns an SSE stream with OpenAI-compatible chunks:
+ * The clinical-chat edge function returns an SSE stream with
+ * OpenAI-compatible chunks:
  *   data: {"choices":[{"delta":{"content":"..."}}]}
  *   data: [DONE]
  *
- * Agent handoffs are detected via completion signals in the response
- * text, mapping to IntakePhase transitions on the frontend.
+ * ─── Debug Logging ─────────────────────────────────────────────────
+ * All requests/responses are logged in dev mode for debugging.
  *
  * ─── Error Resilience ──────────────────────────────────────────────
  * This class does NOT handle fallback — that responsibility belongs
  * to the ResilientIntakeService wrapper in the factory.
  */
 
-import { chatApi } from '@/lib/api-client';
-import { env } from '@/lib/env';
 import type { ClinicalIntake } from '@/domain/types/clinical-intake';
 import type { TriageMessage } from '@/domain/types/triage';
-import type { IntakeResultPayload } from '@/domain/types/chat-protocol';
 import { RiskLevel } from '@/domain/enums/risk-level';
 import type { IntakePhase } from '@/services/intake-service';
 import type { IIntakeService } from '@/services/adapters/types';
+
+// ═══════════════════════════════════════════════════════════════════
+// §0 — Edge function URLs (Supabase)
+// ═══════════════════════════════════════════════════════════════════
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? '';
+const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? '';
+
+const CHAT_FN_URL = `${SUPABASE_URL}/functions/v1/clinical-chat`;
+const RESULT_FN_URL = `${SUPABASE_URL}/functions/v1/clinical-result`;
+
+const isDev = import.meta.env.DEV;
+
+function debugLog(label: string, ...args: unknown[]) {
+  if (!isDev) return;
+  console.log(`[ApiIntakeService][${label}]`, ...args);
+}
+
+function debugWarn(label: string, ...args: unknown[]) {
+  if (!isDev) return;
+  console.warn(`[ApiIntakeService][${label}]`, ...args);
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // §1 — Session history (maintained per intake for multi-turn context)
@@ -102,36 +122,52 @@ const RISK_LEVEL_MAP: Record<string, RiskLevel> = {
 
 function mapResultPayload(
   intakeId: string,
-  data: IntakeResultPayload | Record<string, unknown>,
+  data: Record<string, unknown>,
   messages: TriageMessage[],
 ): ClinicalIntake {
   const now = new Date().toISOString();
-  const d = data as Record<string, unknown>;
 
-  return {
+  debugLog('MAPPER_INPUT', {
+    intakeId,
+    dataKeys: Object.keys(data),
+    chiefComplaint: data.chiefComplaint ?? data.chief_complaint,
+    symptoms: data.symptoms,
+    riskLevel: data.riskLevel ?? data.risk_level,
+  });
+
+  const result: ClinicalIntake = {
     id: intakeId,
     citizenId: 'c-current',
     unitId: 'u-1',
     messages,
-    chiefComplaint: (d.chiefComplaint as string) || (d.chief_complaint as string) || 'Não informado',
-    symptoms: (d.symptoms as string[]) || [],
-    symptomDuration: (d.symptomDuration as string) ?? (d.symptom_duration as string),
-    painScale: (d.painScale as number) ?? (d.pain_scale as number),
-    currentMedications: (d.currentMedications as string[]) || (d.current_medications as string[]) || [],
-    allergies: (d.allergies as string[]) || [],
-    chronicConditions: (d.chronicConditions as string[]) || (d.chronic_conditions as string[]) || [],
-    familyHistory: (d.familyHistory as string[]) || (d.family_history as string[]) || [],
+    chiefComplaint: (data.chiefComplaint as string) || (data.chief_complaint as string) || 'Não informado',
+    symptoms: (data.symptoms as string[]) || [],
+    symptomDuration: (data.symptomDuration as string) ?? (data.symptom_duration as string),
+    painScale: (data.painScale as number) ?? (data.pain_scale as number),
+    currentMedications: (data.currentMedications as string[]) || (data.current_medications as string[]) || [],
+    allergies: (data.allergies as string[]) || [],
+    chronicConditions: (data.chronicConditions as string[]) || (data.chronic_conditions as string[]) || [],
+    familyHistory: (data.familyHistory as string[]) || (data.family_history as string[]) || [],
     riskLevel:
-      RISK_LEVEL_MAP[((d.riskLevel as string) ?? (d.risk_level as string) ?? '').toUpperCase()] ??
+      RISK_LEVEL_MAP[((data.riskLevel as string) ?? (data.risk_level as string) ?? '').toUpperCase()] ??
       RiskLevel.LESS_URGENT,
-    priorityScore: (d.priorityScore as number) ?? (d.priority_score as number) ?? 50,
-    clinicalSummary: mapClinicalSummary(intakeId, d),
-    examSuggestions: mapExamSuggestions(intakeId, d),
-    referralRecommendation: mapReferral(intakeId, d),
+    priorityScore: (data.priorityScore as number) ?? (data.priority_score as number) ?? 50,
+    clinicalSummary: mapClinicalSummary(intakeId, data),
+    examSuggestions: mapExamSuggestions(intakeId, data),
+    referralRecommendation: mapReferral(intakeId, data),
     isComplete: true,
     startedAt: messages[0]?.timestamp ?? now,
     completedAt: now,
   };
+
+  debugLog('MAPPER_OUTPUT', {
+    chiefComplaint: result.chiefComplaint,
+    symptoms: result.symptoms,
+    riskLevel: result.riskLevel,
+    hasClinicalSummary: !!result.clinicalSummary?.narrative,
+  });
+
+  return result;
 }
 
 function mapClinicalSummary(intakeId: string, d: Record<string, unknown>) {
@@ -235,7 +271,7 @@ async function readSSEStream(response: Response): Promise<string> {
 
 export class ApiIntakeService implements IIntakeService {
   /**
-   * POST /api/clinical-chat
+   * POST /functions/v1/clinical-chat  (Supabase Edge Function)
    * Body: { messages: [{ role, content }] }
    * Response: SSE stream
    */
@@ -248,23 +284,40 @@ export class ApiIntakeService implements IIntakeService {
     const history = sessionHistory.get(intakeId)!;
     history.push({ role: 'user', content: userMessage });
 
-    // Direct fetch for SSE — chatApi doesn't support streaming
-    const url = `${env.CHAT_HTTP_URL}/api/clinical-chat`;
-    const resp = await fetch(url, {
+    debugLog('SEND_MESSAGE', {
+      origin: 'api',
+      intakeId,
+      userMessage: userMessage.substring(0, 100),
+      currentPhase,
+      historyLength: history.length,
+      url: CHAT_FN_URL,
+    });
+
+    const resp = await fetch(CHAT_FN_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
+        Authorization: `Bearer ${ANON_KEY}`,
+        apikey: ANON_KEY,
       },
       body: JSON.stringify({ messages: history }),
     });
 
     if (!resp.ok) {
-      throw new Error(`Chat request failed: ${resp.status}`);
+      const errorText = await resp.text().catch(() => '');
+      debugWarn('SEND_MESSAGE_ERROR', { status: resp.status, errorText });
+      throw new Error(`Chat request failed: ${resp.status} — ${errorText}`);
     }
 
     const fullResponse = await readSSEStream(resp);
-    if (!fullResponse) throw new Error('Empty response from chat-backend');
+    if (!fullResponse) throw new Error('Empty response from clinical-chat');
+
+    debugLog('SEND_MESSAGE_RESPONSE', {
+      origin: 'api',
+      responsePreview: fullResponse.substring(0, 150),
+      responseLength: fullResponse.length,
+    });
 
     history.push({ role: 'assistant', content: fullResponse });
     const nextPhase = detectPhaseFromResponse(fullResponse, currentPhase, history.length);
@@ -273,9 +326,9 @@ export class ApiIntakeService implements IIntakeService {
   }
 
   /**
-   * POST /api/clinical-result
-   * Body: { sessionId, messages: [{ role, content }] }
-   * Response: IntakeResultPayload (JSON)
+   * POST /functions/v1/clinical-result  (Supabase Edge Function)
+   * Body: { messages: [{ role, content }] }
+   * Response: JSON structured clinical result
    */
   async generateResult(
     intakeId: string,
@@ -285,13 +338,41 @@ export class ApiIntakeService implements IIntakeService {
       sessionHistory.get(intakeId) ??
       messages.map((m) => ({ role: m.role, content: m.content }));
 
-    const { data } = await chatApi.post<IntakeResultPayload | Record<string, unknown>>(
-      '/api/clinical-result',
-      {
-        sessionId: intakeId,
-        messages: history,
+    debugLog('GENERATE_RESULT', {
+      origin: 'api',
+      intakeId,
+      historyLength: history.length,
+      historySource: sessionHistory.has(intakeId) ? 'sessionHistory' : 'messages param',
+      historyPreview: history.map((m) => ({
+        role: m.role,
+        contentPreview: m.content.substring(0, 80),
+      })),
+      url: RESULT_FN_URL,
+    });
+
+    const resp = await fetch(RESULT_FN_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${ANON_KEY}`,
+        apikey: ANON_KEY,
       },
-    );
+      body: JSON.stringify({ messages: history }),
+    });
+
+    if (!resp.ok) {
+      const errorText = await resp.text().catch(() => '');
+      debugWarn('GENERATE_RESULT_ERROR', { status: resp.status, errorText });
+      throw new Error(`Result generation failed: ${resp.status} — ${errorText}`);
+    }
+
+    const data = await resp.json();
+
+    debugLog('GENERATE_RESULT_RAW_RESPONSE', {
+      origin: 'api',
+      intakeId,
+      rawData: data,
+    });
 
     sessionHistory.delete(intakeId);
     return mapResultPayload(intakeId, data, messages);
