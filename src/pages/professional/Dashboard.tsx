@@ -11,8 +11,7 @@ import {
   ListChecks, Clock, Users, FileCheck, ArrowRight,
   Stethoscope, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
-import { mockCareJourneys } from '@/lib/mock-clinical-data';
-import { mockQueuePositions } from '@/lib/mock-data';
+import { mockCareJourneys, mockQueuePositions } from '@/mock';
 import { CareJourneyStatus, careJourneyStatusConfig } from '@/domain/enums/care-journey-status';
 import { RiskLevel } from '@/domain/enums/risk-level';
 
