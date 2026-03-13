@@ -1222,6 +1222,84 @@ function VisionSection() {
   );
 }
 
+// ─── Demo Channels ────────────────────────────────────────
+function DemoSection() {
+  const navigate = useNavigate();
+
+  const channels = [
+    {
+      icon: Users,
+      label: 'Canal do Paciente',
+      description: 'Acolhimento clínico com IA, jornada de cuidado e acompanhamento',
+      path: '/login',
+      color: 'bg-primary/10 text-primary',
+      cta: 'Entrar como Paciente',
+    },
+    {
+      icon: Stethoscope,
+      label: 'Canal do Médico',
+      description: 'Revisão de pacotes clínicos, validação de exames e encaminhamentos',
+      path: '/profissional/login',
+      color: 'bg-secondary/10 text-secondary',
+      cta: 'Entrar como Médico',
+    },
+    {
+      icon: Building2,
+      label: 'Canal do Gestor de UBS',
+      description: 'Dashboard de resolutividade, fluxo da rede e gargalos operacionais',
+      path: '/gestor/login',
+      color: 'bg-accent text-accent-foreground',
+      cta: 'Entrar como Gestor',
+    },
+    {
+      icon: LayoutDashboard,
+      label: 'Admin da Plataforma',
+      description: 'Gestão SaaS de prefeituras, unidades de saúde e métricas da plataforma',
+      path: '/admin/login',
+      color: 'bg-muted text-foreground',
+      cta: 'Entrar como Admin',
+    },
+  ];
+
+  return (
+    <section id="demo" className="py-20 md:py-28 bg-background">
+      <div className="container">
+        <SectionHeader subtitle="Demo Funcional" title="Teste Todos os Canais da Plataforma" />
+        <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+          Cada tipo de usuário tem seu próprio canal com funcionalidades específicas. 
+          Clique para experimentar o sistema completo em modo demonstração.
+        </p>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {channels.map((ch) => (
+            <Card key={ch.label} className="group cursor-pointer hover:shadow-lg transition-all hover:border-primary/30"
+              onClick={() => navigate(ch.path)}>
+              <CardContent className="p-6 space-y-4">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${ch.color}`}>
+                  <ch.icon className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-foreground">{ch.label}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{ch.description}</p>
+                </div>
+                <Button variant="outline" className="w-full font-display group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                  {ch.cta}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="mt-8 text-center">
+          <p className="text-xs text-muted-foreground">
+            <Lock className="inline h-3 w-3 mr-1" />
+            Modo demonstração — dados fictícios. Use qualquer email/senha para acessar.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── CTA ──────────────────────────────────────────────────
 function CTASection() {
   return (
