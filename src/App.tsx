@@ -31,6 +31,7 @@ import AdminDashboard from "./pages/admin/Dashboard";
 
 // Shared
 import NotFound from "./pages/NotFound";
+import LandingPage from "./pages/LandingPage";
 
 const queryClient = new QueryClient();
 
@@ -43,7 +44,8 @@ const App = () => (
         <AuthProvider>
           <Routes>
             {/* Public routes */}
-            <Route path="/" element={<CitizenHome />} />
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/app" element={<CitizenHome />} />
             <Route path="/login" element={<CitizenLogin />} />
             <Route path="/profissional/login" element={<ProfessionalLogin />} />
             <Route path="/gestor/login" element={<ManagerLogin />} />
