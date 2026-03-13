@@ -2,6 +2,7 @@
  * API Providers — Barrel export.
  *
  * ApiCaseService: REAL implementation (Phase 7)
+ * ApiPatientService: REAL implementation (Phase 7)
  * All others: stubs that throw on invocation (future phases)
  */
 
@@ -11,7 +12,6 @@ export { ApiPatientService } from './patient-service.api';
 
 // trya-backend — stubs (future)
 export {
-  ApiPatientService,
   ApiJourneyService,
   ApiClinicalReviewService,
   ApiExamService,
