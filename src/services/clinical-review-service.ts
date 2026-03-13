@@ -18,7 +18,7 @@ import type {
 } from '@/domain/contracts/trya-backend';
 import { mockCareJourneys, mockClinicalIntake } from '@/lib/mock-clinical-data';
 import { CareJourneyStatus } from '@/domain/enums/care-journey-status';
-import { isMockMode } from '@/lib/env';
+import { isTryaMockMode } from '@/lib/env';
 import { tryaApi } from '@/lib/api-client';
 
 // ─── Public types (re-exported for UI consumption) ──────────────
@@ -42,7 +42,7 @@ export interface ValidationPayload extends ValidationRequest {}
 export async function getPendingClinicalPackages(
   params?: Omit<ClinicalPackageListParams, 'status'>,
 ): Promise<ClinicalPackage[]> {
-  if (!isMockMode()) {
+  if (!isTryaMockMode()) {
     const query = new URLSearchParams({ status: 'pending' });
     if (params?.page) query.set('page', String(params.page));
     if (params?.limit) query.set('limit', String(params.limit));
@@ -78,7 +78,7 @@ export async function getPendingClinicalPackages(
 export async function getAllClinicalPackages(
   params?: ClinicalPackageListParams,
 ): Promise<ClinicalPackage[]> {
-  if (!isMockMode()) {
+  if (!isTryaMockMode()) {
     const query = new URLSearchParams();
     if (params?.status) query.set('status', params.status);
     if (params?.page) query.set('page', String(params.page));
@@ -102,7 +102,7 @@ export async function getAllClinicalPackages(
  * Backend: GET /api/professional/clinical-packages/:id
  */
 export async function getClinicalPackageById(journeyId: string): Promise<ClinicalPackage | null> {
-  if (!isMockMode()) {
+  if (!isTryaMockMode()) {
     const { data } = await tryaApi.get<ClinicalPackage>(
       `/professional/clinical-packages/${journeyId}`,
     );
@@ -125,7 +125,7 @@ export async function getClinicalPackageById(journeyId: string): Promise<Clinica
  * Returns the new journey status and updated steps.
  */
 export async function submitValidation(payload: ValidationPayload): Promise<ValidationResponse> {
-  if (!isMockMode()) {
+  if (!isTryaMockMode()) {
     const { data } = await tryaApi.post<ValidationResponse>('/professional/validate', payload);
     return data;
   }

@@ -12,7 +12,7 @@ import type { CareJourney } from '@/domain/types/care-journey';
 import type { ClinicalIntake } from '@/domain/types/clinical-intake';
 import type { JourneyListParams } from '@/domain/contracts/trya-backend';
 import { mockCareJourneys, mockClinicalIntake } from '@/lib/mock-clinical-data';
-import { isMockMode } from '@/lib/env';
+import { isTryaMockMode } from '@/lib/env';
 import { tryaApi } from '@/lib/api-client';
 
 /**
@@ -23,7 +23,7 @@ export async function getCitizenJourneys(
   citizenId: string,
   params?: JourneyListParams,
 ): Promise<CareJourney[]> {
-  if (!isMockMode()) {
+  if (!isTryaMockMode()) {
     const query = new URLSearchParams({ status: params?.status ?? 'active' });
     const { data } = await tryaApi.get<CareJourney[]>(`/citizens/${citizenId}/journeys?${query}`);
     return data;
@@ -37,7 +37,7 @@ export async function getCitizenJourneys(
  * Backend: GET /api/journeys/:journeyId
  */
 export async function getJourneyById(journeyId: string): Promise<CareJourney | null> {
-  if (!isMockMode()) {
+  if (!isTryaMockMode()) {
     const { data } = await tryaApi.get<CareJourney>(`/journeys/${journeyId}`);
     return data;
   }
@@ -50,7 +50,7 @@ export async function getJourneyById(journeyId: string): Promise<CareJourney | n
  * Backend: GET /api/intakes/:intakeId
  */
 export async function getIntakeForJourney(intakeId: string): Promise<ClinicalIntake | null> {
-  if (!isMockMode()) {
+  if (!isTryaMockMode()) {
     const { data } = await tryaApi.get<ClinicalIntake>(`/intakes/${intakeId}`);
     return data;
   }
@@ -63,7 +63,7 @@ export async function getIntakeForJourney(intakeId: string): Promise<ClinicalInt
  * Backend: GET /api/citizens/:citizenId/journeys (no status filter)
  */
 export async function getCitizenJourneyHistory(citizenId: string): Promise<CareJourney[]> {
-  if (!isMockMode()) {
+  if (!isTryaMockMode()) {
     const { data } = await tryaApi.get<CareJourney[]>(`/citizens/${citizenId}/journeys`);
     return data;
   }

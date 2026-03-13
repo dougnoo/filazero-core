@@ -17,7 +17,7 @@
 import type { ClinicalIntake } from '@/domain/types/clinical-intake';
 import type { TriageMessage } from '@/domain/types/triage';
 import { RiskLevel } from '@/domain/enums/risk-level';
-import { isMockMode } from '@/lib/env';
+import { isChatMockMode } from '@/lib/env';
 import { chatApi } from '@/lib/api-client';
 
 // ─── Intake Phases ───
@@ -110,7 +110,7 @@ export async function sendIntakeMessage(
   currentPhase: IntakePhase,
 ): Promise<{ reply: TriageMessage; nextPhase: IntakePhase }> {
   // ── Real backend path (chat-backend → chat-agents) ──
-  if (!isMockMode()) {
+  if (!isChatMockMode()) {
     const { data } = await chatApi.post<{ reply: TriageMessage; nextPhase: IntakePhase }>(
       `/intakes/${_intakeId}/messages`,
       { content: userMessage, currentPhase },
@@ -139,7 +139,7 @@ export async function generateIntakeResult(
   messages: TriageMessage[],
 ): Promise<ClinicalIntake> {
   // ── Real backend path ──
-  if (!isMockMode()) {
+  if (!isChatMockMode()) {
     const { data } = await chatApi.post<ClinicalIntake>(
       `/intakes/${_intakeId}/generate`,
       { messages },

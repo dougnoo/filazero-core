@@ -10,7 +10,7 @@
 
 import { RiskLevel } from '@/domain/enums/risk-level';
 import { CareJourneyStatus } from '@/domain/enums/care-journey-status';
-import { isMockMode } from '@/lib/env';
+import { isPlatformMockMode } from '@/lib/env';
 import { platformApi } from '@/lib/api-client';
 import type {
   DashboardFilters,
@@ -155,7 +155,7 @@ function generateMockDashboardData(): DashboardData {
  * Mock mode: returns static demo data.
  */
 export async function fetchDashboardData(filters: DashboardFilters = {}): Promise<DashboardData> {
-  if (!isMockMode()) {
+  if (!isPlatformMockMode()) {
     const qs = filtersToParams(filters).toString();
     const path = `/api/manager/dashboard${qs ? `?${qs}` : ''}`;
     const { data } = await platformApi.get<DashboardResponse>(path);
@@ -169,7 +169,7 @@ export async function fetchDashboardData(filters: DashboardFilters = {}): Promis
  * Fetch only KPIs (lighter payload for header widgets).
  */
 export async function fetchKPIs(filters: DashboardFilters = {}): Promise<DashboardKPIs> {
-  if (!isMockMode()) {
+  if (!isPlatformMockMode()) {
     const qs = filtersToParams(filters).toString();
     const path = `/api/manager/dashboard/kpis${qs ? `?${qs}` : ''}`;
     const { data } = await platformApi.get<KPIsResponse>(path);
@@ -183,7 +183,7 @@ export async function fetchKPIs(filters: DashboardFilters = {}): Promise<Dashboa
  * Fetch bottlenecks only (for alert widgets / notifications).
  */
 export async function fetchBottlenecks(filters: DashboardFilters = {}): Promise<Bottleneck[]> {
-  if (!isMockMode()) {
+  if (!isPlatformMockMode()) {
     const qs = filtersToParams(filters).toString();
     const path = `/api/manager/dashboard/bottlenecks${qs ? `?${qs}` : ''}`;
     const { data } = await platformApi.get<BottleneckDTO[]>(path);
@@ -200,7 +200,7 @@ export async function fetchWeeklyTrend(
   filters: DashboardFilters = {},
   weeks = 1,
 ): Promise<WeeklyTrend[]> {
-  if (!isMockMode()) {
+  if (!isPlatformMockMode()) {
     const params = filtersToParams(filters);
     params.set('weeks', String(weeks));
     const path = `/api/manager/dashboard/weekly-trend?${params.toString()}`;

@@ -13,7 +13,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { WSManager } from '@/lib/ws-manager';
-import { env, isMockMode } from '@/lib/env';
+import { env, isChatMockMode } from '@/lib/env';
 import type {
   ServerMessage,
   ServerChatMessage,
@@ -152,7 +152,7 @@ export function useIntakeSession(): IntakeSessionState & IntakeSessionActions {
     setProcessingStage(null);
     setProgress(0);
 
-    if (isMockMode()) {
+    if (isChatMockMode()) {
       // Mock mode: initialize with greeting
       const sid = `mock-${Date.now()}`;
       setSessionId(sid);
@@ -226,7 +226,7 @@ export function useIntakeSession(): IntakeSessionState & IntakeSessionActions {
     setIsAgentTyping(true);
     setError(null);
 
-    if (isMockMode()) {
+    if (isChatMockMode()) {
       // Mock path: use existing mock service
       try {
         const { reply, nextPhase } = await mockSendMessage(sessionId, content, mockPhaseRef.current);
