@@ -70,18 +70,19 @@ function mapStepStatus(raw: string | undefined): CareStepStatus {
 }
 
 function mapStep(dto: CareStepDTO): CareStep {
+  const d = dto as unknown as Record<string, unknown>;
   return {
     id: dto.id,
-    journeyId: dto.journeyId ?? (dto as Record<string, unknown>).journey_id as string ?? '',
+    journeyId: dto.journeyId ?? (d.journey_id as string) ?? '',
     order: dto.order,
     type: dto.type,
     label: dto.label,
     description: dto.description,
     status: mapStepStatus(dto.status),
-    assignedUnitId: dto.assignedUnitId ?? (dto as Record<string, unknown>).assigned_unit_id as string,
-    assignedProfessionalId: dto.assignedProfessionalId ?? (dto as Record<string, unknown>).assigned_professional_id as string,
-    startedAt: dto.startedAt ?? (dto as Record<string, unknown>).started_at as string,
-    completedAt: dto.completedAt ?? (dto as Record<string, unknown>).completed_at as string,
+    assignedUnitId: dto.assignedUnitId ?? (d.assigned_unit_id as string),
+    assignedProfessionalId: dto.assignedProfessionalId ?? (d.assigned_professional_id as string),
+    startedAt: dto.startedAt ?? (d.started_at as string),
+    completedAt: dto.completedAt ?? (d.completed_at as string),
     metadata: dto.metadata,
   };
 }
