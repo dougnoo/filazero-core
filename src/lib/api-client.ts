@@ -51,6 +51,33 @@ export function setSessionAccessor(accessor: SessionAccessor): void {
   _getSession = accessor;
 }
 
+// ─── Dev-mode debug logger ──────────────────────────────────────
+
+const isDev = import.meta.env.DEV;
+
+function logRequest(method: string, url: string, headers: Headers, body?: unknown) {
+  if (!isDev) return;
+  console.group(`[api-client] → ${method} ${url}`);
+  console.log('Headers:', Object.fromEntries(headers.entries()));
+  if (body) console.log('Body:', body);
+  console.groupEnd();
+}
+
+function logResponse(method: string, url: string, status: number, data: unknown, durationMs: number) {
+  if (!isDev) return;
+  const icon = status >= 200 && status < 300 ? '✅' : '❌';
+  console.group(`[api-client] ${icon} ${method} ${url} — ${status} (${durationMs}ms)`);
+  console.log('Data:', data);
+  console.groupEnd();
+}
+
+function logError(method: string, url: string, error: unknown, durationMs: number) {
+  if (!isDev) return;
+  console.group(`[api-client] ❌ ${method} ${url} — ERROR (${durationMs}ms)`);
+  console.error(error);
+  console.groupEnd();
+}
+
 // ─── Core request function ──────────────────────────────────────
 
 async function request<T>(baseUrl: string, path: string, opts: RequestOptions = {}): Promise<ApiResponse<T>> {
@@ -77,8 +104,13 @@ async function request<T>(baseUrl: string, path: string, opts: RequestOptions = 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
 
+  const url = `${baseUrl}${path}`;
+  const method = fetchOpts.method ?? 'GET';
+  logRequest(method, url, headers, body);
+
+  const startTime = performance.now();
+
   try {
-    const url = `${baseUrl}${path}`;
     const response = await fetch(url, {
       ...fetchOpts,
       headers,
@@ -87,10 +119,12 @@ async function request<T>(baseUrl: string, path: string, opts: RequestOptions = 
     });
 
     clearTimeout(timer);
+    const durationMs = Math.round(performance.now() - startTime);
 
     if (!response.ok) {
       let details: unknown;
       try { details = await response.json(); } catch { /* empty */ }
+      logResponse(method, url, response.status, details, durationMs);
       throw new AppError(
         statusToErrorCode(response.status),
         (details as { message?: string })?.message ?? `Request failed: ${response.status}`,
@@ -100,10 +134,13 @@ async function request<T>(baseUrl: string, path: string, opts: RequestOptions = 
     }
 
     const data = response.status === 204 ? (null as T) : ((await response.json()) as T);
+    logResponse(method, url, response.status, data, durationMs);
     return { data, status: response.status, headers: response.headers };
   } catch (err) {
     clearTimeout(timer);
+    const durationMs = Math.round(performance.now() - startTime);
     if (err instanceof AppError) throw err;
+    logError(method, url, err, durationMs);
     if ((err as Error).name === 'AbortError') {
       throw new AppError(ErrorCode.TIMEOUT, 'Request timed out');
     }
