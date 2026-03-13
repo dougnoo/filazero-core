@@ -25,7 +25,7 @@ import { CareJourneyStatus, careJourneyStatusConfig } from '@/domain/enums/care-
 import { CareStepStatus } from '@/domain/enums/care-step-status';
 import type { CareJourney } from '@/domain/types/care-journey';
 import type { ClinicalIntake } from '@/domain/types/clinical-intake';
-import { getCitizenJourneys, getIntakeForJourney } from '@/services/journey-service';
+import { services } from '@/services/adapters';
 import { cn } from '@/lib/utils';
 
 const STATUS_BANNER: Record<string, { icon: typeof Clock; title: string; subtitle: string; className: string }> = {

@@ -42,3 +42,5 @@ export {
   createExamService,
   createDashboardService,
 } from './factory';
+
+export { services } from './service-registry';

@@ -17,7 +17,7 @@ import { careJourneyStatusConfig, CareJourneyStatus } from '@/domain/enums/care-
 import { careStepStatusConfig, CareStepStatus } from '@/domain/enums/care-step-status';
 import { cn } from '@/lib/utils';
 import type { ClinicalPackage } from '@/services/clinical-review-service';
-import { submitValidation } from '@/services/clinical-review-service';
+import { services } from '@/services/adapters';
 import type { ValidationActionType } from '@/domain/contracts/trya-backend';
 import { useCaseStore } from '@/contexts/CaseStore';
 import { toast } from 'sonner';
