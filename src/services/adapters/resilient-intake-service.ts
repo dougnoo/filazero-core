@@ -67,11 +67,11 @@ export class ResilientIntakeService implements IIntakeService {
       const elapsed = Date.now() - this._circuitOpenedAt;
       if (elapsed < ResilientIntakeService.CIRCUIT_COOLDOWN_MS) {
         console.debug(
-          `[ResilientIntakeService] Circuit open — using fallback for ${method} (${Math.round((ResilientIntakeService.CIRCUIT_COOLDOWN_MS - elapsed) / 1000)}s remaining)`,
+          `[ResilientIntakeService] Circuit open — using FALLBACK (mock) for ${method} (${Math.round((ResilientIntakeService.CIRCUIT_COOLDOWN_MS - elapsed) / 1000)}s remaining)`,
         );
         return fallbackFn();
       }
-      console.info('[ResilientIntakeService] Circuit half-open — retrying primary');
+      console.info('[ResilientIntakeService] Circuit half-open — retrying primary (api)');
       this._circuitOpen = false;
       this._failCount = 0;
     }
@@ -79,14 +79,15 @@ export class ResilientIntakeService implements IIntakeService {
     try {
       const result = await primaryFn();
       if (this._failCount > 0) {
-        console.info(`[ResilientIntakeService] ${method} recovered — resetting circuit`);
+        console.info(`[ResilientIntakeService] ${method} recovered — resetting circuit (using api)`);
         this._failCount = 0;
       }
+      console.debug(`[ResilientIntakeService] ✅ ${method} — origin: API`);
       return result;
     } catch (error) {
       this._failCount++;
       console.warn(
-        `[ResilientIntakeService] ${method} failed (attempt ${this._failCount}/${ResilientIntakeService.CIRCUIT_THRESHOLD}) — falling back to mock`,
+        `[ResilientIntakeService] ${method} failed (attempt ${this._failCount}/${ResilientIntakeService.CIRCUIT_THRESHOLD}) — falling back to MOCK`,
         error instanceof Error ? error.message : error,
       );
 
@@ -94,7 +95,7 @@ export class ResilientIntakeService implements IIntakeService {
         this._circuitOpen = true;
         this._circuitOpenedAt = Date.now();
         console.warn(
-          `[ResilientIntakeService] Circuit OPEN — all calls will use fallback for ${ResilientIntakeService.CIRCUIT_COOLDOWN_MS / 1000}s`,
+          `[ResilientIntakeService] Circuit OPEN — all calls will use MOCK fallback for ${ResilientIntakeService.CIRCUIT_COOLDOWN_MS / 1000}s`,
         );
       }
 
