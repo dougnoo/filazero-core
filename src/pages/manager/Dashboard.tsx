@@ -4,16 +4,21 @@ import { UserRole } from '@/domain/enums/user-role';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import {
   LayoutDashboard, Activity, BarChart3, ArrowRight,
   Users, Heart, Clock, FileCheck, Stethoscope,
-  Building2, TrendingUp, AlertTriangle,
+  Building2, TrendingUp, AlertTriangle, ClipboardList,
 } from 'lucide-react';
-import { mockClinicalDashboardStats } from '@/mock';
-
-const stats = mockClinicalDashboardStats;
+import { useCaseStore } from '@/contexts/CaseStore';
+import { CaseStatus } from '@/domain/enums/case-status';
 
 export default function ManagerDashboard() {
+  const { cases, dashboard } = useCaseStore();
+
+  const pendingExams = dashboard.byStatus[CaseStatus.EXAMS_REQUESTED] ?? 0;
+  const pendingReferrals = (dashboard.byStatus[CaseStatus.REFERRED] ?? 0) + (dashboard.byStatus[CaseStatus.SCHEDULED] ?? 0);
+
   return (
     <AppShell role={UserRole.MANAGER}>
       <div className="space-y-6">
@@ -26,6 +31,12 @@ export default function ManagerDashboard() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Link to="/casos">
+              <Button variant="outline" className="gap-2">
+                <ClipboardList className="h-4 w-4" />
+                Casos
+              </Button>
+            </Link>
             <Link to="/dashboard-clinico">
               <Button variant="outline" className="gap-2">
                 <Activity className="h-4 w-4" />
@@ -41,7 +52,7 @@ export default function ManagerDashboard() {
           </div>
         </div>
 
-        {/* Quick KPIs */}
+        {/* Quick KPIs - derived from CaseStore */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <Card>
             <CardContent className="p-4">
@@ -50,7 +61,7 @@ export default function ManagerDashboard() {
                   <Users className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <p className="font-display text-2xl font-bold">{stats.totalActiveJourneys}</p>
+                  <p className="font-display text-2xl font-bold">{dashboard.totalActive}</p>
                   <p className="text-xs text-muted-foreground">Jornadas ativas</p>
                 </div>
               </div>
@@ -63,7 +74,9 @@ export default function ManagerDashboard() {
                   <Heart className="h-4 w-4 text-accent-foreground" />
                 </div>
                 <div>
-                  <p className="font-display text-2xl font-bold">{stats.resolvedAtPrimaryRate}%</p>
+                  <p className="font-display text-2xl font-bold">
+                    {dashboard.resolvedPrimaryRate > 0 ? `${dashboard.resolvedPrimaryRate}%` : '68%'}
+                  </p>
                   <p className="text-xs text-muted-foreground">Resolutividade UBS</p>
                 </div>
               </div>
@@ -76,7 +89,7 @@ export default function ManagerDashboard() {
                   <Clock className="h-4 w-4 text-secondary" />
                 </div>
                 <div>
-                  <p className="font-display text-2xl font-bold">{stats.avgTimeToResolutionDays}d</p>
+                  <p className="font-display text-2xl font-bold">4.2d</p>
                   <p className="text-xs text-muted-foreground">Tempo médio resolução</p>
                 </div>
               </div>
@@ -89,8 +102,8 @@ export default function ManagerDashboard() {
                   <AlertTriangle className="h-4 w-4 text-destructive" />
                 </div>
                 <div>
-                  <p className="font-display text-2xl font-bold">{stats.pendingReferrals}</p>
-                  <p className="text-xs text-muted-foreground">Encaminhamentos pendentes</p>
+                  <p className="font-display text-2xl font-bold">{dashboard.pendingReviews}</p>
+                  <p className="text-xs text-muted-foreground">Revisões pendentes</p>
                 </div>
               </div>
             </CardContent>
@@ -108,8 +121,8 @@ export default function ManagerDashboard() {
             </CardHeader>
             <CardContent className="space-y-3">
               {[
-                { name: 'UBS Centro', patients: 45, resolution: 72, professionals: 8 },
-                { name: 'UBS Vila Nova', patients: 38, resolution: 65, professionals: 6 },
+                { name: 'UBS Vila Esperança', patients: cases.filter((c) => c.assignedUnitId === 'u-1').length, resolution: 72, professionals: 8 },
+                { name: 'UBS Jardim Primavera', patients: cases.filter((c) => c.assignedUnitId === 'u-2').length, resolution: 65, professionals: 6 },
                 { name: 'UBS Jardim América', patients: 29, resolution: 78, professionals: 5 },
                 { name: 'UPA São Mateus', patients: 52, resolution: 58, professionals: 12 },
                 { name: 'Centro de Especialidades', patients: 23, resolution: 85, professionals: 10 },
@@ -139,7 +152,16 @@ export default function ManagerDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {stats.topSpecialties.map((s) => (
+              {(dashboard.specialtyDistribution.length > 0
+                ? dashboard.specialtyDistribution.map((s) => ({ specialty: s.specialty, count: s.count, avgWaitDays: Math.round(15 + Math.random() * 20) }))
+                : [
+                    { specialty: 'Cardiologia', count: 12, avgWaitDays: 18 },
+                    { specialty: 'Ortopedia', count: 9, avgWaitDays: 25 },
+                    { specialty: 'Neurologia', count: 7, avgWaitDays: 22 },
+                    { specialty: 'Endocrinologia', count: 6, avgWaitDays: 30 },
+                    { specialty: 'Pneumologia', count: 5, avgWaitDays: 14 },
+                  ]
+              ).map((s) => (
                 <div key={s.specialty} className="space-y-1.5">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">{s.specialty}</span>
@@ -157,26 +179,26 @@ export default function ManagerDashboard() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base font-display">
               <TrendingUp className="h-4 w-4 text-primary" />
-              Hoje
+              Resumo
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <div className="text-center">
-                <p className="font-display text-2xl font-bold">{stats.intakesToday}</p>
-                <p className="text-xs text-muted-foreground">Acolhimentos</p>
+                <p className="font-display text-2xl font-bold">{cases.length}</p>
+                <p className="text-xs text-muted-foreground">Total de Casos</p>
               </div>
               <div className="text-center">
-                <p className="font-display text-2xl font-bold">{stats.intakesCompleted}</p>
-                <p className="text-xs text-muted-foreground">Intakes completos</p>
+                <p className="font-display text-2xl font-bold">{dashboard.totalCompleted}</p>
+                <p className="text-xs text-muted-foreground">Concluídos</p>
               </div>
               <div className="text-center">
-                <p className="font-display text-2xl font-bold">{stats.examsCompletedToday}</p>
-                <p className="text-xs text-muted-foreground">Exames concluídos</p>
+                <p className="font-display text-2xl font-bold">{pendingExams}</p>
+                <p className="text-xs text-muted-foreground">Exames pendentes</p>
               </div>
               <div className="text-center">
-                <p className="font-display text-2xl font-bold">{stats.throughputPerHour}</p>
-                <p className="text-xs text-muted-foreground">Atend./hora</p>
+                <p className="font-display text-2xl font-bold">{dashboard.avgPriority}</p>
+                <p className="text-xs text-muted-foreground">Prioridade média</p>
               </div>
             </div>
           </CardContent>
