@@ -9,7 +9,7 @@ const now = new Date().toISOString();
 const hoursAgo = (h: number) => new Date(Date.now() - h * 3600000).toISOString();
 const daysAgo = (d: number) => new Date(Date.now() - d * 86400000).toISOString();
 
-// ─── Clinical Intake: completed case ───
+// ─── Clinical Intake: completed case (Emergency — Cardiology) ───
 
 export const mockClinicalSummary: ClinicalSummary = {
   id: 'cs-1',
@@ -82,7 +82,7 @@ export const mockReferralRecommendation: ReferralRecommendation = {
   confidence: 94,
   specialty: 'Cardiologia',
   justification:
-    'Quadro clínico altamente sugestivo de Síndrome Coronariana Aguda. Paciente com fatores de risco cardiovascular significativos e apresentação clássica. Encaminhamento imediato para emergência cardiológica indicado. Não é caso para resolução em atenção primária.',
+    'Quadro clínico altamente sugestivo de Síndrome Coronariana Aguda. Paciente com fatores de risco cardiovascular significativos e apresentação clássica. Encaminhamento imediato para emergência cardiológica indicado.',
   requiredExamsBeforeReferral: ['ECG de 12 derivações'],
   alternativeActions: [],
   generatedAt: hoursAgo(1),
@@ -93,11 +93,11 @@ export const mockClinicalIntake: ClinicalIntake = {
   citizenId: 'c-1',
   unitId: 'u-1',
   messages: [
-    { id: 'm-1', role: 'assistant', content: 'Olá! Sou o assistente clínico do FilaZero. Vou coletar algumas informações sobre o que você está sentindo para agilizar seu atendimento. Qual é a sua queixa principal?', timestamp: hoursAgo(1.5) },
+    { id: 'm-1', role: 'assistant', content: 'Olá! Sou o assistente clínico do FilaZero. Qual é a sua queixa principal?', timestamp: hoursAgo(1.5) },
     { id: 'm-2', role: 'user', content: 'Estou com uma dor forte no peito há uns 40 minutos. Está apertando e vai pro braço esquerdo.', timestamp: hoursAgo(1.4) },
-    { id: 'm-3', role: 'assistant', content: 'Entendo. Dor torácica com irradiação para o braço esquerdo é algo que precisamos avaliar com cuidado. Você está sentindo mais algum sintoma? Como falta de ar, suor frio, enjoo?', timestamp: hoursAgo(1.35) },
+    { id: 'm-3', role: 'assistant', content: 'Dor torácica com irradiação para o braço esquerdo precisa de avaliação. Você sente falta de ar, suor frio ou enjoo?', timestamp: hoursAgo(1.35) },
     { id: 'm-4', role: 'user', content: 'Sim, estou suando muito e com falta de ar.', timestamp: hoursAgo(1.3) },
-    { id: 'm-5', role: 'assistant', content: 'Obrigado. Você toma algum medicamento regularmente? Tem alguma doença crônica como pressão alta ou diabetes?', timestamp: hoursAgo(1.25) },
+    { id: 'm-5', role: 'assistant', content: 'Você toma algum medicamento regularmente? Tem alguma doença crônica?', timestamp: hoursAgo(1.25) },
     { id: 'm-6', role: 'user', content: 'Tomo Losartana 50mg pra pressão alta.', timestamp: hoursAgo(1.2) },
   ],
   chiefComplaint: 'Dor torácica opressiva com irradiação para MSE',
@@ -120,6 +120,253 @@ export const mockClinicalIntake: ClinicalIntake = {
   completedAt: hoursAgo(1),
 };
 
+// ─── Additional mock intakes for different citizens ───
+
+const mockIntake2: ClinicalIntake = {
+  id: 'ci-2',
+  citizenId: 'c-2',
+  unitId: 'u-1',
+  messages: [],
+  chiefComplaint: 'Cefaleia recorrente há 2 semanas com alteração visual',
+  symptoms: ['Cefaleia pulsátil', 'Visão turva', 'Náusea'],
+  symptomDuration: '2 semanas',
+  symptomOnset: 'Gradual com piora progressiva',
+  associatedSymptoms: ['Fotofobia', 'Náusea'],
+  painScale: 7,
+  currentMedications: ['Paracetamol 750mg (sem melhora)'],
+  allergies: ['Dipirona'],
+  chronicConditions: [],
+  familyHistory: ['Mãe - enxaqueca crônica'],
+  riskLevel: RiskLevel.URGENT,
+  priorityScore: 65,
+  clinicalSummary: {
+    id: 'cs-2',
+    intakeId: 'ci-2',
+    narrative: 'Paciente masculino, 34 anos, apresenta cefaleia pulsátil de forte intensidade há 2 semanas com piora progressiva. Relata episódios de visão turva e fotofobia. Sem resposta a paracetamol. Histórico familiar materno de enxaqueca crônica. Nega trauma craniano ou uso de medicamentos contínuos.',
+    structuredFindings: [
+      'Cefaleia pulsátil progressiva há 14 dias',
+      'Episódios de visão turva associados',
+      'Fotofobia e náusea',
+      'Sem resposta a analgésico comum',
+    ],
+    suspectedConditions: ['Enxaqueca com aura', 'Cefaleia tensional crônica', 'Hipertensão intracraniana (investigar)'],
+    relevantHistory: 'Sem comorbidades. HF de enxaqueca crônica materna.',
+    riskFactors: ['Cefaleia progressiva sem alívio', 'Alteração visual associada'],
+    generatedAt: daysAgo(3),
+  },
+  examSuggestions: [
+    { id: 'ex-2-1', intakeId: 'ci-2', examName: 'Tomografia de Crânio', category: 'IMAGING', priority: 'URGENT', justification: 'Cefaleia progressiva com sinais de alarme. Descartar causa estrutural.', status: 'SUGGESTED' },
+    { id: 'ex-2-2', intakeId: 'ci-2', examName: 'Hemograma completo', examCode: '02.02.02.038-0', category: 'LABORATORY', priority: 'ROUTINE', justification: 'Avaliação basal.', status: 'SUGGESTED' },
+    { id: 'ex-2-3', intakeId: 'ci-2', examName: 'Fundo de Olho', category: 'FUNCTIONAL', priority: 'URGENT', justification: 'Avaliação de papiledema para excluir hipertensão intracraniana.', status: 'SUGGESTED' },
+  ],
+  referralRecommendation: {
+    id: 'rr-2',
+    intakeId: 'ci-2',
+    decision: 'REFER_SPECIALIST',
+    confidence: 78,
+    specialty: 'Neurologia',
+    justification: 'Cefaleia progressiva com sinais de alarme. Recomendação de avaliação neurológica após exames de imagem.',
+    requiredExamsBeforeReferral: ['Tomografia de Crânio', 'Fundo de Olho'],
+    alternativeActions: ['Prescrição de profilaxia para enxaqueca', 'Retorno em 7 dias se melhora'],
+    generatedAt: daysAgo(3),
+  },
+  isComplete: true,
+  startedAt: daysAgo(3),
+  completedAt: daysAgo(3),
+};
+
+const mockIntake3: ClinicalIntake = {
+  id: 'ci-3',
+  citizenId: 'c-3',
+  unitId: 'u-1',
+  messages: [],
+  chiefComplaint: 'Infecção urinária recorrente',
+  symptoms: ['Disúria', 'Polaciúria', 'Dor suprapúbica'],
+  symptomDuration: '3 dias',
+  painScale: 4,
+  currentMedications: [],
+  allergies: ['Sulfa'],
+  chronicConditions: [],
+  riskLevel: RiskLevel.LESS_URGENT,
+  priorityScore: 35,
+  clinicalSummary: {
+    id: 'cs-3', intakeId: 'ci-3',
+    narrative: 'Paciente feminina, 28 anos, com terceiro episódio de ITU em 6 meses. Apresenta disúria, polaciúria e desconforto suprapúbico há 3 dias. Sem febre. Alérgica a sulfa.',
+    structuredFindings: ['3º episódio de ITU em 6 meses', 'Disúria e polaciúria', 'Sem febre', 'Alergia a sulfa'],
+    suspectedConditions: ['ITU de repetição', 'Cistite bacteriana'],
+    relevantHistory: 'ITU de repetição. Alergia a sulfa.', riskFactors: ['ITU recorrente'],
+    generatedAt: daysAgo(7),
+  },
+  examSuggestions: [
+    { id: 'ex-3-1', intakeId: 'ci-3', examName: 'Urocultura com antibiograma', category: 'LABORATORY', priority: 'ROUTINE', justification: 'ITU recorrente requer identificação do agente.', status: 'COMPLETED' },
+  ],
+  referralRecommendation: {
+    id: 'rr-3', intakeId: 'ci-3', decision: 'RESOLVE_PRIMARY', confidence: 92, specialty: undefined,
+    justification: 'ITU de repetição pode ser manejada na atenção básica com antibioticoterapia guiada por cultura.',
+    requiredExamsBeforeReferral: [], alternativeActions: ['Antibioticoterapia empírica', 'Orientação sobre higiene', 'Retorno com urocultura'],
+    generatedAt: daysAgo(7),
+  },
+  isComplete: true, startedAt: daysAgo(7), completedAt: daysAgo(7),
+};
+
+const mockIntake4: ClinicalIntake = {
+  id: 'ci-4',
+  citizenId: 'c-4',
+  unitId: 'u-2',
+  messages: [],
+  chiefComplaint: 'Lombalgia crônica sem melhora com tratamento clínico',
+  symptoms: ['Dor lombar crônica', 'Limitação funcional', 'Dor irradiada para MID'],
+  symptomDuration: '4 meses',
+  painScale: 6,
+  currentMedications: ['Ibuprofeno 400mg', 'Ciclobenzaprina 10mg'],
+  allergies: [],
+  chronicConditions: ['Obesidade grau I'],
+  riskLevel: RiskLevel.LESS_URGENT,
+  priorityScore: 40,
+  clinicalSummary: {
+    id: 'cs-4', intakeId: 'ci-4',
+    narrative: 'Paciente masculino, 48 anos, obeso grau I, com lombalgia crônica há 4 meses. Sem melhora com AINES e relaxante muscular. Refere irradiação para membro inferior direito. Sem déficit motor. Trabalha como pedreiro.',
+    structuredFindings: ['Lombalgia crônica há 4 meses', 'Irradiação para MID (ciatalgia)', 'Sem resposta a tratamento conservador', 'Atividade laboral de risco'],
+    suspectedConditions: ['Hérnia discal lombar', 'Espondiloartrose', 'Síndrome do piriforme'],
+    relevantHistory: 'Obesidade grau I. Trabalho com esforço físico pesado.', riskFactors: ['Obesidade', 'Atividade laboral pesada', 'Cronicidade'],
+    generatedAt: daysAgo(15),
+  },
+  examSuggestions: [
+    { id: 'ex-4-1', intakeId: 'ci-4', examName: 'RX Coluna Lombar AP/P', examCode: '02.04.03.003-9', category: 'IMAGING', priority: 'ROUTINE', justification: 'Avaliação de alinhamento e espaços discais.', status: 'COMPLETED' },
+    { id: 'ex-4-2', intakeId: 'ci-4', examName: 'Ressonância Magnética Lombar', category: 'IMAGING', priority: 'URGENT', justification: 'Ciatalgia persistente. Necessário avaliar discos e raízes nervosas.', status: 'SUGGESTED' },
+  ],
+  referralRecommendation: {
+    id: 'rr-4', intakeId: 'ci-4', decision: 'REFER_SPECIALIST', confidence: 72, specialty: 'Ortopedia',
+    justification: 'Lombalgia crônica com ciatalgia sem resposta ao tratamento conservador. Avaliação ortopédica recomendada.',
+    requiredExamsBeforeReferral: ['RX Coluna Lombar', 'Ressonância Magnética Lombar'],
+    alternativeActions: ['Fisioterapia', 'Controle de peso', 'Avaliação ergonômica'],
+    generatedAt: daysAgo(15),
+  },
+  isComplete: true, startedAt: daysAgo(15), completedAt: daysAgo(15),
+};
+
+const mockIntake5: ClinicalIntake = {
+  id: 'ci-5',
+  citizenId: 'c-5',
+  unitId: 'u-1',
+  messages: [],
+  chiefComplaint: 'Tosse persistente há 3 semanas com perda de peso',
+  symptoms: ['Tosse produtiva', 'Perda de peso 4kg', 'Sudorese noturna', 'Febre vespertina'],
+  symptomDuration: '3 semanas',
+  painScale: 3,
+  currentMedications: [],
+  allergies: [],
+  chronicConditions: [],
+  familyHistory: ['Tio materno tratou TB há 2 anos'],
+  riskLevel: RiskLevel.VERY_URGENT,
+  priorityScore: 80,
+  clinicalSummary: {
+    id: 'cs-5', intakeId: 'ci-5',
+    narrative: 'Paciente feminina, 55 anos, apresenta tosse produtiva há 3 semanas, perda ponderal de 4kg, sudorese noturna e febre vespertina. Contato domiciliar com caso de tuberculose (tio materno há 2 anos). Quadro altamente sugestivo de tuberculose pulmonar.',
+    structuredFindings: ['Tosse produtiva > 2 semanas', 'Perda de peso involuntária (4kg)', 'Sudorese noturna e febre vespertina', 'Contato com caso confirmado de TB'],
+    suspectedConditions: ['Tuberculose pulmonar', 'Neoplasia pulmonar (DD)', 'Infecção fúngica pulmonar'],
+    relevantHistory: 'Contato domiciliar com TB. Sem comorbidades conhecidas.',
+    riskFactors: ['Contato com TB', 'Sintomas constitutivos', 'Tosse > 2 semanas'],
+    generatedAt: daysAgo(2),
+  },
+  examSuggestions: [
+    { id: 'ex-5-1', intakeId: 'ci-5', examName: 'Baciloscopia de escarro (BAAR)', category: 'LABORATORY', priority: 'URGENT', justification: 'Tosse > 2 semanas + contato TB. Pesquisa de BAAR obrigatória.', status: 'SUGGESTED' },
+    { id: 'ex-5-2', intakeId: 'ci-5', examName: 'RX de Tórax PA/Perfil', examCode: '02.04.03.015-2', category: 'IMAGING', priority: 'URGENT', justification: 'Avaliação de infiltrado pulmonar e cavitações.', status: 'SUGGESTED' },
+    { id: 'ex-5-3', intakeId: 'ci-5', examName: 'Teste Rápido Molecular para TB (TRM-TB)', category: 'LABORATORY', priority: 'URGENT', justification: 'Diagnóstico rápido de TB com teste de resistência à rifampicina.', status: 'SUGGESTED' },
+  ],
+  referralRecommendation: {
+    id: 'rr-5', intakeId: 'ci-5', decision: 'REFER_SPECIALIST', confidence: 85, specialty: 'Pneumologia',
+    justification: 'Quadro altamente sugestivo de TB pulmonar. Iniciar investigação imediata e notificação compulsória.',
+    requiredExamsBeforeReferral: ['Baciloscopia de escarro', 'RX de Tórax'],
+    alternativeActions: ['Isolamento respiratório', 'Notificação SINAN', 'Rastreamento de contactantes'],
+    generatedAt: daysAgo(2),
+  },
+  isComplete: true, startedAt: daysAgo(2), completedAt: daysAgo(2),
+};
+
+const mockIntake6: ClinicalIntake = {
+  id: 'ci-6',
+  citizenId: 'c-6',
+  unitId: 'u-2',
+  messages: [],
+  chiefComplaint: 'Glicemia descontrolada e formigamento nos pés',
+  symptoms: ['Polidipsia', 'Poliúria', 'Formigamento em MMII', 'Visão embaçada'],
+  symptomDuration: '2 meses',
+  painScale: 3,
+  currentMedications: ['Metformina 850mg 2x/dia', 'Glibenclamida 5mg'],
+  allergies: [],
+  chronicConditions: ['Diabetes Mellitus tipo 2', 'Hipertensão Arterial'],
+  riskLevel: RiskLevel.URGENT,
+  priorityScore: 60,
+  clinicalSummary: {
+    id: 'cs-6', intakeId: 'ci-6',
+    narrative: 'Paciente masculino, 58 anos, diabético tipo 2 há 8 anos, em uso de Metformina e Glibenclamida. Apresenta glicemia capilar >300mg/dL em 3 aferições no último mês. Queixa de formigamento bilateral em pés há 2 meses e episódios de visão embaçada. Suspeita de neuropatia e retinopatia diabética.',
+    structuredFindings: ['Glicemia capilar >300mg/dL sustentada', 'Formigamento bilateral em MMII', 'Visão embaçada episódica', 'DM2 há 8 anos com tratamento oral'],
+    suspectedConditions: ['Neuropatia diabética periférica', 'Retinopatia diabética', 'Descompensação metabólica'],
+    relevantHistory: 'DM2 há 8 anos. HAS. Sem acompanhamento com endocrinologista.', riskFactors: ['DM2 longa duração', 'Glicemia descontrolada', 'Sem acompanhamento especializado'],
+    generatedAt: daysAgo(5),
+  },
+  examSuggestions: [
+    { id: 'ex-6-1', intakeId: 'ci-6', examName: 'Hemoglobina Glicada (HbA1c)', category: 'LABORATORY', priority: 'URGENT', justification: 'Avaliar controle glicêmico dos últimos 3 meses.', status: 'SUGGESTED' },
+    { id: 'ex-6-2', intakeId: 'ci-6', examName: 'Fundo de Olho', category: 'FUNCTIONAL', priority: 'URGENT', justification: 'Rastreio de retinopatia diabética.', status: 'SUGGESTED' },
+    { id: 'ex-6-3', intakeId: 'ci-6', examName: 'Creatinina + Microalbuminúria', category: 'LABORATORY', priority: 'ROUTINE', justification: 'Avaliação de função renal e nefropatia diabética.', status: 'SUGGESTED' },
+    { id: 'ex-6-4', intakeId: 'ci-6', examName: 'Eletroneuromiografia de MMII', category: 'FUNCTIONAL', priority: 'ROUTINE', justification: 'Confirmação de neuropatia periférica.', status: 'SUGGESTED' },
+  ],
+  referralRecommendation: {
+    id: 'rr-6', intakeId: 'ci-6', decision: 'REFER_SPECIALIST', confidence: 82, specialty: 'Endocrinologia',
+    justification: 'DM2 descompensada com sinais de complicações microvasculares (neuropatia + possível retinopatia). Necessita avaliação e ajuste terapêutico por endocrinologista.',
+    requiredExamsBeforeReferral: ['HbA1c', 'Fundo de Olho'],
+    alternativeActions: ['Insulinização na UBS se HbA1c > 9%', 'Orientação nutricional', 'Cuidados com os pés'],
+    generatedAt: daysAgo(5),
+  },
+  isComplete: true, startedAt: daysAgo(5), completedAt: daysAgo(5),
+};
+
+const mockIntake7: ClinicalIntake = {
+  id: 'ci-7',
+  citizenId: 'c-7',
+  unitId: 'u-1',
+  messages: [],
+  chiefComplaint: 'Dor no joelho direito ao subir escadas',
+  symptoms: ['Gonalgia direita', 'Crepitação', 'Edema leve'],
+  symptomDuration: '6 meses',
+  painScale: 5,
+  currentMedications: ['Paracetamol 500mg SOS'],
+  allergies: [],
+  chronicConditions: [],
+  riskLevel: RiskLevel.NON_URGENT,
+  priorityScore: 25,
+  clinicalSummary: {
+    id: 'cs-7', intakeId: 'ci-7',
+    narrative: 'Paciente feminina, 67 anos, refere gonalgia direita há 6 meses, principalmente ao subir escadas e agachar. Relata crepitação articular e edema leve eventual. Sem trauma. Quadro compatível com osteoartrose de joelho.',
+    structuredFindings: ['Gonalgia mecânica há 6 meses', 'Crepitação articular', 'Edema leve intermitente', 'Sem instabilidade'],
+    suspectedConditions: ['Osteoartrose de joelho', 'Lesão meniscal degenerativa'],
+    relevantHistory: 'Sem comorbidades relevantes. IMC 28.', riskFactors: ['Idade > 60', 'Sobrepeso'],
+    generatedAt: daysAgo(10),
+  },
+  examSuggestions: [
+    { id: 'ex-7-1', intakeId: 'ci-7', examName: 'RX Joelho Direito AP/P', category: 'IMAGING', priority: 'ROUTINE', justification: 'Avaliar espaço articular e sinais de artrose.', status: 'COMPLETED' },
+  ],
+  referralRecommendation: {
+    id: 'rr-7', intakeId: 'ci-7', decision: 'RESOLVE_PRIMARY', confidence: 88,
+    justification: 'Osteoartrose de joelho em estágio inicial pode ser manejada na atenção básica com fisioterapia e controle de peso.',
+    requiredExamsBeforeReferral: [], alternativeActions: ['Fisioterapia', 'Controle de peso', 'Fortalecimento muscular', 'AINES se necessário'],
+    generatedAt: daysAgo(10),
+  },
+  isComplete: true, startedAt: daysAgo(10), completedAt: daysAgo(10),
+};
+
+// ─── Map: intakeId → intake ───
+export const mockIntakesMap: Record<string, ClinicalIntake> = {
+  'ci-1': mockClinicalIntake,
+  'ci-2': mockIntake2,
+  'ci-3': mockIntake3,
+  'ci-4': mockIntake4,
+  'ci-5': mockIntake5,
+  'ci-6': mockIntake6,
+  'ci-7': mockIntake7,
+};
+
 // ─── Care Journeys ───
 
 const emergencySteps: CareStep[] = [
@@ -136,7 +383,7 @@ const routineSteps: CareStep[] = [
   { id: 'cs-2-3', journeyId: 'cj-2', order: 3, type: 'EXAM_REQUEST', label: 'Exames Laboratoriais', status: CareStepStatus.COMPLETED, startedAt: daysAgo(3), completedAt: daysAgo(1) },
   { id: 'cs-2-4', journeyId: 'cj-2', order: 4, type: 'EXAM_RESULT', label: 'Resultados Recebidos', status: CareStepStatus.COMPLETED, completedAt: daysAgo(1) },
   { id: 'cs-2-5', journeyId: 'cj-2', order: 5, type: 'REFERRAL_DECISION', label: 'Avaliação de Encaminhamento', status: CareStepStatus.IN_PROGRESS, startedAt: hoursAgo(2) },
-  { id: 'cs-2-6', journeyId: 'cj-2', order: 6, type: 'ATTENDANCE', label: 'Consulta UBS', status: CareStepStatus.PENDING },
+  { id: 'cs-2-6', journeyId: 'cj-2', order: 6, type: 'ATTENDANCE', label: 'Consulta Neurologia', status: CareStepStatus.PENDING },
 ];
 
 const resolvedSteps: CareStep[] = [
@@ -242,33 +489,65 @@ export const mockCareJourneys: CareJourney[] = [
     currentStepIndex: 2,
     startedAt: daysAgo(2),
   },
+  {
+    id: 'cj-6',
+    citizenId: 'c-6',
+    citizenName: 'Roberto Nascimento',
+    intakeId: 'ci-6',
+    originUnitId: 'u-2',
+    chiefComplaint: 'Glicemia descontrolada e formigamento nos pés',
+    riskLevel: RiskLevel.URGENT,
+    priorityScore: 60,
+    referralUrgency: ReferralUrgency.PRIORITY,
+    targetSpecialty: 'Endocrinologia',
+    status: CareJourneyStatus.TRIAGE_COMPLETE,
+    steps: [
+      { id: 'cs-6-1', journeyId: 'cj-6', order: 1, type: 'INTAKE', label: 'Acolhimento', status: CareStepStatus.COMPLETED, startedAt: daysAgo(5), completedAt: daysAgo(5) },
+      { id: 'cs-6-2', journeyId: 'cj-6', order: 2, type: 'TRIAGE', label: 'Triagem Clínica', status: CareStepStatus.COMPLETED, startedAt: daysAgo(5), completedAt: daysAgo(5) },
+      { id: 'cs-6-3', journeyId: 'cj-6', order: 3, type: 'EXAM_REQUEST', label: 'HbA1c + Fundo de Olho', status: CareStepStatus.PENDING },
+      { id: 'cs-6-4', journeyId: 'cj-6', order: 4, type: 'REFERRAL_DECISION', label: 'Avaliação Endocrinologia', status: CareStepStatus.PENDING },
+    ],
+    currentStepIndex: 2,
+    startedAt: daysAgo(5),
+  },
+  {
+    id: 'cj-7',
+    citizenId: 'c-7',
+    citizenName: 'Dona Tereza Almeida',
+    intakeId: 'ci-7',
+    originUnitId: 'u-1',
+    chiefComplaint: 'Dor no joelho direito ao subir escadas',
+    riskLevel: RiskLevel.NON_URGENT,
+    priorityScore: 25,
+    status: CareJourneyStatus.EXAMS_COMPLETE,
+    steps: [
+      { id: 'cs-7-1', journeyId: 'cj-7', order: 1, type: 'INTAKE', label: 'Acolhimento', status: CareStepStatus.COMPLETED, startedAt: daysAgo(10), completedAt: daysAgo(10) },
+      { id: 'cs-7-2', journeyId: 'cj-7', order: 2, type: 'TRIAGE', label: 'Triagem', status: CareStepStatus.COMPLETED, startedAt: daysAgo(10), completedAt: daysAgo(10) },
+      { id: 'cs-7-3', journeyId: 'cj-7', order: 3, type: 'EXAM_REQUEST', label: 'RX Joelho', status: CareStepStatus.COMPLETED, startedAt: daysAgo(9), completedAt: daysAgo(7) },
+      { id: 'cs-7-4', journeyId: 'cj-7', order: 4, type: 'EXAM_RESULT', label: 'Resultado do RX', status: CareStepStatus.COMPLETED, completedAt: daysAgo(7) },
+      { id: 'cs-7-5', journeyId: 'cj-7', order: 5, type: 'ATTENDANCE', label: 'Consulta UBS', status: CareStepStatus.PENDING },
+    ],
+    currentStepIndex: 4,
+    startedAt: daysAgo(10),
+  },
 ];
 
 // ─── Manager Dashboard: Clinical Flow Metrics ───
 
 export const mockClinicalDashboardStats = {
-  // Flow metrics (replaces queue-only metrics)
   totalActiveJourneys: 142,
-  resolvedAtPrimaryRate: 68, // % resolved without referral
-  referralRate: 32, // % that needed specialist
+  resolvedAtPrimaryRate: 68,
+  referralRate: 32,
   avgTimeToResolutionDays: 4.2,
-
-  // Intake metrics
   intakesToday: 23,
   intakesCompleted: 19,
   avgIntakeDurationMinutes: 8,
-
-  // Exam metrics
   pendingExams: 34,
   examsCompletedToday: 12,
   avgExamTurnaroundDays: 2.8,
-
-  // Referral metrics
   pendingReferrals: 18,
   scheduledReferrals: 27,
   avgReferralWaitDays: 15,
-
-  // Risk distribution (kept from original)
   riskDistribution: {
     [RiskLevel.EMERGENCY]: 2,
     [RiskLevel.VERY_URGENT]: 8,
@@ -276,8 +555,6 @@ export const mockClinicalDashboardStats = {
     [RiskLevel.LESS_URGENT]: 61,
     [RiskLevel.NON_URGENT]: 29,
   },
-
-  // Top referral specialties
   topSpecialties: [
     { specialty: 'Cardiologia', count: 12, avgWaitDays: 18 },
     { specialty: 'Ortopedia', count: 9, avgWaitDays: 25 },
@@ -285,8 +562,6 @@ export const mockClinicalDashboardStats = {
     { specialty: 'Endocrinologia', count: 6, avgWaitDays: 30 },
     { specialty: 'Pneumologia', count: 5, avgWaitDays: 14 },
   ],
-
-  // Active professionals
   activeProfessionals: 6,
   throughputPerHour: 8.5,
 };
