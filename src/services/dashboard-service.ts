@@ -1,56 +1,39 @@
+/**
+ * Dashboard Service — Manager operational intelligence.
+ *
+ * Dual-path: mock data when ENABLE_REAL_BACKEND is off,
+ * real platform-backend API when enabled.
+ *
+ * Backend: platform-backend (NestJS)
+ * Endpoint: GET /api/manager/dashboard
+ */
+
 import { RiskLevel } from '@/domain/enums/risk-level';
 import { CareJourneyStatus } from '@/domain/enums/care-journey-status';
 import { isMockMode } from '@/lib/env';
 import { platformApi } from '@/lib/api-client';
-// ─── Types for dashboard metrics ───
+import type {
+  DashboardFilters,
+  DashboardResponse,
+  KPIsResponse,
+  SpecialtyMetricDTO,
+  JourneyBreakdownDTO,
+  RiskDistributionDTO,
+  BottleneckDTO,
+  WeeklyTrendDTO,
+  ResolutionSplitDTO,
+} from '@/domain/contracts/platform-backend';
+import { filtersToParams } from '@/domain/contracts/platform-backend';
 
-export interface DashboardKPIs {
-  totalActiveJourneys: number;
-  resolvedAtPrimaryRate: number;
-  referralRate: number;
-  avgTimeToResolutionDays: number;
-  pendingClinicalReviews: number;
-  pendingExams: number;
-  awaitingSpecialist: number;
-  intakesToday: number;
-  avgIntakeDurationMinutes: number;
-  activeProfessionals: number;
-  throughputPerHour: number;
-}
+// ─── Re-export contract types as domain types ───────────────────
+// Keep backward-compatible aliases used by ClinicalDashboard.tsx
 
-export interface SpecialtyMetric {
-  specialty: string;
-  referralCount: number;
-  avgWaitDays: number;
-  pendingCount: number;
-}
-
-export interface JourneyStatusBreakdown {
-  status: CareJourneyStatus;
-  label: string;
-  count: number;
-}
-
-export interface RiskDistribution {
-  level: RiskLevel;
-  count: number;
-}
-
-export interface Bottleneck {
-  id: string;
-  severity: 'critical' | 'warning' | 'info';
-  title: string;
-  description: string;
-  metric: string;
-  threshold: string;
-}
-
-export interface WeeklyTrend {
-  day: string;
-  intakes: number;
-  resolved: number;
-  referred: number;
-}
+export type DashboardKPIs = KPIsResponse;
+export type SpecialtyMetric = SpecialtyMetricDTO;
+export type JourneyStatusBreakdown = JourneyBreakdownDTO;
+export type RiskDistribution = RiskDistributionDTO;
+export type Bottleneck = BottleneckDTO;
+export type WeeklyTrend = WeeklyTrendDTO;
 
 export interface DashboardData {
   kpis: DashboardKPIs;
@@ -59,10 +42,10 @@ export interface DashboardData {
   riskDistribution: RiskDistribution[];
   bottlenecks: Bottleneck[];
   weeklyTrend: WeeklyTrend[];
-  resolutionSplit: { resolvedPrimary: number; referredOut: number };
+  resolutionSplit: ResolutionSplitDTO;
 }
 
-// ─── Mock data generation ───
+// ─── Mock data generation ───────────────────────────────────────
 
 function generateMockDashboardData(): DashboardData {
   const kpis: DashboardKPIs = {
@@ -164,13 +147,66 @@ function generateMockDashboardData(): DashboardData {
   };
 }
 
-// ─── Service abstraction (ready for backend replacement) ───
+// ─── Service functions ──────────────────────────────────────────
 
-export async function fetchDashboardData(): Promise<DashboardData> {
+/**
+ * Fetch the full aggregated dashboard.
+ * Real mode: GET /api/manager/dashboard?filters
+ * Mock mode: returns static demo data.
+ */
+export async function fetchDashboardData(filters: DashboardFilters = {}): Promise<DashboardData> {
   if (!isMockMode()) {
-    const { data } = await platformApi.get<DashboardData>('/manager/dashboard');
+    const qs = filtersToParams(filters).toString();
+    const path = `/api/manager/dashboard${qs ? `?${qs}` : ''}`;
+    const { data } = await platformApi.get<DashboardResponse>(path);
     return data;
   }
   await new Promise((r) => setTimeout(r, 400));
   return generateMockDashboardData();
+}
+
+/**
+ * Fetch only KPIs (lighter payload for header widgets).
+ */
+export async function fetchKPIs(filters: DashboardFilters = {}): Promise<DashboardKPIs> {
+  if (!isMockMode()) {
+    const qs = filtersToParams(filters).toString();
+    const path = `/api/manager/dashboard/kpis${qs ? `?${qs}` : ''}`;
+    const { data } = await platformApi.get<KPIsResponse>(path);
+    return data;
+  }
+  await new Promise((r) => setTimeout(r, 200));
+  return generateMockDashboardData().kpis;
+}
+
+/**
+ * Fetch bottlenecks only (for alert widgets / notifications).
+ */
+export async function fetchBottlenecks(filters: DashboardFilters = {}): Promise<Bottleneck[]> {
+  if (!isMockMode()) {
+    const qs = filtersToParams(filters).toString();
+    const path = `/api/manager/dashboard/bottlenecks${qs ? `?${qs}` : ''}`;
+    const { data } = await platformApi.get<BottleneckDTO[]>(path);
+    return data;
+  }
+  await new Promise((r) => setTimeout(r, 200));
+  return generateMockDashboardData().bottlenecks;
+}
+
+/**
+ * Fetch weekly trend data (for chart).
+ */
+export async function fetchWeeklyTrend(
+  filters: DashboardFilters = {},
+  weeks = 1,
+): Promise<WeeklyTrend[]> {
+  if (!isMockMode()) {
+    const params = filtersToParams(filters);
+    params.set('weeks', String(weeks));
+    const path = `/api/manager/dashboard/weekly-trend?${params.toString()}`;
+    const { data } = await platformApi.get<WeeklyTrendDTO[]>(path);
+    return data;
+  }
+  await new Promise((r) => setTimeout(r, 200));
+  return generateMockDashboardData().weeklyTrend;
 }

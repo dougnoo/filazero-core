@@ -27,6 +27,7 @@ import {
   type DashboardData,
   type Bottleneck,
 } from '@/services/dashboard-service';
+import type { DashboardFilters } from '@/domain/contracts/platform-backend';
 
 // ─── KPI Card ───
 
