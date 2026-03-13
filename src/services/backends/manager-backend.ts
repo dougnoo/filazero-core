@@ -27,7 +27,7 @@ export {
 } from '@/services/clinical-review-service';
 
 // ─── Clinical mock stats (for dashboard widgets) ────────────────
-export { mockClinicalDashboardStats } from '@/lib/mock-clinical-data';
+export { mockClinicalDashboardStats } from '@/mock';
 
 // ─── Auth ───────────────────────────────────────────────────────
 export { authService } from '@/services/auth-service';

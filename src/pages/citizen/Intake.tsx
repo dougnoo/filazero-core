@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
-import { IntakeChat } from '@/components/intake/IntakeChat';
-import { IntakeResult } from '@/components/intake/IntakeResult';
+import { IntakeChat } from '@/features/intake/IntakeChat';
+import { IntakeResult } from '@/features/intake/IntakeResult';
 import { UserRole } from '@/domain/enums/user-role';
 import type { ClinicalIntake } from '@/domain/types/clinical-intake';
 

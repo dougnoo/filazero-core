@@ -25,7 +25,7 @@ export {
 export {
   mockCareJourneys,
   mockClinicalDashboardStats,
-} from '@/lib/mock-clinical-data';
+} from '@/mock';
 
 // ─── Auth ───────────────────────────────────────────────────────
 export { authService } from '@/services/auth-service';
