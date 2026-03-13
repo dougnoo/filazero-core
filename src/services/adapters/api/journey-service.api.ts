@@ -118,7 +118,7 @@ function mapRiskLevel(raw?: string): RiskLevel {
 }
 
 function mapJourneyStatus(raw?: string): CareJourneyStatus {
-  if (!raw) return CareJourneyStatus.INTAKE_STARTED;
+  if (!raw) return CareJourneyStatus.INTAKE;
   const upper = raw.toUpperCase().replace(/-/g, '_');
   if (Object.values(CareJourneyStatus).includes(upper as CareJourneyStatus)) {
     return upper as CareJourneyStatus;
