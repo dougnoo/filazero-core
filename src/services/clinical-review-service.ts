@@ -102,7 +102,7 @@ export async function getAllClinicalPackages(
  * Backend: GET /api/professional/clinical-packages/:id
  */
 export async function getClinicalPackageById(journeyId: string): Promise<ClinicalPackage | null> {
-  if (!isMockMode()) {
+  if (!isTryaMockMode()) {
     const { data } = await tryaApi.get<ClinicalPackage>(
       `/professional/clinical-packages/${journeyId}`,
     );
