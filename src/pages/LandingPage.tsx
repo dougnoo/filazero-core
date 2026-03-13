@@ -48,9 +48,87 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from "recharts";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+// ─── Animated Section Wrapper ─────────────────────────────
+function AnimatedSection({ children, id, className }: { children: React.ReactNode; id?: string; className?: string }) {
+  return (
+    <motion.section
+      id={id}
+      className={className}
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
+      {children}
+    </motion.section>
+  );
+}
+
+// ─── Navbar ───────────────────────────────────────────────
+const navItems = [
+  { label: "Problema", href: "#problema" },
+  { label: "Solução", href: "#solucao" },
+  { label: "Como Funciona", href: "#como-funciona" },
+  { label: "Impacto", href: "#impacto" },
+  { label: "Implementação", href: "#implementacao" },
+  { label: "Preço", href: "#preco" },
+  { label: "Segurança", href: "#seguranca" },
+];
+
+function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-background/95 backdrop-blur-md shadow-sm border-b border-border" : "bg-transparent"}`}>
+      <div className="container flex items-center justify-between h-16">
+        <a href="#" className="font-display text-xl font-extrabold text-foreground">
+          Fila Zero <span className="text-primary">Saúde</span>
+        </a>
+
+        <div className="hidden lg:flex items-center gap-6">
+          {navItems.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {item.label}
+            </a>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            className="hidden sm:inline-flex border-border font-semibold"
+            onClick={() => navigate("/app")}
+          >
+            Ver Demo
+          </Button>
+          <Button size="sm" className="bg-primary text-primary-foreground font-semibold">
+            <a href="#contato">Agendar Reunião</a>
+          </Button>
+        </div>
+      </div>
+    </nav>
+  );
+}
 
 // ─── Hero ─────────────────────────────────────────────────
 function HeroSection() {
+  const navigate = useNavigate();
   return (
     <section className="relative overflow-hidden bg-background min-h-[90vh] flex items-center">
       {/* Subtle gradient overlay */}
