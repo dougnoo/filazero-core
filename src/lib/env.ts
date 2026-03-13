@@ -33,6 +33,11 @@ interface EnvConfig {
   ENABLE_REAL_BACKEND: boolean;
   ENABLE_REAL_AUTH: boolean;
   ENABLE_WEBSOCKET: boolean;
+
+  /** Granular backend flags (override ENABLE_REAL_BACKEND per service) */
+  ENABLE_REAL_TRYA: boolean;
+  ENABLE_REAL_PLATFORM: boolean;
+  ENABLE_REAL_CHAT: boolean;
 }
 
 function bool(val: string | undefined): boolean {
