@@ -81,7 +81,9 @@ export type ValidationActionType =
   | 'APPROVE_REFERRAL'
   | 'REJECT_REFERRAL'
   | 'REQUEST_MORE_INFO'
-  | 'RESOLVE_PRIMARY';
+  | 'RESOLVE_PRIMARY'
+  | 'CHANGE_PRIORITY'
+  | 'REDIRECT_CASE';
 
 export interface ValidationResponse {
   success: boolean;
@@ -219,6 +221,7 @@ export interface ClinicalSummaryDTO {
   narrative: string;
   structuredFindings: string[];
   suspectedConditions: string[];
+  cid10Codes?: string[];
   relevantHistory: string;
   riskFactors: string[];
   generatedAt: string;
@@ -322,6 +325,12 @@ export const VALIDATION_ACTION_EFFECTS: Record<ValidationActionType, {
       from: ['TRIAGE_COMPLETE', 'EXAMS_COMPLETE', 'REFERRAL_PENDING'] as CareJourneyStatus[],
       to: 'RESOLVED' as CareJourneyStatus,
     },
+  },
+  CHANGE_PRIORITY: {
+    description: 'Changes clinical priority score based on professional reassessment',
+  },
+  REDIRECT_CASE: {
+    description: 'Redirects case to a different specialty or unit',
   },
 };
 

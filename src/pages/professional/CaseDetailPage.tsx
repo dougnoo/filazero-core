@@ -3,13 +3,14 @@
  *
  * Full view of a single case: patient summary, intake, risk, journey,
  * review status, exams, referral, and mutation actions.
+ * Phase 4: CID-10, social vulnerability, vital signs, SIGTAP codes.
  */
 
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { UserRole } from '@/domain/enums/user-role';
 import { useCaseStore } from '@/contexts/CaseStore';
-import { LoadingState, EmptyState, ErrorState, UrgentBanner } from '@/components/shared/DataState';
+import { EmptyState, UrgentBanner } from '@/components/shared/DataState';
 import { RiskBadge } from '@/features/shared/RiskBadge';
 import { JourneyTimeline } from '@/features/journey/JourneyTimeline';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,8 +22,8 @@ import { RiskLevel } from '@/domain/enums/risk-level';
 import { mockCareJourneys } from '@/mock/clinical-data';
 import {
   ArrowLeft, ArrowRight, User, FileText, FlaskConical,
-  Stethoscope, CheckCircle2, Clock, Building2, AlertTriangle,
-  ClipboardList, ShieldAlert, Activity,
+  Stethoscope, CheckCircle2, Clock, AlertTriangle,
+  ClipboardList, ShieldAlert, Activity, Heart,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -104,6 +105,12 @@ export default function CaseDetailPage() {
           {caseItem.reviewedBy && (
             <Badge variant="outline" className="text-xs">✓ Revisado por {caseItem.reviewedBy}</Badge>
           )}
+          {intake?.socialVulnerabilityScore != null && (
+            <Badge variant="outline" className="text-xs border-destructive/30 text-destructive">
+              <ShieldAlert className="mr-1 h-3 w-3" />
+              Vuln. Social: {intake.socialVulnerabilityScore}/10
+            </Badge>
+          )}
           {caseItem.aiConfidence && (
             <span className="ml-auto text-xs text-muted-foreground">
               IA: {caseItem.aiConfidence}% confiança
@@ -139,6 +146,52 @@ export default function CaseDetailPage() {
               </CardContent>
             </Card>
 
+            {/* Vital Signs */}
+            {intake?.vitalSigns && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-sm font-display">
+                    <Heart className="h-4 w-4 text-destructive" />
+                    Sinais Vitais
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                    {intake.vitalSigns.bloodPressure && (
+                      <div className="rounded-lg border p-3 text-center">
+                        <p className="text-xs text-muted-foreground">PA</p>
+                        <p className="font-display text-sm font-bold">{intake.vitalSigns.bloodPressure}</p>
+                      </div>
+                    )}
+                    {intake.vitalSigns.heartRate && (
+                      <div className="rounded-lg border p-3 text-center">
+                        <p className="text-xs text-muted-foreground">FC</p>
+                        <p className="font-display text-sm font-bold">{intake.vitalSigns.heartRate} bpm</p>
+                      </div>
+                    )}
+                    {intake.vitalSigns.temperature && (
+                      <div className="rounded-lg border p-3 text-center">
+                        <p className="text-xs text-muted-foreground">Temp</p>
+                        <p className="font-display text-sm font-bold">{intake.vitalSigns.temperature}°C</p>
+                      </div>
+                    )}
+                    {intake.vitalSigns.oxygenSaturation && (
+                      <div className="rounded-lg border p-3 text-center">
+                        <p className="text-xs text-muted-foreground">SpO₂</p>
+                        <p className="font-display text-sm font-bold">{intake.vitalSigns.oxygenSaturation}%</p>
+                      </div>
+                    )}
+                    {intake.vitalSigns.respiratoryRate && (
+                      <div className="rounded-lg border p-3 text-center">
+                        <p className="text-xs text-muted-foreground">FR</p>
+                        <p className="font-display text-sm font-bold">{intake.vitalSigns.respiratoryRate} rpm</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Clinical summary */}
             {intake?.clinicalSummary && (
               <Card>
@@ -161,10 +214,24 @@ export default function CaseDetailPage() {
                     </ul>
                   )}
                   {intake.clinicalSummary.suspectedConditions.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {intake.clinicalSummary.suspectedConditions.map((c, i) => (
-                        <Badge key={i} variant="outline" className="text-xs bg-muted/50">{c}</Badge>
-                      ))}
+                    <div>
+                      <p className="mb-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Hipóteses Diagnósticas</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {intake.clinicalSummary.suspectedConditions.map((c, i) => (
+                          <Badge key={i} variant="outline" className="text-xs bg-muted/50">{c}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* CID-10 Codes */}
+                  {intake.clinicalSummary.cid10Codes && intake.clinicalSummary.cid10Codes.length > 0 && (
+                    <div>
+                      <p className="mb-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">CID-10 Suspeitos</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {intake.clinicalSummary.cid10Codes.map((code, i) => (
+                          <Badge key={i} variant="secondary" className="text-xs font-mono">{code}</Badge>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </CardContent>
@@ -185,6 +252,9 @@ export default function CaseDetailPage() {
                     <div key={exam.id} className="flex items-center justify-between rounded-lg border p-3">
                       <div>
                         <p className="text-sm font-medium">{exam.examName}</p>
+                        {exam.examCode && (
+                          <p className="text-[10px] text-muted-foreground">SIGTAP: {exam.examCode}</p>
+                        )}
                         <p className="text-xs text-muted-foreground">{exam.justification}</p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -223,6 +293,34 @@ export default function CaseDetailPage() {
                     </span>
                   </div>
                   <p className="text-sm">{intake.referralRecommendation.justification}</p>
+
+                  {intake.referralRecommendation.requiredExamsBeforeReferral.length > 0 && (
+                    <div>
+                      <p className="mb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Exames Pré-Encaminhamento</p>
+                      <ul className="space-y-1">
+                        {intake.referralRecommendation.requiredExamsBeforeReferral.map((e, i) => (
+                          <li key={i} className="flex items-center gap-2 text-sm">
+                            <AlertTriangle className="h-3.5 w-3.5 text-risk-urgent" />
+                            {e}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {intake.referralRecommendation.alternativeActions && intake.referralRecommendation.alternativeActions.length > 0 && (
+                    <div>
+                      <p className="mb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Alternativas APS</p>
+                      <ul className="space-y-1">
+                        {intake.referralRecommendation.alternativeActions.map((a, i) => (
+                          <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Stethoscope className="h-3.5 w-3.5 text-primary" />
+                            {a}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -257,6 +355,12 @@ export default function CaseDetailPage() {
                     {caseItem.reviewStatus === 'completed' ? 'Revisado' : caseItem.reviewStatus === 'in_progress' ? 'Em Revisão' : 'Pendente'}
                   </Badge>
                 </div>
+                {intake?.socialVulnerabilityScore != null && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Vuln. Social</span>
+                    <span className="font-medium">{intake.socialVulnerabilityScore}/10</span>
+                  </div>
+                )}
                 <Separator />
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Criado</span>
