@@ -30,12 +30,18 @@ const managerNav = [
   { label: 'Config', icon: Settings, path: '/gestor/config' },
 ];
 
+const adminNav = [
+  { label: 'Prefeituras', icon: LayoutDashboard, path: '/admin' },
+  { label: 'Config', icon: Settings, path: '/admin/config' },
+];
+
 export function AppShell({ children, role = UserRole.CITIZEN }: AppShellProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
   const isCitizen = role === UserRole.CITIZEN;
-  const nav = role === UserRole.PROFESSIONAL ? professionalNav
+  const nav = role === UserRole.ADMIN ? adminNav
+    : role === UserRole.PROFESSIONAL ? professionalNav
     : role === UserRole.MANAGER ? managerNav
     : citizenNav;
 
