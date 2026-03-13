@@ -51,6 +51,8 @@ import { Bar, BarChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell }
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { UserRole } from "@/domain/enums/user-role";
 
 // ─── Animated Section Wrapper ─────────────────────────────
 function AnimatedSection({ children, id }: { children: React.ReactNode; id?: string }) {
