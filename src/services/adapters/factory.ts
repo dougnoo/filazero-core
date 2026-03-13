@@ -230,7 +230,10 @@ export function createIntakeService(): IIntakeService {
 /** trya-backend → Journey tracking */
 export function createJourneyService(): IJourneyService {
   if (!isTryaMockMode()) {
-    console.warn('[factory] ApiJourneyService is a stub — falling back to mock');
+    console.info('[factory] ✅ JourneyService → API (with resilient fallback)');
+    const api = new ApiJourneyService();
+    const mock = new MockJourneyService();
+    return new ResilientJourneyService(api, mock);
   }
   return new MockJourneyService();
 }
