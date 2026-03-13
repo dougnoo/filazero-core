@@ -88,6 +88,7 @@ import {
 } from './api';
 
 import { ResilientCaseService } from './resilient-case-service';
+import { ResilientPatientService } from './resilient-patient-service';
 
 // ═══════════════════════════════════════════════════════════════════
 // §1 — Mock Adapters (delegate to existing service functions)
