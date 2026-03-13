@@ -1,27 +1,32 @@
 import { createContext, useContext, useState, useCallback, useMemo, useEffect, ReactNode } from 'react';
 import { UserRole } from '@/domain/enums/user-role';
 import { setSessionAccessor } from '@/lib/api-client';
-import { env } from '@/lib/env';
+import {
+  authService,
+  mapClaimsToAppUser,
+  type AppUser,
+  type AuthTokens,
+} from '@/services/auth-service';
 
 // ─── Auth Types ─────────────────────────────────────────────────
-// Structured to map 1:1 to Cognito session later.
 
-export interface AuthUser {
-  id: string;
-  name: string;
-  email?: string;
-  cpf?: string;
-  role: UserRole;
-  unitId?: string;          // health unit (for professionals/managers)
-  municipalityId?: string;  // tenant isolation
+export type { AppUser as AuthUser };
+
+export interface TenantContext {
+  municipalityId: string | null;
+  unitId: string | null;
 }
 
 export interface AuthState {
-  user: AuthUser | null;
+  user: AppUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  /** JWT access token (populated when using real Cognito auth) */
-  token: string | null;
+  /** JWT access token (for API calls) */
+  accessToken: string | null;
+  /** JWT id token (contains claims) */
+  idToken: string | null;
+  /** Tenant context derived from user claims */
+  tenant: TenantContext;
 }
 
 interface AuthActions {
@@ -32,101 +37,111 @@ interface AuthActions {
   logout: () => void;
   /** Check if current user has a specific role */
   hasRole: (role: UserRole) => boolean;
+  /** Force token refresh */
+  refreshSession: () => Promise<void>;
 }
 
 type AuthContextType = AuthState & AuthActions;
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// ─── Mock Users (will be replaced by Cognito) ───────────────────
-
-const MOCK_USERS: Record<string, AuthUser> = {
-  citizen: {
-    id: 'ctz-001',
-    name: 'Maria da Silva',
-    cpf: '123.456.789-00',
-    role: UserRole.CITIZEN,
-    municipalityId: 'mun-001',
-  },
-  professional: {
-    id: 'prof-001',
-    name: 'Dr. Carlos Mendes',
-    email: 'carlos@ubs.gov.br',
-    role: UserRole.PROFESSIONAL,
-    unitId: 'unit-001',
-    municipalityId: 'mun-001',
-  },
-  manager: {
-    id: 'mgr-001',
-    name: 'Ana Coordenadora',
-    email: 'ana@saude.gov.br',
-    role: UserRole.MANAGER,
-    unitId: 'unit-001',
-    municipalityId: 'mun-001',
-  },
-  admin: {
-    id: 'adm-001',
-    name: 'Admin Sistema',
-    email: 'admin@filazero.com',
-    role: UserRole.ADMIN,
-    municipalityId: 'mun-001',
-  },
-};
-
 // ─── Provider ───────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<AppUser | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [idToken, setIdToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true); // start true to check existing session
 
-  const loginWithCPF = useCallback(async (_cpf: string, _otp: string) => {
-    setIsLoading(true);
-    // Simulate network delay — will become Cognito custom auth flow
-    await new Promise((r) => setTimeout(r, 800));
-    setUser(MOCK_USERS.citizen);
-    setIsLoading(false);
+  const tenant = useMemo<TenantContext>(() => ({
+    municipalityId: user?.municipalityId ?? null,
+    unitId: user?.unitId ?? null,
+  }), [user]);
+
+  // ─── Apply session tokens + user from auth service result ─────
+  const applySession = useCallback((tokens: AuthTokens, appUser: AppUser) => {
+    setAccessToken(tokens.accessToken);
+    setIdToken(tokens.idToken);
+    setUser(appUser);
   }, []);
 
-  const loginWithCredentials = useCallback(async (_email: string, _password: string, role: UserRole) => {
+  // ─── Check for existing session on mount ──────────────────────
+  useEffect(() => {
+    let cancelled = false;
+    authService.getCurrentSession().then((session) => {
+      if (cancelled) return;
+      if (session) {
+        const appUser = mapClaimsToAppUser(session.claims);
+        applySession(session.tokens, appUser);
+      }
+      setIsLoading(false);
+    }).catch(() => {
+      if (!cancelled) setIsLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [applySession]);
+
+  const loginWithCPF = useCallback(async (cpf: string, otp: string) => {
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
-    const key = role === UserRole.PROFESSIONAL ? 'professional'
-      : role === UserRole.MANAGER ? 'manager'
-      : role === UserRole.ADMIN ? 'admin'
-      : 'citizen';
-    setUser(MOCK_USERS[key]);
-    setIsLoading(false);
-  }, []);
+    try {
+      const session = await authService.loginWithCPF(cpf, otp);
+      const appUser = mapClaimsToAppUser(session.claims);
+      applySession(session.tokens, appUser);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [applySession]);
+
+  const loginWithCredentials = useCallback(async (email: string, password: string, _role: UserRole) => {
+    setIsLoading(true);
+    try {
+      const session = await authService.loginWithCredentials(email, password);
+      const appUser = mapClaimsToAppUser(session.claims);
+      applySession(session.tokens, appUser);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [applySession]);
 
   const logout = useCallback(() => {
+    authService.logout();
     setUser(null);
-    setToken(null);
+    setAccessToken(null);
+    setIdToken(null);
   }, []);
 
-  const hasRole = useCallback((role: UserRole) => {
-    return user?.role === role;
-  }, [user]);
+  const hasRole = useCallback((role: UserRole) => user?.role === role, [user]);
 
-  // Wire up API client session accessor
+  const refreshSession = useCallback(async () => {
+    const session = await authService.refreshSession();
+    if (session) {
+      const appUser = mapClaimsToAppUser(session.claims);
+      applySession(session.tokens, appUser);
+    }
+  }, [applySession]);
+
+  // ─── Wire up API client session accessor ──────────────────────
   useEffect(() => {
     setSessionAccessor(() => ({
-      token,
-      municipalityId: user?.municipalityId ?? null,
-      unitId: user?.unitId ?? null,
+      token: accessToken,
+      municipalityId: tenant.municipalityId,
+      unitId: tenant.unitId,
     }));
-  }, [token, user]);
+  }, [accessToken, tenant]);
 
   const value = useMemo<AuthContextType>(() => ({
     user,
     isAuthenticated: !!user,
     isLoading,
-    token,
+    accessToken,
+    idToken,
+    tenant,
     loginWithCPF,
     loginWithCredentials,
     logout,
     hasRole,
-  }), [user, isLoading, token, loginWithCPF, loginWithCredentials, logout, hasRole]);
+    refreshSession,
+  }), [user, isLoading, accessToken, idToken, tenant, loginWithCPF, loginWithCredentials, logout, hasRole, refreshSession]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
