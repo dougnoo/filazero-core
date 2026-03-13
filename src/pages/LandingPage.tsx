@@ -1266,20 +1266,20 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background font-body scroll-smooth">
       <Navbar />
       <HeroSection />
-      <AnimatedSection id="problema" className="py-20 md:py-28 bg-background"><ProblemSection /></AnimatedSection>
-      <AnimatedSection className="py-20 md:py-28 bg-muted/30"><PoliticalCostSection /></AnimatedSection>
-      <AnimatedSection id="solucao" className="py-20 md:py-28 bg-background"><SolutionSection /></AnimatedSection>
-      <AnimatedSection id="como-funciona" className="py-20 md:py-28 bg-muted/30"><HowItWorksSection /></AnimatedSection>
-      <AnimatedSection id="impacto" className="py-20 md:py-28 bg-background"><ImpactSection /></AnimatedSection>
-      <AnimatedSection className="py-20 md:py-28 bg-muted/30"><CitizenImpactSection /></AnimatedSection>
-      <AnimatedSection className="py-20 md:py-28 bg-background"><ManagerImpactSection /></AnimatedSection>
-      <AnimatedSection id="implementacao" className="py-20 md:py-28 bg-muted/30"><ImplementationSection /></AnimatedSection>
-      <AnimatedSection id="preco" className="py-20 md:py-28 bg-background"><PricingSection /></AnimatedSection>
-      <AnimatedSection className="py-20 md:py-28 bg-muted/30"><IntegrationSection /></AnimatedSection>
-      <AnimatedSection id="seguranca" className="py-20 md:py-28 bg-background"><SecuritySection /></AnimatedSection>
-      <AnimatedSection className="py-20 md:py-28 bg-muted/30"><PoliticalGainSection /></AnimatedSection>
-      <AnimatedSection className="py-20 md:py-28 bg-background"><LocalImpactSection /></AnimatedSection>
-      <AnimatedSection className="py-20 md:py-28 bg-muted/30"><VisionSection /></AnimatedSection>
+      <AnimatedSection id="problema"><ProblemSection /></AnimatedSection>
+      <AnimatedSection><PoliticalCostSection /></AnimatedSection>
+      <AnimatedSection id="solucao"><SolutionSection /></AnimatedSection>
+      <AnimatedSection id="como-funciona"><HowItWorksSection /></AnimatedSection>
+      <AnimatedSection id="impacto"><ImpactSection /></AnimatedSection>
+      <AnimatedSection><CitizenImpactSection /></AnimatedSection>
+      <AnimatedSection><ManagerImpactSection /></AnimatedSection>
+      <AnimatedSection id="implementacao"><ImplementationSection /></AnimatedSection>
+      <AnimatedSection id="preco"><PricingSection /></AnimatedSection>
+      <AnimatedSection><IntegrationSection /></AnimatedSection>
+      <AnimatedSection id="seguranca"><SecuritySection /></AnimatedSection>
+      <AnimatedSection><PoliticalGainSection /></AnimatedSection>
+      <AnimatedSection><LocalImpactSection /></AnimatedSection>
+      <AnimatedSection><VisionSection /></AnimatedSection>
       <CTASection />
       <Footer />
     </div>
