@@ -133,7 +133,7 @@ export default function ClinicalDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDashboardData()
+    services.dashboard.fetchDashboard()
       .then((d) => {
         setData(d);
       })

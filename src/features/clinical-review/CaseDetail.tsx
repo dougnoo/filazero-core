@@ -75,7 +75,7 @@ export function CaseDetail({ pkg, onValidationComplete }: CaseDetailProps) {
   const handleAction = async (action: ValidationActionType) => {
     setValidating(action);
     try {
-      const result = await submitValidation({
+      const result = await services.clinicalReview.submitValidation({
         journeyId: journey.id,
         action,
         notes: doctorNotes || undefined,

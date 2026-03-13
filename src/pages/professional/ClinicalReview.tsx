@@ -14,7 +14,7 @@ export default function ClinicalReview() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getPendingClinicalPackages()
+    services.clinicalReview.getPendingPackages()
       .then((data) => {
         setPackages(data);
         if (data.length > 0) setSelected(data[0]);

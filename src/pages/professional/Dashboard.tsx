@@ -33,7 +33,7 @@ export default function ProfessionalDashboard() {
   const waitingPatients = mockQueuePositions.filter((p) => p.status === 'WAITING');
 
   useEffect(() => {
-    getAllClinicalPackages()
+    services.clinicalReview.getAllPackages()
       .then(setAllPackages)
       .catch(console.error)
       .finally(() => setLoading(false));

@@ -121,10 +121,10 @@ export default function CareJourneyPage() {
   useEffect(() => {
     (async () => {
       try {
-        const data = await getCitizenJourneys('c-current');
+        const data = await services.journeys.getCitizenJourneys('c-current');
         setJourneys(data);
         if (data.length > 0) {
-          const intakeData = await getIntakeForJourney(data[0].intakeId);
+          const intakeData = await services.journeys.getIntakeForJourney(data[0].intakeId);
           setIntake(intakeData);
         }
       } catch (err) {
