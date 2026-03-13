@@ -8,7 +8,6 @@
  * Auth: Bearer JWT + X-Municipality-Id + X-Unit-Id (via api-client.ts)
  */
 
-import type { Patient } from '@/domain/types/case';
 import type { CareJourney } from '@/domain/types/care-journey';
 import type { ClinicalIntake, ExamSuggestion } from '@/domain/types/clinical-intake';
 import type {
@@ -19,7 +18,6 @@ import type {
 } from '@/domain/contracts/trya-backend';
 import type { ClinicalPackage } from '@/services/clinical-review-service';
 import type {
-  IPatientService,
   IJourneyService,
   IClinicalReviewService,
   IExamService,
@@ -29,41 +27,7 @@ const NOT_IMPL = (method: string) =>
   new Error(`[ApiStub] ${method} not implemented — connect trya-backend first`);
 
 // ─── Case Service — MOVED to case-service.api.ts (Phase 7) ─────
-// ApiCaseService is now a real implementation, not a stub.
-
-// ─── Patient Service ────────────────────────────────────────────
-
-export class ApiPatientService implements IPatientService {
-  /**
-   * GET /api/patients/:id
-   */
-  async getPatientById(_patientId: string): Promise<Patient | null> {
-    throw NOT_IMPL('ApiPatientService.getPatientById');
-    // TODO:
-    // const { data } = await tryaApi.get<Patient>(`/api/patients/${patientId}`);
-    // return data;
-  }
-
-  /**
-   * GET /api/patients/search?cpf=123.456.789-00
-   */
-  async searchPatientByCPF(_cpf: string): Promise<Patient | null> {
-    throw NOT_IMPL('ApiPatientService.searchPatientByCPF');
-    // TODO:
-    // const { data } = await tryaApi.get<Patient>(`/api/patients/search?cpf=${cpf}`);
-    // return data;
-  }
-
-  /**
-   * GET /api/patients/:id/history
-   */
-  async getPatientClinicalHistory(_patientId: string): Promise<ClinicalIntake[]> {
-    throw NOT_IMPL('ApiPatientService.getPatientClinicalHistory');
-    // TODO:
-    // const { data } = await tryaApi.get<ClinicalIntake[]>(`/api/patients/${patientId}/history`);
-    // return data;
-  }
-}
+// ─── Patient Service — MOVED to patient-service.api.ts (Phase 7) ─────
 
 // ─── Journey Service ────────────────────────────────────────────
 

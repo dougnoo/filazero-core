@@ -88,6 +88,7 @@ import {
 } from './api';
 
 import { ResilientCaseService } from './resilient-case-service';
+import { ResilientPatientService } from './resilient-patient-service';
 
 // ═══════════════════════════════════════════════════════════════════
 // §1 — Mock Adapters (delegate to existing service functions)
@@ -205,7 +206,10 @@ export function createCaseService(): ICaseService {
 /** trya-backend → Patient lookup */
 export function createPatientService(): IPatientService {
   if (!isTryaMockMode()) {
-    console.warn('[factory] ApiPatientService is a stub — falling back to mock');
+    console.info('[factory] ✅ PatientService → API (with resilient fallback)');
+    const api = new ApiPatientService();
+    const mock = new MockPatientService();
+    return new ResilientPatientService(api, mock);
   }
   return new MockPatientService();
 }
