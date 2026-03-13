@@ -27,18 +27,27 @@ import {
   Search,
   ClipboardList,
   Timer,
-  TrendingDown,
-  
-  Repeat,
   UserCheck,
-  Hourglass,
   Brain,
-  Shield,
   Phone,
   Mail,
+  Lock,
+  Server,
+  ScanEye,
+  Plug,
+  LayoutDashboard,
+  Mic,
+  Newspaper,
+  CircleCheckBig,
+  Quote,
+  TrendingUp,
+  HeartPulse,
+  Globe,
+  Handshake,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Bar, BarChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from "recharts";
 
 // ─── Hero ─────────────────────────────────────────────────
 function HeroSection() {
@@ -667,6 +676,473 @@ function ImplementationSection() {
   );
 }
 
+// ─── Modelo de Contratação ─────────────────────────────────
+function PricingSection() {
+  return (
+    <section className="py-20 md:py-28 bg-background">
+      <div className="container">
+        <SectionHeader subtitle="Viabilidade Financeira" title="Modelo de Contratação" />
+
+        <div className="grid lg:grid-cols-2 gap-12 items-start">
+          {/* Left - Formats */}
+          <div>
+            <h3 className="flex items-center gap-2 font-display font-bold text-foreground text-lg mb-6">
+              <FileText className="h-5 w-5 text-secondary" /> Formatos Sugeridos
+            </h3>
+
+            <Card className="border-border shadow-sm mb-4">
+              <CardContent className="p-6 flex gap-4">
+                <div className="h-10 w-10 rounded-lg bg-secondary/10 flex items-center justify-center flex-shrink-0">
+                  <Users className="h-5 w-5 text-secondary" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-display font-bold text-foreground">Licença por Habitante</h4>
+                    <span className="bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded-full uppercase">Recomendado</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Ideal para cobertura total do município. Valor escala conforme o porte da cidade, garantindo previsibilidade orçamentária.</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <p className="text-center text-muted-foreground text-sm my-4">ou</p>
+
+            <Card className="border-border shadow-sm">
+              <CardContent className="p-6 flex gap-4">
+                <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                  <Building2 className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <h4 className="font-display font-bold text-foreground">Licença por UBS</h4>
+                  <p className="text-sm text-muted-foreground">Focado em projetos piloto ou implementação gradual por distritos de saúde. Cobrança por unidade de saúde ativa.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right - Example */}
+          <div className="space-y-6">
+            <Card className="bg-secondary text-secondary-foreground border-0 shadow-lg">
+              <CardContent className="p-8 space-y-6">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-display font-bold text-xl flex items-center gap-2">
+                    <Building2 className="h-5 w-5" /> Exemplo Prático
+                  </h4>
+                  <span className="bg-secondary-foreground/20 px-3 py-1 rounded-full text-sm font-semibold">Município Médio Porte</span>
+                </div>
+
+                <div className="flex justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-wider opacity-70">População</p>
+                    <p className="font-display text-4xl font-extrabold">150.000</p>
+                    <p className="text-sm opacity-80">habitantes</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs uppercase tracking-wider opacity-70">Investimento Anual</p>
+                    <p className="font-display">
+                      <span className="text-sm">R$</span> <span className="text-4xl font-extrabold">2</span> <span className="text-sm">a R$</span> <span className="text-4xl font-extrabold">4</span>
+                    </p>
+                    <p className="text-sm opacity-80">por habitante / ano</p>
+                  </div>
+                </div>
+
+                <div className="bg-secondary-foreground/10 rounded-xl p-4 flex items-center gap-3">
+                  <span className="text-2xl">💰</span>
+                  <div>
+                    <p className="text-sm opacity-80">Custo Total Estimado</p>
+                    <p className="font-display font-bold text-lg">R$ 300.000 a R$ 600.000 / ano</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-semibold text-foreground">Impacto no Orçamento da Saúde</h4>
+                  <span className="bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" /> Alta Viabilidade
+                  </span>
+                </div>
+                <p className="text-primary font-bold mb-2">↓ 0,5%</p>
+                <div className="w-full bg-muted rounded-full h-3 mb-4">
+                  <div className="bg-secondary h-3 rounded-full" style={{ width: '0.5%', minWidth: '8px' }} />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  O investimento representa <strong className="text-foreground">menos de 0,5%</strong> do orçamento médio anual da saúde, com alto retorno em eficiência e satisfação.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Diferenciais e Integração ────────────────────────────
+function IntegrationSection() {
+  const legacySystems = [
+    { title: "e-SUS / PEC", desc: "Base de dados oficial mantida" },
+    { title: "SISREG", desc: "Fluxo regulatório preservado" },
+    { title: "Prontuário", desc: "Sem migração de legado" },
+  ];
+
+  const capabilities = [
+    { icon: Plug, title: "Integração API", desc: "Conecta aos dados sem romper processos atuais." },
+    { icon: Cpu, title: "IA Clínica", desc: "Algoritmos que analisam prioridades reais." },
+    { icon: ListChecks, title: "Saneamento", desc: "Limpa duplicidades e organiza a fila automaticamente." },
+    { icon: LayoutDashboard, title: "Dashboard", desc: "Visão gerencial que os sistemas antigos não têm." },
+  ];
+
+  return (
+    <section className="py-20 md:py-28 bg-muted/30">
+      <div className="container">
+        <SectionHeader subtitle="Tecnologia Segura" title="Diferenciais e Integração" />
+
+        <Card className="border-border shadow-sm mb-8">
+          <CardContent className="p-8">
+            <div className="grid lg:grid-cols-[1fr_auto_2fr] gap-8 items-start">
+              {/* Legacy */}
+              <div>
+                <h3 className="font-display font-bold text-foreground text-lg mb-6 flex items-center gap-2">
+                  <span className="text-muted-foreground">◉</span> Não Substitui
+                </h3>
+                <div className="space-y-3">
+                  {legacySystems.map((s, i) => (
+                    <Card key={i} className="border-border">
+                      <CardContent className="p-4">
+                        <h5 className="font-semibold text-foreground">{s.title}</h5>
+                        <p className="text-sm text-muted-foreground">{s.desc}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              {/* Arrow */}
+              <div className="hidden lg:flex items-center justify-center h-full">
+                <div className="h-8 w-8 rounded-full border-2 border-secondary flex items-center justify-center">
+                  <ArrowRight className="h-4 w-4 text-secondary" />
+                </div>
+              </div>
+
+              {/* New capabilities */}
+              <div>
+                <h3 className="font-display font-bold text-foreground text-lg mb-6 flex items-center gap-2">
+                  <span className="text-secondary">◐</span> Integra e Adiciona Inteligência
+                </h3>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {capabilities.map((c, i) => (
+                    <Card key={i} className="border-l-2 border-l-primary border-border">
+                      <CardContent className="p-4 space-y-2">
+                        <c.icon className="h-6 w-6 text-secondary" />
+                        <h5 className="font-semibold text-foreground">{c.title}</h5>
+                        <p className="text-sm text-muted-foreground">{c.desc}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Bottom benefits */}
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Card className="border-l-4 border-l-primary border-border">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h4 className="font-display font-bold text-foreground">Baixo Risco Político</h4>
+                <p className="text-sm text-muted-foreground">Sem "virada de chave" traumática. O atendimento não para durante a implantação.</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-border shadow-sm">
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="h-10 w-10 rounded-full bg-secondary/10 flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="h-5 w-5 text-secondary" />
+              </div>
+              <div>
+                <h4 className="font-display font-bold text-foreground">Alta Visibilidade</h4>
+                <p className="text-sm text-muted-foreground">Resultados rápidos e perceptíveis para a população em curto prazo.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Segurança e Conformidade ─────────────────────────────
+function SecuritySection() {
+  const items = [
+    { icon: ListChecks, title: "LGPD & Conformidade", badge: "100% Adequado", badgeColor: "bg-primary/10 text-primary", desc: "Total aderência à Lei Geral de Proteção de Dados (Lei nº 13.709/2018). Tratamento de dados com bases legais claras, anonimização para relatórios estatísticos e respeito aos direitos dos titulares.", tags: ["Consentimento", "Finalidade"] },
+    { icon: Lock, title: "Dados Criptografados", badge: "Militar", badgeColor: "bg-secondary/10 text-secondary", desc: "Segurança técnica avançada. Todos os dados são criptografados tanto em trânsito (TLS 1.3) quanto em repouso (AES-256).", tags: ["End-to-End", "SSL/TLS"] },
+    { icon: Server, title: "Hospedagem Segura", badge: "Tier III", badgeColor: "bg-muted text-muted-foreground", desc: "Infraestrutura em nuvem certificada (ISO 27001), com redundância geográfica e backups automáticos. Alta disponibilidade (SLA 99.9%).", tags: ["ISO 27001", "SLA 99.9%"] },
+    { icon: ScanEye, title: "Acesso Auditável", badge: "Rastreável", badgeColor: "bg-amber-50 text-amber-700", desc: "Governança total. O sistema mantém logs imutáveis de todas as ações: quem acessou, quando acessou e qual dado foi visualizado.", tags: ["Logs", "Governança"] },
+  ];
+
+  return (
+    <section className="py-20 md:py-28 bg-background">
+      <div className="container">
+        <SectionHeader subtitle="Proteção de Dados" title="Segurança e Conformidade" />
+
+        <p className="text-lg text-muted-foreground mb-12 max-w-4xl">
+          A infraestrutura do Programa Fila Zero Saúde foi desenhada priorizando a <strong className="text-foreground">privacidade do paciente</strong> e a <strong className="text-foreground">soberania dos dados municipais</strong>, atendendo aos mais rigorosos padrões legais.
+        </p>
+
+        <div className="grid sm:grid-cols-2 gap-6">
+          {items.map((item, i) => (
+            <Card key={i} className="border-border shadow-sm">
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="h-12 w-12 rounded-xl bg-accent flex items-center justify-center">
+                    <item.icon className="h-6 w-6 text-accent-foreground" />
+                  </div>
+                  <span className={`${item.badgeColor} text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider`}>
+                    {item.badge}
+                  </span>
+                </div>
+                <h4 className="font-display font-bold text-foreground text-lg">{item.title}</h4>
+                <p className="text-sm text-muted-foreground">{item.desc}</p>
+                <div className="flex gap-2">
+                  {item.tags.map((tag, j) => (
+                    <span key={j} className="border border-border text-muted-foreground text-xs px-3 py-1 rounded-full">{tag}</span>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── O Ganho Político ─────────────────────────────────────
+function PoliticalGainSection() {
+  const outcomes = [
+    { icon: Newspaper, title: "Manchete Positiva", desc: 'Notícia de impacto na imprensa local e regional, mudando a pauta de "reclamação" para "solução".' },
+    { icon: Mic, title: "Discurso Forte", desc: "Argumento técnico irrefutável para entrevistas, debates e prestação de contas nas redes sociais." },
+    { icon: CircleCheckBig, title: "Plano Cumprido", desc: "Validação de promessa de campanha com entrega mensurável antes do final do mandato.", highlight: true },
+  ];
+
+  return (
+    <section className="py-20 md:py-28 bg-muted/30">
+      <div className="container">
+        <SectionHeader subtitle="Resultados & Narrativa" title="O Ganho Político" />
+
+        <div className="max-w-3xl mx-auto text-center mb-12">
+          <span className="inline-block bg-muted text-foreground px-4 py-1.5 rounded-full text-sm font-semibold mb-6">O Prefeito Anuncia</span>
+
+          <div className="relative bg-muted/50 border border-border rounded-2xl p-8 md:p-12">
+            <Quote className="absolute top-4 left-6 h-10 w-10 text-muted-foreground/20" />
+            <Quote className="absolute bottom-4 right-6 h-10 w-10 text-muted-foreground/20 rotate-180" />
+            <p className="font-display text-2xl md:text-3xl text-foreground leading-relaxed">
+              Em <span className="text-primary font-bold">6 meses</span> reduzimos a fila de especialidades em <span className="bg-primary/10 text-primary font-extrabold px-2 py-1 rounded-lg">28%</span>.
+            </p>
+          </div>
+
+          <ArrowDown className="h-6 w-6 text-muted-foreground mx-auto my-6" />
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Isso se transforma em:</p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          {outcomes.map((o, i) => (
+            <Card key={i} className={`border-border shadow-sm ${o.highlight ? 'border-t-4 border-t-primary' : ''}`}>
+              <CardContent className="p-6 text-center space-y-4">
+                <div className={`h-14 w-14 rounded-full mx-auto flex items-center justify-center ${o.highlight ? 'bg-primary text-primary-foreground' : 'bg-secondary/10 text-secondary'}`}>
+                  <o.icon className="h-7 w-7" />
+                </div>
+                <h4 className="font-display font-bold text-foreground">{o.title}</h4>
+                <p className="text-sm text-muted-foreground">{o.desc}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Projeção de Impacto Local ────────────────────────────
+function LocalImpactSection() {
+  const chartData = [
+    { name: "Hoje (Cenário Atual)", dias: 90, fill: "hsl(0, 84%, 60%)" },
+    { name: "Em 6 Meses", dias: 60, fill: "hsl(40, 90%, 55%)" },
+    { name: "Em 12 Meses", dias: 45, fill: "hsl(160, 68%, 40%)" },
+  ];
+
+  return (
+    <section className="py-20 md:py-28 bg-background">
+      <div className="container">
+        <SectionHeader subtitle="Simulação Prática" title="Projeção de Impacto Local" />
+
+        <div className="grid lg:grid-cols-[1fr_2fr] gap-12 items-start">
+          {/* Scenario */}
+          <Card className="border-l-4 border-l-secondary border-border">
+            <CardContent className="p-8 space-y-6">
+              <h3 className="font-display font-bold text-foreground text-lg flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-secondary" /> Cenário Base
+              </h3>
+
+              <div>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">Município (Simulação)</p>
+                <p className="flex items-center gap-2 mt-1">
+                  <Users className="h-5 w-5 text-muted-foreground" />
+                  <span className="font-display text-3xl font-extrabold text-foreground">120.000</span>
+                  <span className="text-sm text-muted-foreground">habitantes</span>
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">Especialidade Crítica</p>
+                <p className="font-display font-bold text-foreground text-lg mt-1 flex items-center gap-2">
+                  <Stethoscope className="h-5 w-5 text-muted-foreground" /> Ortopedia
+                </p>
+                <p className="text-destructive text-sm font-semibold flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" /> Fila de 1.200 pacientes
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">Situação Atual</p>
+                <p className="flex items-center gap-2 mt-1">
+                  <Clock className="h-5 w-5 text-destructive" />
+                  <span className="font-display text-3xl font-extrabold text-destructive">90 Dias</span>
+                </p>
+                <p className="text-sm text-muted-foreground">Tempo médio de espera para 1ª consulta</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Chart */}
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-display font-bold text-foreground text-lg">Redução do Tempo de Espera (Previsão)</h3>
+              <span className="border border-border text-secondary text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                <TrendingUp className="h-3 w-3" /> Meta: Eficiência Máxima
+              </span>
+            </div>
+
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} barSize={80}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} label={{ value: 'Dias de Espera', angle: -90, position: 'insideLeft', style: { fontSize: 12 } }} />
+                  <Bar dataKey="dias" radius={[8, 8, 0, 0]}>
+                    {chartData.map((entry, index) => (
+                      <Cell key={index} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="flex items-center justify-end mt-4">
+              <span className="border-2 border-primary text-primary font-display font-bold text-xl px-4 py-2 rounded-xl">
+                -50% <span className="text-xs uppercase tracking-wider font-normal">em 12 meses</span>
+              </span>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4 mt-6">
+              <Card className="border-border bg-secondary/5">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <span className="font-display text-2xl font-bold text-secondary">6</span>
+                  <div>
+                    <p className="text-xs font-bold text-secondary uppercase">Curto Prazo (6 Meses)</p>
+                    <p className="text-sm text-foreground">Redução para <strong className="text-primary">60 dias</strong></p>
+                    <p className="text-xs text-muted-foreground">Otimização de agenda e triagem</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-border bg-primary/5">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <span className="font-display text-2xl font-bold text-primary">12</span>
+                  <div>
+                    <p className="text-xs font-bold text-primary uppercase">Médio Prazo (1 Ano)</p>
+                    <p className="text-sm text-foreground">Redução para <strong className="text-primary">45 dias</strong></p>
+                    <p className="text-xs text-muted-foreground">Estabilização do fluxo inteligente</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Visão de Longo Prazo ─────────────────────────────────
+function VisionSection() {
+  const pillars = [
+    { icon: BarChart3, title: "Saúde Baseada em Dados", desc: 'Decisões de gestão tomadas com inteligência em tempo real, eliminando o "achismo" e direcionando recursos para onde salvam mais vidas.' },
+    { icon: HeartPulse, title: "Atenção Básica Resolutiva", desc: "Fortalecimento das UBSs com suporte diagnóstico rápido, reduzindo a pressão sobre hospitais e especialidades." },
+    { icon: Globe, title: "Referência Nacional", desc: "Município reconhecido como modelo de inovação em gestão de saúde pública no país." },
+    { icon: Handshake, title: "Saúde como Legado", desc: "Construção de uma rede de saúde que transcende mandatos, com processos inteligentes e sustentáveis." },
+  ];
+
+  return (
+    <section className="py-20 md:py-28 bg-muted/30">
+      <div className="container">
+        <div className="grid lg:grid-cols-2 gap-12 items-start">
+          <div>
+            <SectionHeader subtitle="O Legado da Gestão" title="Visão de Longo Prazo" />
+            <div className="w-16 h-1.5 rounded-full bg-primary mb-8" />
+            <p className="text-lg text-muted-foreground mb-10 leading-relaxed">
+              Mais do que reduzir filas hoje, o Programa Fila Zero Saúde planta as bases para um sistema de saúde pública moderno, humano e eficiente.
+            </p>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              {pillars.map((p, i) => (
+                <Card key={i} className="border-t-2 border-t-secondary border-border">
+                  <CardContent className="p-5 space-y-3">
+                    <div className="h-10 w-10 rounded-full bg-secondary/10 flex items-center justify-center">
+                      <p.icon className="h-5 w-5 text-secondary" />
+                    </div>
+                    <h4 className="font-display font-bold text-foreground">{p.title}</h4>
+                    <p className="text-sm text-muted-foreground">{p.desc}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* Right - Quote & CTA */}
+          <div className="space-y-6 lg:pt-20">
+            <Card className="bg-secondary text-secondary-foreground border-0 shadow-lg">
+              <CardContent className="p-8 space-y-6">
+                <h3 className="font-display text-2xl font-bold">A Referência do Futuro</h3>
+                <p className="opacity-90 leading-relaxed italic">
+                  "Transformar a dificuldade de hoje no exemplo de amanhã. Este é o compromisso de uma gestão que olha para as pessoas."
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-foreground text-background border-0 shadow-lg">
+              <CardContent className="p-8 space-y-4">
+                <p className="text-xs uppercase tracking-widest text-primary">Próximo Passo</p>
+                <h3 className="font-display text-2xl font-bold">Iniciar Diagnóstico</h3>
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                  <p className="text-sm opacity-80">Cronograma pronto para execução imediata em 2026.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── CTA ──────────────────────────────────────────────────
 function CTASection() {
   return (
@@ -718,6 +1194,12 @@ export default function LandingPage() {
       <CitizenImpactSection />
       <ManagerImpactSection />
       <ImplementationSection />
+      <PricingSection />
+      <IntegrationSection />
+      <SecuritySection />
+      <PoliticalGainSection />
+      <LocalImpactSection />
+      <VisionSection />
       <CTASection />
       <Footer />
     </div>
