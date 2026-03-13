@@ -241,6 +241,7 @@ const mockIntake4: ClinicalIntake = {
     narrative: 'Paciente masculino, 48 anos, obeso grau I, com lombalgia crônica há 4 meses. Sem melhora com AINES e relaxante muscular. Refere irradiação para membro inferior direito. Sem déficit motor. Trabalha como pedreiro.',
     structuredFindings: ['Lombalgia crônica há 4 meses', 'Irradiação para MID (ciatalgia)', 'Sem resposta a tratamento conservador', 'Atividade laboral de risco'],
     suspectedConditions: ['Hérnia discal lombar', 'Espondiloartrose', 'Síndrome do piriforme'],
+    cid10Codes: ['M51.1', 'M47.8', 'G57.0'],
     relevantHistory: 'Obesidade grau I. Trabalho com esforço físico pesado.', riskFactors: ['Obesidade', 'Atividade laboral pesada', 'Cronicidade'],
     generatedAt: daysAgo(15),
   },
