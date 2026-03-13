@@ -27,6 +27,7 @@ export const mockClinicalSummary: ClinicalSummary = {
     'Angina Instável',
     'Dissecção Aórtica (menos provável)',
   ],
+  cid10Codes: ['I20.0', 'I21.9', 'I71.0'],
   relevantHistory: 'HAS em tratamento. Sem DM conhecida. Sem internações recentes. Mãe faleceu de IAM aos 58 anos.',
   riskFactors: ['Hipertensão', 'Idade > 60', 'Histórico familiar de DAC', 'Sexo feminino pós-menopausa'],
   generatedAt: hoursAgo(1),
