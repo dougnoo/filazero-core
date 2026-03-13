@@ -1,60 +1,61 @@
 /**
  * Cases Page — Central case management module.
  *
- * Links all flows: intake, clinical result, care journey,
- * professional review, and manager dashboard.
+ * Reads from CaseStore (single source of truth).
+ * Links to case detail, clinical review, and dashboard.
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { UserRole } from '@/domain/enums/user-role';
 import { CasesTable } from '@/features/cases/CasesTable';
 import { CaseFiltersBar } from '@/features/cases/CaseFilters';
-import { LoadingState, EmptyState, ErrorState, UrgentBanner } from '@/components/shared/DataState';
-import { getCases, getCaseCountsByStatus, type CaseFilters } from '@/services/case-service';
+import { EmptyState, UrgentBanner } from '@/components/shared/DataState';
+import { useCaseStore } from '@/contexts/CaseStore';
 import { CaseStatus } from '@/domain/enums/case-status';
 import { RiskLevel } from '@/domain/enums/risk-level';
 import type { Case } from '@/domain/types/case';
+import type { CaseFilters } from '@/services/case-service';
 import { ClipboardList } from 'lucide-react';
 
 export default function CasesPage() {
   const navigate = useNavigate();
-  const [cases, setCases] = useState<Case[]>([]);
-  const [counts, setCounts] = useState<Record<CaseStatus, number> | null>(null);
+  const { cases, dashboard } = useCaseStore();
   const [filters, setFilters] = useState<CaseFilters>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const [casesData, countsData] = await Promise.all([
-        getCases(filters),
-        getCaseCountsByStatus(),
-      ]);
-      setCases(casesData);
-      setCounts(countsData);
-    } catch (err) {
-      console.error('[Cases] Failed to load:', err);
-      setError('Não foi possível carregar os casos.');
-    } finally {
-      setLoading(false);
+  const filteredCases = useMemo(() => {
+    let results = [...cases];
+
+    if (filters.status) {
+      results = results.filter((c) => c.status === filters.status);
     }
-  }, [filters]);
+    if (filters.riskLevel) {
+      results = results.filter((c) => c.riskLevel === filters.riskLevel);
+    }
+    if (filters.reviewStatus) {
+      results = results.filter((c) => c.reviewStatus === filters.reviewStatus);
+    }
+    if (filters.search) {
+      const q = filters.search.toLowerCase();
+      results = results.filter(
+        (c) =>
+          c.patient.fullName.toLowerCase().includes(q) ||
+          c.chiefComplaint.toLowerCase().includes(q) ||
+          c.id.toLowerCase().includes(q),
+      );
+    }
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+    results.sort((a, b) => b.priorityScore - a.priorityScore);
+    return results;
+  }, [cases, filters]);
 
-  const urgentCount = cases.filter(
+  const urgentCount = filteredCases.filter(
     (c) => c.riskLevel === RiskLevel.EMERGENCY || c.riskLevel === RiskLevel.VERY_URGENT,
   ).length;
 
   const handleSelectCase = (caseItem: Case) => {
-    // Navigate to clinical review with the journey context
-    navigate(`/revisao-clinica`);
+    navigate(`/casos/${caseItem.id}`);
   };
 
   return (
@@ -64,7 +65,7 @@ export default function CasesPage() {
         <div>
           <h1 className="font-display text-2xl font-bold">Central de Casos</h1>
           <p className="text-sm text-muted-foreground">
-            Visão unificada de todos os casos clínicos da unidade
+            {dashboard.totalActive} ativos · {dashboard.pendingReviews} aguardando revisão · {dashboard.totalCompleted} concluídos
           </p>
         </div>
 
@@ -79,15 +80,11 @@ export default function CasesPage() {
         <CaseFiltersBar
           filters={filters}
           onChange={setFilters}
-          counts={counts ?? undefined}
+          counts={dashboard.byStatus}
         />
 
         {/* Content */}
-        {error ? (
-          <ErrorState description={error} onRetry={loadData} />
-        ) : loading ? (
-          <LoadingState message="Carregando casos..." />
-        ) : cases.length === 0 ? (
+        {filteredCases.length === 0 ? (
           <EmptyState
             icon={ClipboardList}
             title="Nenhum caso encontrado"
@@ -98,7 +95,7 @@ export default function CasesPage() {
             }
           />
         ) : (
-          <CasesTable cases={cases} onSelectCase={handleSelectCase} />
+          <CasesTable cases={filteredCases} onSelectCase={handleSelectCase} />
         )}
       </div>
     </AppShell>

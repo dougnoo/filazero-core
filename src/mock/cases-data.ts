@@ -22,6 +22,10 @@ export const mockPatients: Patient[] = [
   { id: 'c-5', fullName: 'Francisca Souza Pereira', cpf: '567.890.123-44', birthDate: '1970-07-08', gender: 'F' },
   { id: 'c-6', fullName: 'Roberto Nascimento', cpf: '678.901.234-55', birthDate: '1967-12-25', gender: 'M', chronicConditions: ['Diabetes tipo 2', 'Hipertensão'] },
   { id: 'c-7', fullName: 'Dona Tereza Almeida', cpf: '789.012.345-66', birthDate: '1958-02-14', gender: 'F' },
+  // Additional demo scenario patients
+  { id: 'c-8', fullName: 'Lucas Martins Costa', cpf: '890.123.456-77', birthDate: '2002-09-05', gender: 'M' },
+  { id: 'c-9', fullName: 'Sandra Regina Dias', cpf: '901.234.567-88', birthDate: '1985-04-18', gender: 'F', chronicConditions: ['Asma'] },
+  { id: 'c-10', fullName: 'José Antônio Ribeiro', cpf: '012.345.678-99', birthDate: '1950-01-22', gender: 'M', chronicConditions: ['DPOC', 'Cardiopatia'] },
 ];
 
 const patientsMap: Record<string, Patient> = Object.fromEntries(mockPatients.map((p) => [p.id, p]));
@@ -73,3 +77,71 @@ export const mockCases: Case[] = mockCareJourneys.map((journey) => {
     resolvedAt: journey.resolvedAt,
   };
 });
+
+// ─── Additional demo scenario cases (not tied to journeys) ───
+
+const additionalCases: Case[] = [
+  // Low complexity - resolved quickly
+  {
+    id: 'case-demo-low',
+    patient: patientsMap['c-8']!,
+    status: CaseStatus.COMPLETED,
+    riskLevel: RiskLevel.NON_URGENT,
+    priorityScore: 15,
+    chiefComplaint: 'Resfriado comum há 3 dias',
+    suggestedDestination: undefined,
+    assignedUnitId: 'u-1',
+    assignedUnitName: 'UBS Vila Esperança',
+    reviewedBy: 'Dra. Patrícia Lima',
+    reviewStatus: 'completed',
+    referralDecision: 'RESOLVE_PRIMARY',
+    aiConfidence: 96,
+    intakeId: 'ci-1',
+    journeyId: 'cj-3',
+    createdAt: daysAgo(2),
+    updatedAt: daysAgo(1),
+    resolvedAt: daysAgo(1),
+  },
+  // Medium complexity - awaiting exams
+  {
+    id: 'case-demo-med',
+    patient: patientsMap['c-9']!,
+    status: CaseStatus.EXAMS_REQUESTED,
+    riskLevel: RiskLevel.LESS_URGENT,
+    priorityScore: 45,
+    chiefComplaint: 'Crise asmática recorrente com piora noturna',
+    suggestedDestination: 'Pneumologia',
+    assignedUnitId: 'u-2',
+    assignedUnitName: 'UBS Jardim Primavera',
+    reviewedBy: undefined,
+    reviewStatus: 'in_progress',
+    referralDecision: 'REFER_SPECIALIST',
+    aiConfidence: 74,
+    intakeId: 'ci-5',
+    journeyId: 'cj-5',
+    createdAt: daysAgo(4),
+    updatedAt: daysAgo(1),
+  },
+  // High risk - operational bottleneck
+  {
+    id: 'case-demo-high',
+    patient: patientsMap['c-10']!,
+    status: CaseStatus.AWAITING_REVIEW,
+    riskLevel: RiskLevel.VERY_URGENT,
+    priorityScore: 88,
+    chiefComplaint: 'Dispneia progressiva em paciente com DPOC e cardiopatia',
+    suggestedDestination: 'Cardiologia',
+    assignedUnitId: 'u-1',
+    assignedUnitName: 'UBS Vila Esperança',
+    reviewedBy: undefined,
+    reviewStatus: 'pending',
+    referralDecision: 'REFER_EMERGENCY',
+    aiConfidence: 91,
+    intakeId: 'ci-1',
+    journeyId: 'cj-1',
+    createdAt: hoursAgo(3),
+    updatedAt: hoursAgo(1),
+  },
+];
+
+mockCases.push(...additionalCases);
