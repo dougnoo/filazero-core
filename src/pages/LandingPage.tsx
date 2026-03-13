@@ -1358,6 +1358,7 @@ export default function LandingPage() {
       <AnimatedSection><PoliticalGainSection /></AnimatedSection>
       <AnimatedSection><LocalImpactSection /></AnimatedSection>
       <AnimatedSection><VisionSection /></AnimatedSection>
+      <AnimatedSection id="demo"><DemoSection /></AnimatedSection>
       <CTASection />
       <Footer />
     </div>
