@@ -20,7 +20,8 @@ export default function CitizenTriage() {
 
   return (
     <AppShell role={UserRole.CITIZEN}>
-      <div className="mx-auto h-[calc(100vh-4rem)] max-w-lg">
+      {/* h-[calc(100vh-3.5rem-3.5rem)] = viewport minus top header (56px) minus bottom nav (56px) */}
+      <div className="mx-auto h-[calc(100vh-7rem)] max-w-lg">
         <IntakeChat onComplete={setResult} />
       </div>
     </AppShell>
