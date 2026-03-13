@@ -7,6 +7,7 @@
 
 // trya-backend — REAL (Phase 7)
 export { ApiCaseService } from './case-service.api';
+export { ApiPatientService } from './patient-service.api';
 
 // trya-backend — stubs (future)
 export {
