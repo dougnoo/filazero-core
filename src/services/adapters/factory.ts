@@ -73,7 +73,7 @@ import {
 
 import { mockClinicalIntake } from '@/mock';
 
-// ─── API stub imports ───────────────────────────────────────────
+// ─── API imports ────────────────────────────────────────────────
 
 import {
   ApiCaseService,
@@ -86,6 +86,8 @@ import {
   ApiReferralService,
   ApiDashboardService,
 } from './api';
+
+import { ResilientCaseService } from './resilient-case-service';
 
 // ═══════════════════════════════════════════════════════════════════
 // §1 — Mock Adapters (delegate to existing service functions)
