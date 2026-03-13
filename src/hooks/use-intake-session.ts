@@ -152,7 +152,7 @@ export function useIntakeSession(): IntakeSessionState & IntakeSessionActions {
     setProcessingStage(null);
     setProgress(0);
 
-    if (isMockMode()) {
+    if (isChatMockMode()) {
       // Mock mode: initialize with greeting
       const sid = `mock-${Date.now()}`;
       setSessionId(sid);
