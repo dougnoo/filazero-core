@@ -221,6 +221,7 @@ export interface ClinicalSummaryDTO {
   narrative: string;
   structuredFindings: string[];
   suspectedConditions: string[];
+  cid10Codes?: string[];
   relevantHistory: string;
   riskFactors: string[];
   generatedAt: string;
