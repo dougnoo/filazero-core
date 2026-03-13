@@ -23,7 +23,7 @@ export async function getCitizenJourneys(
   citizenId: string,
   params?: JourneyListParams,
 ): Promise<CareJourney[]> {
-  if (!isMockMode()) {
+  if (!isTryaMockMode()) {
     const query = new URLSearchParams({ status: params?.status ?? 'active' });
     const { data } = await tryaApi.get<CareJourney[]>(`/citizens/${citizenId}/journeys?${query}`);
     return data;
