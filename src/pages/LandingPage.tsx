@@ -1225,7 +1225,7 @@ function VisionSection() {
 // ─── CTA ──────────────────────────────────────────────────
 function CTASection() {
   return (
-    <section className="py-20 md:py-28 bg-secondary text-secondary-foreground">
+    <section id="contato" className="py-20 md:py-28 bg-secondary text-secondary-foreground">
       <div className="container text-center space-y-8 max-w-3xl">
         <h2 className="font-display text-3xl md:text-5xl font-extrabold">
           Transforme a saúde do seu município
