@@ -123,7 +123,7 @@ function mapJourneyStatus(raw?: string): CareJourneyStatus {
   if (Object.values(CareJourneyStatus).includes(upper as CareJourneyStatus)) {
     return upper as CareJourneyStatus;
   }
-  return CareJourneyStatus.INTAKE_STARTED;
+  return CareJourneyStatus.INTAKE;
 }
 
 function mapStepStatus(raw?: string): CareStepStatus {
