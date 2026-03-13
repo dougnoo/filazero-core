@@ -18,7 +18,7 @@ import type {
 } from '@/domain/contracts/trya-backend';
 import { mockCareJourneys, mockClinicalIntake } from '@/lib/mock-clinical-data';
 import { CareJourneyStatus } from '@/domain/enums/care-journey-status';
-import { isMockMode } from '@/lib/env';
+import { isTryaMockMode } from '@/lib/env';
 import { tryaApi } from '@/lib/api-client';
 
 // ─── Public types (re-exported for UI consumption) ──────────────
