@@ -36,6 +36,16 @@ export default function CaseDetailPage() {
 
   const caseItem = id ? getCase(id) : undefined;
 
+  const [journey, setJourney] = useState<CareJourney | null>(null);
+
+  useEffect(() => {
+    if (caseItem?.journeyId) {
+      services.journeys.getJourneyById(caseItem.journeyId)
+        .then((j) => setJourney(j))
+        .catch(() => setJourney(null));
+    }
+  }, [caseItem?.journeyId]);
+
   if (!caseItem) {
     return (
       <AppShell role={UserRole.PROFESSIONAL}>
@@ -50,7 +60,6 @@ export default function CaseDetailPage() {
   }
 
   const intake = getIntakeForCase(caseItem);
-  const journey = mockCareJourneys.find((j) => j.id === caseItem.journeyId);
   const statusCfg = caseStatusConfig[caseItem.status];
   const isUrgent = caseItem.riskLevel === RiskLevel.EMERGENCY || caseItem.riskLevel === RiskLevel.VERY_URGENT;
 
