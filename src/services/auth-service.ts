@@ -232,7 +232,7 @@ class CognitoAuthService implements IAuthService {
 // ─── Factory ────────────────────────────────────────────────────
 
 export function createAuthService(): IAuthService {
-  if (env.ENABLE_REAL_AUTH && env.COGNITO_POOL_ID && env.COGNITO_CLIENT_ID) {
+  if (!isAuthMockMode() && env.COGNITO_POOL_ID && env.COGNITO_CLIENT_ID) {
     return new CognitoAuthService();
   }
   return new MockAuthService();
