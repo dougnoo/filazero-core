@@ -11,7 +11,7 @@
 import type { CareJourney } from '@/domain/types/care-journey';
 import type { ClinicalIntake } from '@/domain/types/clinical-intake';
 import type { JourneyListParams } from '@/domain/contracts/trya-backend';
-import { mockCareJourneys, mockClinicalIntake } from '@/lib/mock-clinical-data';
+import { mockCareJourneys, mockIntakesMap, mockClinicalIntake } from '@/lib/mock-clinical-data';
 import { isTryaMockMode } from '@/lib/env';
 import { tryaApi } from '@/lib/api-client';
 
