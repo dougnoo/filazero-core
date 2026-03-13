@@ -1,23 +1,26 @@
 /**
- * Service Adapter Interfaces — Phase 5: Backend Integration Preparation.
+ * Service Adapter Interfaces — Phase 6: Real Backend Alignment.
  *
- * These interfaces define the contracts that both Mock and API implementations
- * must satisfy. The factory in ./factory.ts selects the correct implementation
- * based on DEMO_MODE and granular feature flags.
+ * Interfaces are now grouped by their target Trya backend module:
  *
- * ─── Entity Mapping ────────────────────────────────────────────────
- *
- * Frontend Entity    → Backend Endpoint (trya-backend / platform-backend)
- * ─────────────────────────────────────────────────────────────────────
- * Case               → GET  /api/cases, GET /api/cases/:id
- * Patient            → embedded in Case (denormalized)
- * Intake             → POST /api/intakes, GET /api/intakes/:id
- * Journey            → GET  /api/citizens/:id/journeys, GET /api/journeys/:id
- * ClinicalPackage    → GET  /api/professional/clinical-packages
- * Validation         → POST /api/professional/validate
- * Referral           → embedded in ValidationRequest (action-based)
- * Exam               → embedded in ClinicalIntake.examSuggestions
- * Dashboard          → GET  /api/manager/dashboard
+ * ┌─────────────────────────┬────────────────────────────────────────┐
+ * │ Backend Module          │ Service Interfaces                     │
+ * ├─────────────────────────┼────────────────────────────────────────┤
+ * │ trya-backend            │ ICaseService, IPatientService,         │
+ * │ (handslab-trya-backend) │ IJourneyService, IClinicalReviewService,│
+ * │                         │ IExamService                           │
+ * ├─────────────────────────┼────────────────────────────────────────┤
+ * │ chat-backend            │ IIntakeService                         │
+ * │ (handslab-trya-chat-    │ (WebSocket session + HTTP endpoints)   │
+ * │  backend)               │                                        │
+ * ├─────────────────────────┼────────────────────────────────────────┤
+ * │ chat-agents             │ IClinicalSummaryService,               │
+ * │ (handslab-trya-chat-    │ IReferralService                       │
+ * │  agents)                │ (AI inference — called via chat-backend)│
+ * ├─────────────────────────┼────────────────────────────────────────┤
+ * │ platform-backend        │ IDashboardService                      │
+ * │ (handslab-trya-platform)│ (NOT used in MVP — manager analytics)  │
+ * └─────────────────────────┴────────────────────────────────────────┘
  *
  * ─── Auth Headers (injected by api-client.ts) ──────────────────────
  *   Authorization: Bearer <JWT>
@@ -25,9 +28,14 @@
  *   X-Unit-Id: <uuid>
  */
 
-import type { Case } from '@/domain/types/case';
+import type { Case, Patient } from '@/domain/types/case';
 import type { CareJourney } from '@/domain/types/care-journey';
-import type { ClinicalIntake } from '@/domain/types/clinical-intake';
+import type {
+  ClinicalIntake,
+  ClinicalSummary,
+  ExamSuggestion,
+  ReferralRecommendation,
+} from '@/domain/types/clinical-intake';
 import type { TriageMessage } from '@/domain/types/triage';
 import type {
   ValidationRequest,
@@ -48,20 +56,11 @@ import type { IntakePhase } from '@/services/intake-service';
 import type { CaseStatus } from '@/domain/enums/case-status';
 
 // ═══════════════════════════════════════════════════════════════════
-// §1 — Case Service Adapter
+// §1 — trya-backend: Case Service
+// Backend: handslab-trya-backend
+// Endpoints: GET /api/cases, GET /api/cases/:id, GET /api/cases/counts
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * ICaseService — Central case CRUD and queries.
- *
- * Backend: trya-backend
- * Endpoints:
- *   GET  /api/cases              → list with filters
- *   GET  /api/cases/:id          → single case
- *   GET  /api/cases/counts       → counts by status
- *   PATCH /api/cases/:id/status  → update status
- *   PATCH /api/cases/:id/priority → update priority
- */
 export interface ICaseService {
   getCases(filters?: CaseFilters): Promise<Case[]>;
   getCaseById(caseId: string): Promise<Case | null>;
@@ -69,22 +68,30 @@ export interface ICaseService {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// §2 — Intake Service Adapter
+// §2 — trya-backend: Patient Service
+// Backend: handslab-trya-backend
+// Endpoints:
+//   GET  /api/patients/:id            → patient details
+//   GET  /api/patients/search?cpf=X   → lookup by CPF
+//   GET  /api/patients/:id/history    → clinical history
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * IIntakeService — Clinical intake conversation and result generation.
- *
- * Backend: chat-backend (WebSocket + HTTP)
- * Endpoints:
- *   POST /api/clinical-chat      → send message (streaming SSE)
- *   POST /api/clinical-result    → generate clinical result from conversation
- *
- * The chat-backend delegates to LangChain agents:
- *   - OnboardingAgent: greeting + identification
- *   - SymptomAgent: structured symptom collection
- *   - ResultAgent: clinical summary + risk classification
- */
+export interface IPatientService {
+  getPatientById(patientId: string): Promise<Patient | null>;
+  searchPatientByCPF(cpf: string): Promise<Patient | null>;
+  getPatientClinicalHistory(patientId: string): Promise<ClinicalIntake[]>;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// §3 — chat-backend: Intake Service
+// Backend: handslab-trya-chat-backend (WebSocket + HTTP)
+// Endpoints:
+//   WS   /ws/intake/:sessionId        → real-time chat session
+//   POST /api/clinical-chat           → send message (SSE streaming)
+//   POST /api/clinical-result         → generate clinical result
+// Delegates to chat-agents for AI inference.
+// ═══════════════════════════════════════════════════════════════════
+
 export interface IIntakeService {
   sendMessage(
     intakeId: string,
@@ -101,18 +108,14 @@ export interface IIntakeService {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// §3 — Journey Service Adapter
+// §4 — trya-backend: Journey Service
+// Backend: handslab-trya-backend
+// Endpoints:
+//   GET /api/citizens/:citizenId/journeys   → list journeys
+//   GET /api/journeys/:journeyId            → single journey
+//   GET /api/intakes/:intakeId              → intake details
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * IJourneyService — Citizen care journey tracking.
- *
- * Backend: trya-backend
- * Endpoints:
- *   GET /api/citizens/:citizenId/journeys          → list (with optional status filter)
- *   GET /api/journeys/:journeyId                   → single journey
- *   GET /api/intakes/:intakeId                     → intake details for a journey
- */
 export interface IJourneyService {
   getCitizenJourneys(
     citizenId: string,
@@ -127,22 +130,14 @@ export interface IJourneyService {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// §4 — Clinical Review Service Adapter
+// §5 — trya-backend: Clinical Review Service
+// Backend: handslab-trya-backend
+// Endpoints:
+//   GET  /api/professional/clinical-packages
+//   GET  /api/professional/clinical-packages/:id
+//   POST /api/professional/validate
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * IClinicalReviewService — Professional clinical package review & validation.
- *
- * Backend: trya-backend
- * Endpoints:
- *   GET  /api/professional/clinical-packages           → list (pending/all)
- *   GET  /api/professional/clinical-packages/:id       → single package
- *   POST /api/professional/validate                    → submit validation action
- *
- * Validation actions (see ValidationActionType):
- *   APPROVE_EXAMS, REJECT_EXAMS, APPROVE_REFERRAL, REJECT_REFERRAL,
- *   REQUEST_MORE_INFO, RESOLVE_PRIMARY, CHANGE_PRIORITY, REDIRECT_CASE
- */
 export interface IClinicalReviewService {
   getPendingPackages(
     params?: Omit<ClinicalPackageListParams, 'status'>,
@@ -158,19 +153,91 @@ export interface IClinicalReviewService {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// §5 — Dashboard Service Adapter
+// §6 — chat-agents: Clinical Summary Service
+// Backend: handslab-trya-chat-agents (via chat-backend proxy)
+// The chat-agents system generates structured clinical output:
+//   - ClinicalSummary (narrative + findings)
+//   - CID-10 code suggestions
+//   - Risk classification
+// This is invoked indirectly via chat-backend's /api/clinical-result.
+// Direct endpoint (internal): POST /api/agents/summarize
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * IDashboardService — Manager operational intelligence.
- *
- * Backend: platform-backend
- * Endpoints:
- *   GET /api/manager/dashboard                → full aggregated dashboard
- *   GET /api/manager/dashboard/kpis           → KPIs only
- *   GET /api/manager/dashboard/bottlenecks    → bottlenecks only
- *   GET /api/manager/dashboard/weekly-trend   → weekly trend chart data
- */
+export interface IClinicalSummaryService {
+  /** Generate a clinical summary from intake messages */
+  generateSummary(
+    intakeId: string,
+    messages: TriageMessage[],
+  ): Promise<ClinicalSummary>;
+
+  /** Re-generate summary with additional context */
+  regenerateSummary(
+    intakeId: string,
+    messages: TriageMessage[],
+    additionalContext?: string,
+  ): Promise<ClinicalSummary>;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// §7 — chat-agents: Referral Service
+// Backend: handslab-trya-chat-agents (via chat-backend proxy)
+// Generates referral recommendations using AI reasoning.
+// Internal endpoint: POST /api/agents/referral-decision
+// ═══════════════════════════════════════════════════════════════════
+
+export interface IReferralService {
+  /** Generate a referral recommendation from clinical data */
+  generateRecommendation(
+    intakeId: string,
+    summary: ClinicalSummary,
+    exams: ExamSuggestion[],
+  ): Promise<ReferralRecommendation>;
+
+  /** Recalculate recommendation after exam results */
+  recalculateAfterExams(
+    intakeId: string,
+    summary: ClinicalSummary,
+    completedExams: ExamSuggestion[],
+  ): Promise<ReferralRecommendation>;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// §8 — trya-backend + chat-agents: Exam Service
+// Backend: handslab-trya-backend (CRUD) + chat-agents (suggestions)
+// Endpoints:
+//   GET    /api/exams?intakeId=X           → list exams for intake
+//   PATCH  /api/exams/:examId/status       → update exam status
+//   POST   /api/agents/suggest-exams       → AI-suggested exams (via chat-agents)
+// ═══════════════════════════════════════════════════════════════════
+
+export interface IExamService {
+  /** List exams for a given intake */
+  getExamsForIntake(intakeId: string): Promise<ExamSuggestion[]>;
+
+  /** Update exam status (e.g. REQUESTED → COMPLETED) */
+  updateExamStatus(
+    examId: string,
+    status: ExamSuggestion['status'],
+    result?: string,
+  ): Promise<ExamSuggestion>;
+
+  /** AI-suggest exams based on clinical data (delegates to chat-agents) */
+  suggestExams(
+    intakeId: string,
+    summary: ClinicalSummary,
+  ): Promise<ExamSuggestion[]>;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// §9 — platform-backend: Dashboard Service
+// Backend: handslab-trya-platform-backend (NOT used in MVP1)
+// Endpoints:
+//   GET /api/manager/dashboard
+//   GET /api/manager/dashboard/kpis
+//   GET /api/manager/dashboard/bottlenecks
+//   GET /api/manager/dashboard/weekly-trend
+// ═══════════════════════════════════════════════════════════════════
+
 export interface IDashboardService {
   fetchDashboard(filters?: DashboardFilters): Promise<DashboardResponse>;
   fetchKPIs(filters?: DashboardFilters): Promise<KPIsResponse>;
@@ -179,8 +246,7 @@ export interface IDashboardService {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// §6 — Auth Service Adapter (already implemented in auth-service.ts)
+// §10 — Auth Service (already implemented in auth-service.ts)
 // ═══════════════════════════════════════════════════════════════════
 
-// Re-exported for completeness. See src/services/auth-service.ts → IAuthService.
 export type { IAuthService, AppSession, AppUser } from '@/services/auth-service';
