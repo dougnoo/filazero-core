@@ -86,17 +86,24 @@ export default function CareJourneyPage() {
   const [journeys, setJourneys] = useState<CareJourney[]>([]);
   const [intake, setIntake] = useState<ClinicalIntake | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showSummary, setShowSummary] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const data = await getCitizenJourneys('c-current');
-      setJourneys(data);
-      if (data.length > 0) {
-        const intakeData = await getIntakeForJourney(data[0].intakeId);
-        setIntake(intakeData);
+      try {
+        const data = await getCitizenJourneys('c-current');
+        setJourneys(data);
+        if (data.length > 0) {
+          const intakeData = await getIntakeForJourney(data[0].intakeId);
+          setIntake(intakeData);
+        }
+      } catch (err) {
+        console.error('[CareJourneyPage] Failed to load journeys:', err);
+        setError(err instanceof Error ? err.message : 'Erro ao carregar jornada.');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     })();
   }, []);
 
