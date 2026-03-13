@@ -48,11 +48,88 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from "recharts";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+// ─── Animated Section Wrapper ─────────────────────────────
+function AnimatedSection({ children, id }: { children: React.ReactNode; id?: string }) {
+  return (
+    <motion.div
+      id={id}
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// ─── Navbar ───────────────────────────────────────────────
+const navItems = [
+  { label: "Problema", href: "#problema" },
+  { label: "Solução", href: "#solucao" },
+  { label: "Como Funciona", href: "#como-funciona" },
+  { label: "Impacto", href: "#impacto" },
+  { label: "Implementação", href: "#implementacao" },
+  { label: "Preço", href: "#preco" },
+  { label: "Segurança", href: "#seguranca" },
+];
+
+function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-background/95 backdrop-blur-md shadow-sm border-b border-border" : "bg-transparent"}`}>
+      <div className="container flex items-center justify-between h-16">
+        <a href="#" className="font-display text-xl font-extrabold text-foreground">
+          Fila Zero <span className="text-primary">Saúde</span>
+        </a>
+
+        <div className="hidden lg:flex items-center gap-6">
+          {navItems.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {item.label}
+            </a>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            className="hidden sm:inline-flex border-border font-semibold"
+            onClick={() => navigate("/app")}
+          >
+            Ver Demo
+          </Button>
+          <Button size="sm" className="bg-primary text-primary-foreground font-semibold">
+            <a href="#contato">Agendar Reunião</a>
+          </Button>
+        </div>
+      </div>
+    </nav>
+  );
+}
 
 // ─── Hero ─────────────────────────────────────────────────
 function HeroSection() {
+  const navigate = useNavigate();
   return (
-    <section className="relative overflow-hidden bg-background min-h-[90vh] flex items-center">
+    <section id="hero" className="relative overflow-hidden bg-background min-h-[90vh] flex items-center pt-20">
       {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-accent/40 via-background to-secondary/5" />
       <div className="container relative z-10 py-16 md:py-24">
@@ -86,12 +163,14 @@ function HeroSection() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-base px-8 h-14 rounded-xl">
-                Agendar Apresentação
-                <ArrowRight className="ml-2 h-5 w-5" />
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-base px-8 h-14 rounded-xl" asChild>
+                <a href="#contato">
+                  Agendar Apresentação
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </a>
               </Button>
-              <Button size="lg" variant="outline" className="font-semibold text-base px-8 h-14 rounded-xl border-border">
-                Ver Proposta Completa
+              <Button size="lg" variant="outline" className="font-semibold text-base px-8 h-14 rounded-xl border-border" onClick={() => navigate("/app")}>
+                Ver Demo da Plataforma
               </Button>
             </div>
           </div>
@@ -1146,7 +1225,7 @@ function VisionSection() {
 // ─── CTA ──────────────────────────────────────────────────
 function CTASection() {
   return (
-    <section className="py-20 md:py-28 bg-secondary text-secondary-foreground">
+    <section id="contato" className="py-20 md:py-28 bg-secondary text-secondary-foreground">
       <div className="container text-center space-y-8 max-w-3xl">
         <h2 className="font-display text-3xl md:text-5xl font-extrabold">
           Transforme a saúde do seu município
@@ -1184,22 +1263,23 @@ function Footer() {
 // ─── Main ─────────────────────────────────────────────────
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-background font-body">
+    <div className="min-h-screen bg-background font-body scroll-smooth">
+      <Navbar />
       <HeroSection />
-      <ProblemSection />
-      <PoliticalCostSection />
-      <SolutionSection />
-      <HowItWorksSection />
-      <ImpactSection />
-      <CitizenImpactSection />
-      <ManagerImpactSection />
-      <ImplementationSection />
-      <PricingSection />
-      <IntegrationSection />
-      <SecuritySection />
-      <PoliticalGainSection />
-      <LocalImpactSection />
-      <VisionSection />
+      <AnimatedSection id="problema"><ProblemSection /></AnimatedSection>
+      <AnimatedSection><PoliticalCostSection /></AnimatedSection>
+      <AnimatedSection id="solucao"><SolutionSection /></AnimatedSection>
+      <AnimatedSection id="como-funciona"><HowItWorksSection /></AnimatedSection>
+      <AnimatedSection id="impacto"><ImpactSection /></AnimatedSection>
+      <AnimatedSection><CitizenImpactSection /></AnimatedSection>
+      <AnimatedSection><ManagerImpactSection /></AnimatedSection>
+      <AnimatedSection id="implementacao"><ImplementationSection /></AnimatedSection>
+      <AnimatedSection id="preco"><PricingSection /></AnimatedSection>
+      <AnimatedSection><IntegrationSection /></AnimatedSection>
+      <AnimatedSection id="seguranca"><SecuritySection /></AnimatedSection>
+      <AnimatedSection><PoliticalGainSection /></AnimatedSection>
+      <AnimatedSection><LocalImpactSection /></AnimatedSection>
+      <AnimatedSection><VisionSection /></AnimatedSection>
       <CTASection />
       <Footer />
     </div>
