@@ -40,7 +40,8 @@ export function AppShell({ children, role = UserRole.CITIZEN }: AppShellProps) {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const isCitizen = role === UserRole.CITIZEN;
-  const nav = role === UserRole.PROFESSIONAL ? professionalNav
+  const nav = role === UserRole.ADMIN ? adminNav
+    : role === UserRole.PROFESSIONAL ? professionalNav
     : role === UserRole.MANAGER ? managerNav
     : citizenNav;
 

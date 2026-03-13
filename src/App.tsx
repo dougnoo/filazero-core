@@ -49,6 +49,7 @@ const App = () => (
             <Route path="/login" element={<CitizenLogin />} />
             <Route path="/profissional/login" element={<ProfessionalLogin />} />
             <Route path="/gestor/login" element={<ManagerLogin />} />
+            <Route path="/admin/login" element={<ProfessionalLogin />} />
 
             {/* Citizen routes (protected) */}
             <Route path="/intake" element={
