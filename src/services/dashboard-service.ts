@@ -169,7 +169,7 @@ export async function fetchDashboardData(filters: DashboardFilters = {}): Promis
  * Fetch only KPIs (lighter payload for header widgets).
  */
 export async function fetchKPIs(filters: DashboardFilters = {}): Promise<DashboardKPIs> {
-  if (!isMockMode()) {
+  if (!isPlatformMockMode()) {
     const qs = filtersToParams(filters).toString();
     const path = `/api/manager/dashboard/kpis${qs ? `?${qs}` : ''}`;
     const { data } = await platformApi.get<KPIsResponse>(path);
