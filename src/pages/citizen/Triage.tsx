@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { UserRole } from '@/domain/enums/user-role';
 import { IntakeChat } from '@/features/intake/IntakeChat';
@@ -7,11 +8,12 @@ import type { ClinicalIntake } from '@/domain/types/clinical-intake';
 
 export default function CitizenTriage() {
   const [result, setResult] = useState<ClinicalIntake | null>(null);
+  const navigate = useNavigate();
 
   if (result) {
     return (
       <AppShell role={UserRole.CITIZEN}>
-        <IntakeResult intake={result} />
+        <IntakeResult intake={result} onViewJourney={() => navigate('/cidadao/jornada')} />
       </AppShell>
     );
   }
