@@ -184,11 +184,20 @@ class MockDashboardService implements IDashboardService {
 // §2 — Factory Functions
 // ═══════════════════════════════════════════════════════════════════
 
-/** trya-backend → Case CRUD */
+/**
+ * trya-backend → Case CRUD
+ *
+ * Phase 7: First real integration.
+ * When DEMO_MODE=false + ENABLE_REAL_TRYA=true + TRYA_BACKEND_URL set:
+ *   → Uses ApiCaseService wrapped in ResilientCaseService
+ *   → If API fails, automatically falls back to mock (circuit breaker)
+ */
 export function createCaseService(): ICaseService {
   if (!isTryaMockMode()) {
-    console.warn('[factory] ApiCaseService is a stub — falling back to mock');
-    // TODO: return new ApiCaseService() when implemented
+    console.info('[factory] ✅ CaseService → API (with resilient fallback)');
+    const api = new ApiCaseService();
+    const mock = new MockCaseService();
+    return new ResilientCaseService(api, mock);
   }
   return new MockCaseService();
 }
