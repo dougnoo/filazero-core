@@ -16,10 +16,12 @@ export { ApiIntakeService } from './intake-service.api';
 
 // trya-backend — stubs (future)
 export {
-  ApiJourneyService,
   ApiClinicalReviewService,
   ApiExamService,
 } from './trya-backend.stub';
+
+// trya-backend — REAL (Phase 7)
+export { ApiJourneyService } from './journey-service.api';
 
 // chat-agents (handslab-trya-chat-agents)
 export {
