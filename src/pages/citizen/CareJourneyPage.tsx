@@ -86,17 +86,24 @@ export default function CareJourneyPage() {
   const [journeys, setJourneys] = useState<CareJourney[]>([]);
   const [intake, setIntake] = useState<ClinicalIntake | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showSummary, setShowSummary] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const data = await getCitizenJourneys('c-current');
-      setJourneys(data);
-      if (data.length > 0) {
-        const intakeData = await getIntakeForJourney(data[0].intakeId);
-        setIntake(intakeData);
+      try {
+        const data = await getCitizenJourneys('c-current');
+        setJourneys(data);
+        if (data.length > 0) {
+          const intakeData = await getIntakeForJourney(data[0].intakeId);
+          setIntake(intakeData);
+        }
+      } catch (err) {
+        console.error('[CareJourneyPage] Failed to load journeys:', err);
+        setError(err instanceof Error ? err.message : 'Erro ao carregar jornada.');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     })();
   }, []);
 
@@ -105,6 +112,23 @@ export default function CareJourneyPage() {
       <AppShell role={UserRole.CITIZEN}>
         <div className="flex h-[60vh] items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <AppShell role={UserRole.CITIZEN}>
+        <div className="mx-auto max-w-lg px-4 py-12 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10">
+            <AlertTriangle className="h-8 w-8 text-destructive" />
+          </div>
+          <h1 className="font-display text-xl font-bold text-foreground">Erro ao carregar jornada</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{error}</p>
+          <Button variant="outline" onClick={() => window.location.reload()} className="mt-6">
+            Tentar novamente
+          </Button>
         </div>
       </AppShell>
     );
