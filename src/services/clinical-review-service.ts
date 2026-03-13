@@ -42,7 +42,7 @@ export interface ValidationPayload extends ValidationRequest {}
 export async function getPendingClinicalPackages(
   params?: Omit<ClinicalPackageListParams, 'status'>,
 ): Promise<ClinicalPackage[]> {
-  if (!isMockMode()) {
+  if (!isTryaMockMode()) {
     const query = new URLSearchParams({ status: 'pending' });
     if (params?.page) query.set('page', String(params.page));
     if (params?.limit) query.set('limit', String(params.limit));
