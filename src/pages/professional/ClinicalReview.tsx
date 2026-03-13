@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { UserRole } from '@/domain/enums/user-role';
 import { CaseList } from '@/features/clinical-review/CaseList';
 import { CaseDetail } from '@/features/clinical-review/CaseDetail';
 import { getPendingClinicalPackages, type ClinicalPackage } from '@/services/clinical-review-service';
+import { CareJourneyStatus } from '@/domain/enums/care-journey-status';
 import { FileText, Loader2 } from 'lucide-react';
 
 export default function ClinicalReview() {
@@ -24,6 +25,19 @@ export default function ClinicalReview() {
         setLoading(false);
       });
   }, []);
+
+  const handleValidationComplete = useCallback((journeyId: string, _action: string, _newStatus: CareJourneyStatus) => {
+    // Remove from pending list after validation
+    setPackages((prev) => {
+      const updated = prev.filter((p) => p.journey.id !== journeyId);
+      if (selected?.journey.id === journeyId && updated.length > 0) {
+        setSelected(updated[0]);
+      } else if (updated.length === 0) {
+        setSelected(null);
+      }
+      return updated;
+    });
+  }, [selected]);
 
   return (
     <AppShell role={UserRole.PROFESSIONAL}>
@@ -49,7 +63,6 @@ export default function ClinicalReview() {
         </div>
       ) : (
         <div className="flex h-[calc(100vh-12rem)] overflow-hidden rounded-xl border bg-card">
-          {/* Left: Case List */}
           <div className="w-80 shrink-0 border-r lg:w-96">
             <CaseList
               packages={packages}
@@ -57,11 +70,9 @@ export default function ClinicalReview() {
               onSelect={setSelected}
             />
           </div>
-
-          {/* Right: Detail */}
           <div className="flex-1">
             {selected ? (
-              <CaseDetail pkg={selected} />
+              <CaseDetail pkg={selected} onValidationComplete={handleValidationComplete} />
             ) : (
               <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                 Selecione um pacote clínico para revisar.
