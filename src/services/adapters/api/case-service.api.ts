@@ -24,7 +24,7 @@ import type { Case, Patient } from '@/domain/types/case';
 import { CaseStatus } from '@/domain/enums/case-status';
 import { RiskLevel } from '@/domain/enums/risk-level';
 import type { CaseFilters } from '@/services/case-service';
-import type { ICaseService } from '../types';
+import type { ICaseService } from '@/services/adapters/types';
 
 // ═══════════════════════════════════════════════════════════════════
 // §1 — Backend DTO types (what trya-backend actually returns)

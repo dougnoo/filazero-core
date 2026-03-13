@@ -13,7 +13,7 @@
 import type { Case } from '@/domain/types/case';
 import type { CaseStatus } from '@/domain/enums/case-status';
 import type { CaseFilters } from '@/services/case-service';
-import type { ICaseService } from '../types';
+import type { ICaseService } from './types';
 
 export class ResilientCaseService implements ICaseService {
   private _failCount = 0;
