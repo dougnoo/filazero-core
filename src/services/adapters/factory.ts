@@ -22,6 +22,7 @@ import {
   isTryaMockMode,
   isChatMockMode,
   isPlatformMockMode,
+  env,
 } from '@/lib/env';
 
 import type {
@@ -249,12 +250,31 @@ export function createJourneyService(): IJourneyService {
   return new MockJourneyService();
 }
 
-/** trya-backend → Clinical review & validation */
+/**
+ * trya-backend → Clinical review & validation
+ *
+ * Read operations (getPendingPackages, getAllPackages, getPackageById) use real API.
+ * Write operations (submitValidation) are gated by VITE_ENABLE_TRYA_WRITE flag.
+ * When write is disabled, submitValidation always falls back to mock.
+ */
 export function createClinicalReviewService(): IClinicalReviewService {
   if (!isTryaMockMode()) {
-    console.info('[factory] ✅ ClinicalReviewService → API (with resilient fallback)');
     const api = new ApiClinicalReviewService();
     const mock = new MockClinicalReviewService();
+
+    if (!env.ENABLE_TRYA_WRITE) {
+      console.info('[factory] ✅ ClinicalReviewService → API read-only (write → mock)');
+      // Create a read-only hybrid: API reads, mock writes
+      const readOnlyApi: IClinicalReviewService = {
+        getPendingPackages: api.getPendingPackages.bind(api),
+        getAllPackages: api.getAllPackages.bind(api),
+        getPackageById: api.getPackageById.bind(api),
+        submitValidation: mock.submitValidation.bind(mock),
+      };
+      return new ResilientClinicalReviewService(readOnlyApi, mock);
+    }
+
+    console.info('[factory] ✅ ClinicalReviewService → API full (read + write)');
     return new ResilientClinicalReviewService(api, mock);
   }
   return new MockClinicalReviewService();
