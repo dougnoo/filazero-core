@@ -9,3 +9,4 @@ export * from './intake-service';
 export * from './clinical-review-service';
 export * from './journey-service';
 export * from './dashboard-service';
+export * from './case-service';

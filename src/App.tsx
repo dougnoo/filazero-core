@@ -94,6 +94,11 @@ const App = () => (
                 <ClinicalReview />
               </ProtectedRoute>
             } />
+            <Route path="/casos" element={
+              <ProtectedRoute allowedRoles={[UserRole.PROFESSIONAL, UserRole.MANAGER]}>
+                <CasesPage />
+              </ProtectedRoute>
+            } />
 
             {/* ═══ Manager routes (protected) ═══ */}
             <Route path="/gestor" element={
