@@ -89,6 +89,7 @@ import {
 
 import { ResilientCaseService } from './resilient-case-service';
 import { ResilientPatientService } from './resilient-patient-service';
+import { ResilientIntakeService } from './resilient-intake-service';
 
 // ═══════════════════════════════════════════════════════════════════
 // §1 — Mock Adapters (delegate to existing service functions)
@@ -217,7 +218,10 @@ export function createPatientService(): IPatientService {
 /** chat-backend → Conversational intake */
 export function createIntakeService(): IIntakeService {
   if (!isChatMockMode()) {
-    console.warn('[factory] ApiIntakeService is a stub — falling back to mock');
+    console.info('[factory] ✅ IntakeService → API (with resilient fallback)');
+    const api = new ApiIntakeService();
+    const mock = new MockIntakeService();
+    return new ResilientIntakeService(api, mock);
   }
   return new MockIntakeService();
 }

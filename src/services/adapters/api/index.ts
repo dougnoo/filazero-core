@@ -3,6 +3,7 @@
  *
  * ApiCaseService: REAL implementation (Phase 7)
  * ApiPatientService: REAL implementation (Phase 7)
+ * ApiIntakeService: REAL implementation (Phase 7)
  * All others: stubs that throw on invocation (future phases)
  */
 
@@ -10,15 +11,15 @@
 export { ApiCaseService } from './case-service.api';
 export { ApiPatientService } from './patient-service.api';
 
+// chat-backend — REAL (Phase 7)
+export { ApiIntakeService } from './intake-service.api';
+
 // trya-backend — stubs (future)
 export {
   ApiJourneyService,
   ApiClinicalReviewService,
   ApiExamService,
 } from './trya-backend.stub';
-
-// chat-backend (handslab-trya-chat-backend)
-export { ApiIntakeService } from './chat-backend.stub';
 
 // chat-agents (handslab-trya-chat-agents)
 export {
