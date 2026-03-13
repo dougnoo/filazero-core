@@ -1,31 +1,60 @@
 /**
- * Clinical Review Service — Abstraction for professional clinical package review.
- * 
+ * Clinical Review Service — Professional clinical package review & validation.
+ *
+ * Backend: trya-backend
+ * Contract: src/domain/contracts/trya-backend.ts
+ *
  * Mock mode: returns local data.
  * Real mode: calls trya-backend REST API.
  */
 
 import type { CareJourney } from '@/domain/types/care-journey';
 import type { ClinicalIntake } from '@/domain/types/clinical-intake';
+import type {
+  ValidationRequest,
+  ValidationResponse,
+  ValidationActionType,
+  ClinicalPackageListParams,
+} from '@/domain/contracts/trya-backend';
 import { mockCareJourneys, mockClinicalIntake } from '@/lib/mock-clinical-data';
 import { CareJourneyStatus } from '@/domain/enums/care-journey-status';
 import { isMockMode } from '@/lib/env';
 import { tryaApi } from '@/lib/api-client';
+
+// ─── Public types (re-exported for UI consumption) ──────────────
 
 export interface ClinicalPackage {
   journey: CareJourney;
   intake: ClinicalIntake;
 }
 
+/** @deprecated Use ValidationActionType from contracts */
+export type ValidationAction = ValidationActionType;
+
+export interface ValidationPayload extends ValidationRequest {}
+
+// ─── Service functions ──────────────────────────────────────────
+
 /**
  * Fetches clinical packages pending professional review.
- * In production: GET /api/professional/clinical-packages?status=pending
+ * Backend: GET /api/professional/clinical-packages?status=pending
  */
-export async function getPendingClinicalPackages(): Promise<ClinicalPackage[]> {
+export async function getPendingClinicalPackages(
+  params?: Omit<ClinicalPackageListParams, 'status'>,
+): Promise<ClinicalPackage[]> {
   if (!isMockMode()) {
-    const { data } = await tryaApi.get<ClinicalPackage[]>('/professional/clinical-packages?status=pending');
-    return data;
+    const query = new URLSearchParams({ status: 'pending' });
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    if (params?.sortBy) query.set('sortBy', params.sortBy);
+    if (params?.order) query.set('order', params.order);
+
+    const { data } = await tryaApi.get<{ data: ClinicalPackage[] }>(
+      `/professional/clinical-packages?${query}`,
+    );
+    return data.data;
   }
+
   await new Promise((r) => setTimeout(r, 400));
   const reviewableStatuses = new Set([
     CareJourneyStatus.TRIAGE_COMPLETE,
@@ -44,12 +73,23 @@ export async function getPendingClinicalPackages(): Promise<ClinicalPackage[]> {
 
 /**
  * Fetches all clinical packages (including resolved) for history.
+ * Backend: GET /api/professional/clinical-packages
  */
-export async function getAllClinicalPackages(): Promise<ClinicalPackage[]> {
+export async function getAllClinicalPackages(
+  params?: ClinicalPackageListParams,
+): Promise<ClinicalPackage[]> {
   if (!isMockMode()) {
-    const { data } = await tryaApi.get<ClinicalPackage[]>('/professional/clinical-packages');
-    return data;
+    const query = new URLSearchParams();
+    if (params?.status) query.set('status', params.status);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+
+    const { data } = await tryaApi.get<{ data: ClinicalPackage[] }>(
+      `/professional/clinical-packages?${query}`,
+    );
+    return data.data;
   }
+
   await new Promise((r) => setTimeout(r, 400));
   return mockCareJourneys.map((journey) => ({
     journey,
@@ -57,33 +97,63 @@ export async function getAllClinicalPackages(): Promise<ClinicalPackage[]> {
   }));
 }
 
-// ─── Validation Actions (stubs for future backend integration) ───
+/**
+ * Fetches a single clinical package by journey ID.
+ * Backend: GET /api/professional/clinical-packages/:id
+ */
+export async function getClinicalPackageById(journeyId: string): Promise<ClinicalPackage | null> {
+  if (!isMockMode()) {
+    const { data } = await tryaApi.get<ClinicalPackage>(
+      `/professional/clinical-packages/${journeyId}`,
+    );
+    return data;
+  }
 
-export type ValidationAction =
-  | 'APPROVE_EXAMS'
-  | 'REJECT_EXAMS'
-  | 'APPROVE_REFERRAL'
-  | 'REJECT_REFERRAL'
-  | 'REQUEST_MORE_INFO'
-  | 'RESOLVE_PRIMARY';
-
-export interface ValidationPayload {
-  journeyId: string;
-  action: ValidationAction;
-  notes?: string;
-  modifiedExamIds?: string[];
+  await new Promise((r) => setTimeout(r, 300));
+  const journey = mockCareJourneys.find((j) => j.id === journeyId);
+  if (!journey) return null;
+  return {
+    journey,
+    intake: { ...mockClinicalIntake, id: journey.intakeId, citizenId: journey.citizenId },
+  };
 }
 
 /**
  * Submits a medical validation action.
- * In production: POST /api/professional/validate
+ * Backend: POST /api/professional/validate
+ *
+ * Returns the new journey status and updated steps.
  */
-export async function submitValidation(payload: ValidationPayload): Promise<{ success: boolean }> {
+export async function submitValidation(payload: ValidationPayload): Promise<ValidationResponse> {
   if (!isMockMode()) {
-    const { data } = await tryaApi.post<{ success: boolean }>('/professional/validate', payload);
+    const { data } = await tryaApi.post<ValidationResponse>('/professional/validate', payload);
     return data;
   }
+
   await new Promise((r) => setTimeout(r, 600));
   console.log('[clinical-review-service] Validation submitted:', payload);
-  return { success: true };
+
+  // Mock: simulate state transition
+  const journey = mockCareJourneys.find((j) => j.id === payload.journeyId);
+  const currentStatus = journey?.status ?? CareJourneyStatus.TRIAGE_COMPLETE;
+
+  let newStatus = currentStatus;
+  switch (payload.action) {
+    case 'APPROVE_EXAMS':
+      newStatus = CareJourneyStatus.EXAMS_PENDING;
+      break;
+    case 'APPROVE_REFERRAL':
+      newStatus = CareJourneyStatus.REFERRAL_SCHEDULED;
+      break;
+    case 'RESOLVE_PRIMARY':
+      newStatus = CareJourneyStatus.RESOLVED;
+      break;
+  }
+
+  return {
+    success: true,
+    journeyId: payload.journeyId,
+    newStatus,
+    message: 'Validação registrada com sucesso.',
+  };
 }

@@ -11,8 +11,9 @@ import { RiskBadge } from '@/components/patient/RiskBadge';
 import { careJourneyStatusConfig } from '@/domain/enums/care-journey-status';
 import { careStepStatusConfig, CareStepStatus } from '@/domain/enums/care-step-status';
 import { cn } from '@/lib/utils';
-import type { ClinicalPackage, ValidationAction } from '@/services/clinical-review-service';
+import type { ClinicalPackage } from '@/services/clinical-review-service';
 import { submitValidation } from '@/services/clinical-review-service';
+import type { ValidationActionType } from '@/domain/contracts/trya-backend';
 import { toast } from 'sonner';
 
 interface CaseDetailProps {
@@ -36,13 +37,17 @@ const examCategoryLabels: Record<string, string> = {
 export function CaseDetail({ pkg }: CaseDetailProps) {
   const { journey, intake } = pkg;
   const { clinicalSummary, examSuggestions, referralRecommendation } = intake;
-  const [validating, setValidating] = useState<ValidationAction | null>(null);
+  const [validating, setValidating] = useState<ValidationActionType | null>(null);
 
-  const handleAction = async (action: ValidationAction) => {
+  const handleAction = async (action: ValidationActionType) => {
     setValidating(action);
     try {
-      await submitValidation({ journeyId: journey.id, action });
-      toast.success('Ação registrada com sucesso.');
+      const result = await submitValidation({ journeyId: journey.id, action });
+      if (result.success) {
+        toast.success(result.message ?? 'Ação registrada com sucesso.');
+      } else {
+        toast.error('Validação não foi aceita pelo backend.');
+      }
     } catch {
       toast.error('Erro ao processar ação.');
     } finally {
