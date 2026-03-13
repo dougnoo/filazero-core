@@ -16,7 +16,7 @@ import type {
   ValidationActionType,
   ClinicalPackageListParams,
 } from '@/domain/contracts/trya-backend';
-import { mockCareJourneys, mockClinicalIntake } from '@/lib/mock-clinical-data';
+import { mockCareJourneys, mockIntakesMap, mockClinicalIntake } from '@/lib/mock-clinical-data';
 import { CareJourneyStatus } from '@/domain/enums/care-journey-status';
 import { isTryaMockMode } from '@/lib/env';
 import { tryaApi } from '@/lib/api-client';
@@ -67,7 +67,7 @@ export async function getPendingClinicalPackages(
 
   return pendingJourneys.map((journey) => ({
     journey,
-    intake: { ...mockClinicalIntake, id: journey.intakeId, citizenId: journey.citizenId },
+    intake: mockIntakesMap[journey.intakeId] ?? { ...mockClinicalIntake, id: journey.intakeId, citizenId: journey.citizenId },
   }));
 }
 
@@ -93,7 +93,7 @@ export async function getAllClinicalPackages(
   await new Promise((r) => setTimeout(r, 400));
   return mockCareJourneys.map((journey) => ({
     journey,
-    intake: { ...mockClinicalIntake, id: journey.intakeId, citizenId: journey.citizenId },
+    intake: mockIntakesMap[journey.intakeId] ?? { ...mockClinicalIntake, id: journey.intakeId, citizenId: journey.citizenId },
   }));
 }
 
@@ -114,7 +114,7 @@ export async function getClinicalPackageById(journeyId: string): Promise<Clinica
   if (!journey) return null;
   return {
     journey,
-    intake: { ...mockClinicalIntake, id: journey.intakeId, citizenId: journey.citizenId },
+    intake: mockIntakesMap[journey.intakeId] ?? { ...mockClinicalIntake, id: journey.intakeId, citizenId: journey.citizenId },
   };
 }
 

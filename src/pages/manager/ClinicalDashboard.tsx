@@ -136,10 +136,16 @@ export default function ClinicalDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDashboardData().then((d) => {
-      setData(d);
-      setLoading(false);
-    });
+    fetchDashboardData()
+      .then((d) => {
+        setData(d);
+      })
+      .catch((err) => {
+        console.error('[ClinicalDashboard] Failed to load:', err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   if (loading || !data) {
