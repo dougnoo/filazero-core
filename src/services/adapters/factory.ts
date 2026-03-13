@@ -308,7 +308,10 @@ export function createExamService(): IExamService {
 /** platform-backend → Manager dashboard analytics */
 export function createDashboardService(): IDashboardService {
   if (!isPlatformMockMode()) {
-    console.warn('[factory] ApiDashboardService is a stub — falling back to mock');
+    console.info('[factory] ✅ DashboardService → API (with resilient fallback)');
+    const api = new ApiDashboardService();
+    const mock = new MockDashboardService();
+    return new ResilientDashboardService(api, mock);
   }
   return new MockDashboardService();
 }
