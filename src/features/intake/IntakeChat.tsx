@@ -1,22 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Paperclip, Loader2, Wifi, WifiOff, Bot } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Send, Loader2, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ServerChatMessage, AgentType } from '@/domain/types/chat-protocol';
+import type { ServerChatMessage } from '@/domain/types/chat-protocol';
 import type { ClinicalIntake } from '@/domain/types/clinical-intake';
 import { useIntakeSession } from '@/hooks/use-intake-session';
-
-// ─── Agent display names ────────────────────────────────────────
-
-const AGENT_LABELS: Record<AgentType, string> = {
-  onboarding: 'Cadastro e Contexto',
-  symptoms: 'Análise de Sintomas',
-  structuring: 'Estruturação Clínica',
-  exam_suggestion: 'Sugestão de Exames',
-  referral_advisor: 'Recomendação',
-};
-
-// ─── Props ──────────────────────────────────────────────────────
 
 interface IntakeChatProps {
   onComplete: (result: ClinicalIntake) => void;
@@ -27,24 +14,20 @@ interface IntakeChatProps {
 export function IntakeChat({ onComplete, citizenId = 'c-current', unitId = 'u-1' }: IntakeChatProps) {
   const {
     messages,
-    activeAgent,
-    progress,
     isAgentTyping,
     streamingText,
     processingStage,
     result,
     error,
-    isConnected,
     startSession,
     sendMessage,
   } = useIntakeSession();
 
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const hasStarted = useRef(false);
 
-  // Start session on mount
   useEffect(() => {
     if (!hasStarted.current) {
       hasStarted.current = true;
@@ -52,14 +35,10 @@ export function IntakeChat({ onComplete, citizenId = 'c-current', unitId = 'u-1'
     }
   }, [citizenId, unitId, startSession]);
 
-  // Propagate result to parent
   useEffect(() => {
-    if (result) {
-      onComplete(result);
-    }
+    if (result) onComplete(result);
   }, [result, onComplete]);
 
-  // Scroll to bottom on new messages or streaming
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -70,156 +49,133 @@ export function IntakeChat({ onComplete, citizenId = 'c-current', unitId = 'u-1'
     scrollToBottom();
   }, [messages, streamingText, scrollToBottom]);
 
-  // ─── Send handler ──────────────────────────────────────────
-
   const handleSend = async () => {
     const text = input.trim();
     if (!text || isAgentTyping || processingStage) return;
-
     setInput('');
     await sendMessage(text);
     inputRef.current?.focus();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter') {
       e.preventDefault();
       handleSend();
     }
   };
 
   // ─── Processing overlay ────────────────────────────────────
-
   if (processingStage) {
-    const stageLabels: Record<string, string> = {
-      structuring: 'Estruturando dados clínicos',
-      exam_suggestion: 'Analisando exames necessários',
-      referral_analysis: 'Gerando recomendação de encaminhamento',
-    };
-
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 px-4 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-        <div>
-          <h2 className="font-display text-lg font-bold text-foreground">
-            Processando seus dados
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Nossa inteligência clínica está analisando suas informações.
-          </p>
-        </div>
-        <div className="mt-4 flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            {stageLabels[processingStage] ?? 'Processando...'}
-          </span>
+      <div className="flex h-full flex-col">
+        <ChatHeader />
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsl(var(--primary))]/10">
+            <Loader2 className="h-8 w-8 animate-spin text-[hsl(var(--primary))]" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Processando seus dados</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Nossa inteligência clínica está analisando suas informações.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="h-2 w-2 rounded-full bg-[hsl(var(--primary))] animate-pulse" />
+            {processingStage === 'structuring'
+              ? 'Estruturando dados clínicos...'
+              : processingStage === 'exam_suggestion'
+                ? 'Analisando exames necessários...'
+                : 'Processando...'}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Progress header */}
-      <div className="border-b border-border bg-card px-4 py-3">
-        <div className="mb-1.5 flex items-center justify-between">
-          <span className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <Bot className="h-3.5 w-3.5" />
-            {activeAgent ? AGENT_LABELS[activeAgent] : 'Assistente Clínico'}
-          </span>
-          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            {isConnected ? (
-              <Wifi className="h-3 w-3 text-primary" />
-            ) : (
-              <WifiOff className="h-3 w-3 text-destructive" />
-            )}
-            {Math.round(progress)}%
-          </span>
-        </div>
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full rounded-full bg-primary transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
+    <div className="flex h-full flex-col bg-background">
+      <ChatHeader />
 
       {/* Error banner */}
       {error && (
-        <div className="border-b border-destructive/20 bg-destructive/10 px-4 py-2 text-xs text-destructive">
+        <div className="bg-destructive/10 px-4 py-2 text-xs text-destructive text-center">
           {error}
         </div>
       )}
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.map((msg) => (
           <ChatBubble key={msg.id} message={msg} />
         ))}
 
-        {/* Streaming text preview */}
+        {/* Streaming preview */}
         {isAgentTyping && streamingText && (
-          <div className="flex justify-start animate-slide-up">
-            <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-muted px-4 py-3 text-sm leading-relaxed text-foreground">
+          <div className="flex justify-start">
+            <div className="max-w-[80%] rounded-2xl rounded-bl-sm bg-card px-4 py-3 text-sm leading-relaxed text-foreground shadow-sm">
               {streamingText}
-              <span className="ml-1 inline-block h-4 w-0.5 animate-pulse bg-foreground/40" />
+              <span className="ml-1 inline-block h-4 w-0.5 animate-pulse bg-foreground/30" />
             </div>
           </div>
         )}
 
-        {/* Typing indicator (no stream content yet) */}
+        {/* Typing indicator */}
         {isAgentTyping && !streamingText && (
-          <div className="flex justify-start animate-slide-up">
-            <div className="flex items-center gap-2 rounded-2xl bg-muted px-4 py-3 text-sm text-muted-foreground rounded-bl-md">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Analisando...
+          <div className="flex justify-start">
+            <div className="flex items-center gap-2 rounded-2xl rounded-bl-sm bg-card px-4 py-3 shadow-sm">
+              <div className="flex gap-1">
+                <span className="h-2 w-2 rounded-full bg-muted-foreground/40 animate-bounce [animation-delay:0ms]" />
+                <span className="h-2 w-2 rounded-full bg-muted-foreground/40 animate-bounce [animation-delay:150ms]" />
+                <span className="h-2 w-2 rounded-full bg-muted-foreground/40 animate-bounce [animation-delay:300ms]" />
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Input */}
-      <div className="border-t border-border bg-card p-3">
-        <div className="mx-auto flex max-w-lg items-end gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="shrink-0 text-muted-foreground"
-            title="Anexar documento"
-            disabled={isAgentTyping}
-          >
-            <Paperclip className="h-5 w-5" />
-          </Button>
-          <div className="relative flex-1">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Digite sua resposta..."
-              rows={1}
-              disabled={isAgentTyping || !!processingStage}
-              className="w-full resize-none rounded-xl border border-input bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-              style={{ minHeight: '2.75rem', maxHeight: '6rem' }}
-              onInput={(e) => {
-                const el = e.currentTarget;
-                el.style.height = 'auto';
-                el.style.height = Math.min(el.scrollHeight, 96) + 'px';
-              }}
-            />
-          </div>
-          <Button
-            size="icon"
+      {/* Input bar */}
+      <div className="border-t border-border bg-card px-3 py-3">
+        <div className="mx-auto flex max-w-lg items-center gap-2">
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Digite sua mensagem..."
+            disabled={isAgentTyping || !!processingStage}
+            className="flex-1 rounded-full border border-input bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+          />
+          <button
             onClick={handleSend}
             disabled={!input.trim() || isAgentTyping}
-            className="shrink-0 rounded-xl"
+            className={cn(
+              'flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors',
+              input.trim() && !isAgentTyping
+                ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90'
+                : 'bg-muted text-muted-foreground'
+            )}
           >
             <Send className="h-4 w-4" />
-          </Button>
+          </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Header (Trya style) ────────────────────────────────────────
+
+function ChatHeader() {
+  return (
+    <div className="flex items-center justify-between border-b border-border bg-card px-4 py-3">
+      <button className="text-foreground">
+        <Menu className="h-5 w-5" />
+      </button>
+      <span className="font-[var(--font-display)] text-lg font-bold tracking-tight text-foreground">
+        trya
+      </span>
+      <div className="w-5" />
     </div>
   );
 }
@@ -230,13 +186,13 @@ function ChatBubble({ message }: { message: ServerChatMessage }) {
   const isUser = message.role === 'user';
 
   return (
-    <div className={cn('flex animate-slide-up', isUser ? 'justify-end' : 'justify-start')}>
+    <div className={cn('flex', isUser ? 'justify-end' : 'justify-start')}>
       <div
         className={cn(
-          'max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
+          'max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
           isUser
-            ? 'bg-primary text-primary-foreground rounded-br-md'
-            : 'bg-muted text-foreground rounded-bl-md'
+            ? 'rounded-br-sm bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+            : 'rounded-bl-sm bg-card text-foreground shadow-sm'
         )}
       >
         {message.content.split('\n').map((line, i) => (
