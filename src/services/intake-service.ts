@@ -1,12 +1,11 @@
 /**
- * Intake Service — Abstraction layer for Clinical Intake interactions.
+ * Intake Service — Clinical Intake AI interactions.
  * 
- * Currently uses mock data. Designed to be replaced by:
- * - chat-agents (Python/LangChain AI agents via AWS Bedrock)
- * - chat-backend (WebSocket/REST conversation management)
- * - trya-backend (persistence, patient records)
+ * Uses Lovable AI Gateway via edge functions:
+ * - clinical-chat: Streaming conversational agent (Manchester Protocol)
+ * - clinical-result: Structured clinical data extraction via tool calling
  * 
- * Contract matches the existing multi-agent architecture:
+ * Architecture mirrors the original Trya chat-agents:
  * 1. Onboarding Agent → collects demographics, history
  * 2. Symptoms Agent → adaptive symptom collection
  * 3. Structuring Agent → generates ClinicalSummary
@@ -17,8 +16,7 @@
 import type { ClinicalIntake } from '@/domain/types/clinical-intake';
 import type { TriageMessage } from '@/domain/types/triage';
 import { RiskLevel } from '@/domain/enums/risk-level';
-import { isChatMockMode } from '@/lib/env';
-import { chatApi } from '@/lib/api-client';
+import { supabase } from '@/integrations/supabase/client';
 
 // ─── Intake Phases ───
 export type IntakePhase =
@@ -59,36 +57,6 @@ export const PHASE_LABELS: Record<IntakePhase, string> = {
   COMPLETE: 'Concluído',
 };
 
-// ─── Mock Agent Responses ───
-// Simulates the adaptive question flow from the multi-agent system.
-
-const AGENT_RESPONSES: Record<IntakePhase, string> = {
-  GREETING:
-    'Olá! Sou o assistente clínico do FilaZero. Vou fazer algumas perguntas para entender melhor o que você está sentindo e agilizar seu atendimento. Tudo que você compartilhar é confidencial e será usado apenas pela equipe de saúde.\n\nQual é a sua queixa principal hoje? O que trouxe você à unidade de saúde?',
-  CHIEF_COMPLAINT:
-    'Entendi. Vou precisar de mais alguns detalhes sobre esses sintomas.\n\nHá quanto tempo você está sentindo isso? Os sintomas são constantes ou vêm e vão? De 0 a 10, qual a intensidade do desconforto?',
-  SYMPTOM_DETAILS:
-    'Obrigado pelas informações. Agora preciso saber um pouco sobre seu histórico de saúde.\n\nVocê tem alguma doença crônica (pressão alta, diabetes, asma, etc.)? Já foi internado(a) recentemente? Tem histórico familiar de doenças importantes?',
-  MEDICAL_HISTORY:
-    'Certo. Sobre medicamentos:\n\nVocê toma algum medicamento regularmente? Se sim, quais e em que dose?',
-  MEDICATIONS:
-    'E sobre alergias:\n\nVocê tem alergia a algum medicamento, alimento ou substância?',
-  ALLERGIES:
-    'Quase finalizando. Algumas informações do seu contexto ajudam a equipe a cuidar melhor de você.\n\nComo você avalia suas condições de moradia? Tem acesso a saneamento básico? Essas informações são opcionais.',
-  SOCIAL_CONTEXT:
-    'Se você tiver algum documento médico recente (exames, receitas, laudos), pode anexar aqui. Isso é opcional, mas ajuda na avaliação.\n\nSe não tiver, pode pular esta etapa.',
-  DOCUMENTS:
-    'Obrigado por compartilhar todas essas informações. Estou processando seus dados com nossa inteligência clínica para gerar um resumo, sugestão de exames e recomendação de encaminhamento.\n\nIsso levará alguns segundos...',
-  PROCESSING: '',
-  COMPLETE: '',
-};
-
-function getNextPhase(current: IntakePhase): IntakePhase {
-  const idx = PHASE_ORDER.indexOf(current);
-  if (idx < 0 || idx >= PHASE_ORDER.length - 1) return 'COMPLETE';
-  return PHASE_ORDER[idx + 1];
-}
-
 let msgCounter = 100;
 function makeMsg(role: 'user' | 'assistant', content: string): TriageMessage {
   msgCounter++;
@@ -100,161 +68,268 @@ function makeMsg(role: 'user' | 'assistant', content: string): TriageMessage {
   };
 }
 
+// ─── Phase detection from AI response ───
+const COMPLETION_SIGNALS = [
+  'vou processar',
+  'processar seus dados',
+  'processando',
+  'informações suficientes',
+  'dados suficientes',
+  'inteligência clínica',
+];
+
+function detectPhaseFromResponse(
+  response: string,
+  currentPhase: IntakePhase,
+  messageCount: number,
+): IntakePhase {
+  const lower = response.toLowerCase();
+
+  // Check if AI signals completion
+  if (COMPLETION_SIGNALS.some((s) => lower.includes(s))) {
+    return 'PROCESSING';
+  }
+
+  // Heuristic phase progression based on message count
+  // The AI drives the conversation, we just track progress
+  if (messageCount <= 2) return 'CHIEF_COMPLAINT';
+  if (messageCount <= 4) return 'SYMPTOM_DETAILS';
+  if (messageCount <= 6) return 'MEDICAL_HISTORY';
+  if (messageCount <= 8) return 'MEDICATIONS';
+  if (messageCount <= 10) return 'ALLERGIES';
+  if (messageCount <= 12) return 'SOCIAL_CONTEXT';
+  return 'DOCUMENTS';
+}
+
+// Store conversation history per session for the LLM
+const sessionHistory = new Map<string, Array<{ role: string; content: string }>>();
+
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clinical-chat`;
+const RESULT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clinical-result`;
+
 /**
- * Sends a user message and returns the AI agent's response + next phase.
- * In production, this calls chat-backend → chat-agents pipeline.
+ * Sends a user message to the clinical AI agent and streams the response.
+ * Uses the clinical-chat edge function (Lovable AI Gateway).
  */
 export async function sendIntakeMessage(
-  _intakeId: string,
+  intakeId: string,
   userMessage: string,
   currentPhase: IntakePhase,
 ): Promise<{ reply: TriageMessage; nextPhase: IntakePhase }> {
-  // ── Real backend path (chat-backend → chat-agents) ──
-  if (!isChatMockMode()) {
-    const { data } = await chatApi.post<{ reply: TriageMessage; nextPhase: IntakePhase }>(
-      `/intakes/${_intakeId}/messages`,
-      { content: userMessage, currentPhase },
-    );
-    return data;
+  // Get or create session history
+  if (!sessionHistory.has(intakeId)) {
+    sessionHistory.set(intakeId, []);
   }
+  const history = sessionHistory.get(intakeId)!;
+  history.push({ role: 'user', content: userMessage });
 
-  // ── Mock path ──
-  await new Promise((r) => setTimeout(r, 800 + Math.random() * 700));
+  try {
+    const resp = await fetch(CHAT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({ messages: history }),
+    });
 
-  const nextPhase = getNextPhase(currentPhase);
-  const replyContent = AGENT_RESPONSES[nextPhase] || 'Obrigado. Processando...';
+    if (!resp.ok || !resp.body) {
+      const errorBody = await resp.text();
+      console.error('[intake-service] Chat error:', resp.status, errorBody);
+      throw new Error(`Chat request failed: ${resp.status}`);
+    }
 
-  return {
-    reply: makeMsg('assistant', replyContent),
-    nextPhase,
-  };
+    // Parse SSE stream
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let textBuffer = '';
+    let fullResponse = '';
+    let streamDone = false;
+
+    while (!streamDone) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      textBuffer += decoder.decode(value, { stream: true });
+
+      let newlineIndex: number;
+      while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+        let line = textBuffer.slice(0, newlineIndex);
+        textBuffer = textBuffer.slice(newlineIndex + 1);
+
+        if (line.endsWith('\r')) line = line.slice(0, -1);
+        if (line.startsWith(':') || line.trim() === '') continue;
+        if (!line.startsWith('data: ')) continue;
+
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === '[DONE]') {
+          streamDone = true;
+          break;
+        }
+
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          if (content) fullResponse += content;
+        } catch {
+          textBuffer = line + '\n' + textBuffer;
+          break;
+        }
+      }
+    }
+
+    // Flush remaining
+    if (textBuffer.trim()) {
+      for (let raw of textBuffer.split('\n')) {
+        if (!raw) continue;
+        if (raw.endsWith('\r')) raw = raw.slice(0, -1);
+        if (raw.startsWith(':') || raw.trim() === '') continue;
+        if (!raw.startsWith('data: ')) continue;
+        const jsonStr = raw.slice(6).trim();
+        if (jsonStr === '[DONE]') continue;
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          if (content) fullResponse += content;
+        } catch { /* ignore */ }
+      }
+    }
+
+    if (!fullResponse) {
+      throw new Error('Empty response from AI');
+    }
+
+    // Store assistant response in history
+    history.push({ role: 'assistant', content: fullResponse });
+
+    const nextPhase = detectPhaseFromResponse(fullResponse, currentPhase, history.length);
+
+    return {
+      reply: makeMsg('assistant', fullResponse),
+      nextPhase,
+    };
+  } catch (error) {
+    console.error('[intake-service] Error:', error);
+    // Fallback: return a generic error message
+    const fallback = makeMsg(
+      'assistant',
+      'Desculpe, tive um problema ao processar sua mensagem. Pode tentar novamente?',
+    );
+    return { reply: fallback, nextPhase: currentPhase };
+  }
 }
 
 /**
- * Generates the final clinical intake result.
- * In production, this calls the Structuring Agent + Exam Suggestion Agent + Referral Advisor.
+ * Generates the final structured clinical intake result using AI.
+ * Calls the clinical-result edge function (tool calling for structured output).
  */
 export async function generateIntakeResult(
-  _intakeId: string,
+  intakeId: string,
   messages: TriageMessage[],
 ): Promise<ClinicalIntake> {
-  // ── Real backend path ──
-  if (!isChatMockMode()) {
-    const { data } = await chatApi.post<ClinicalIntake>(
-      `/intakes/${_intakeId}/generate`,
-      { messages },
-    );
-    return data;
+  const history = sessionHistory.get(intakeId) ??
+    messages.map((m) => ({ role: m.role, content: m.content }));
+
+  try {
+    const resp = await fetch(RESULT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({ messages: history }),
+    });
+
+    if (!resp.ok) {
+      const errorBody = await resp.text();
+      console.error('[intake-service] Result generation error:', resp.status, errorBody);
+      throw new Error(`Result generation failed: ${resp.status}`);
+    }
+
+    const data = await resp.json();
+    const now = new Date().toISOString();
+
+    // Map risk level string to enum
+    const riskLevelMap: Record<string, RiskLevel> = {
+      EMERGENCY: RiskLevel.EMERGENCY,
+      VERY_URGENT: RiskLevel.VERY_URGENT,
+      URGENT: RiskLevel.URGENT,
+      LESS_URGENT: RiskLevel.LESS_URGENT,
+      NON_URGENT: RiskLevel.NON_URGENT,
+    };
+
+    const result: ClinicalIntake = {
+      id: intakeId,
+      citizenId: 'c-current',
+      unitId: 'u-1',
+      messages,
+      chiefComplaint: data.chiefComplaint || 'Não informado',
+      symptoms: data.symptoms || [],
+      symptomDuration: data.symptomDuration,
+      painScale: data.painScale,
+      currentMedications: data.currentMedications || [],
+      allergies: data.allergies || [],
+      chronicConditions: data.chronicConditions || [],
+      familyHistory: data.familyHistory || [],
+      riskLevel: riskLevelMap[data.riskLevel] || RiskLevel.LESS_URGENT,
+      priorityScore: data.priorityScore || 50,
+      clinicalSummary: {
+        id: `cs-${intakeId}`,
+        intakeId,
+        narrative: data.clinicalSummary?.narrative || '',
+        structuredFindings: data.clinicalSummary?.structuredFindings || [],
+        suspectedConditions: data.clinicalSummary?.suspectedConditions || [],
+        relevantHistory: data.clinicalSummary?.relevantHistory || '',
+        riskFactors: data.clinicalSummary?.riskFactors || [],
+        generatedAt: now,
+      },
+      examSuggestions: (data.examSuggestions || []).map(
+        (e: any, i: number) => ({
+          id: `ex-${i}`,
+          intakeId,
+          examName: e.examName,
+          examCode: e.examCode,
+          category: e.category || 'OTHER',
+          priority: e.priority || 'ROUTINE',
+          justification: e.justification || '',
+          status: 'SUGGESTED' as const,
+        }),
+      ),
+      referralRecommendation: {
+        id: `rr-${intakeId}`,
+        intakeId,
+        decision: data.referralRecommendation?.decision || 'NEEDS_MORE_DATA',
+        confidence: data.referralRecommendation?.confidence || 50,
+        specialty: data.referralRecommendation?.specialty,
+        justification: data.referralRecommendation?.justification || '',
+        requiredExamsBeforeReferral:
+          data.referralRecommendation?.requiredExamsBeforeReferral || [],
+        alternativeActions:
+          data.referralRecommendation?.alternativeActions || [],
+        generatedAt: now,
+      },
+      isComplete: true,
+      startedAt: messages[0]?.timestamp ?? now,
+      completedAt: now,
+    };
+
+    // Clean up session history
+    sessionHistory.delete(intakeId);
+
+    return result;
+  } catch (error) {
+    console.error('[intake-service] Result generation error:', error);
+    // Clean up
+    sessionHistory.delete(intakeId);
+    throw error;
   }
-
-  // ── Mock path ──
-  await new Promise((r) => setTimeout(r, 2000));
-
-  // Return mock structured result (mirrors mock-clinical-data patterns)
-  const now = new Date().toISOString();
-  return {
-    id: _intakeId,
-    citizenId: 'c-current',
-    unitId: 'u-1',
-    messages,
-    chiefComplaint: 'Dor de cabeça persistente há 5 dias com tontura',
-    symptoms: ['Cefaleia persistente', 'Tontura', 'Visão turva ocasional'],
-    symptomDuration: '5 dias',
-    symptomOnset: 'Gradual',
-    associatedSymptoms: ['Tontura', 'Visão turva', 'Náusea leve'],
-    painScale: 6,
-    currentMedications: ['Losartana 50mg'],
-    allergies: ['Dipirona'],
-    chronicConditions: ['Hipertensão Arterial Sistêmica'],
-    familyHistory: ['Pai - AVC aos 65 anos'],
-    riskLevel: RiskLevel.URGENT,
-    priorityScore: 65,
-    clinicalSummary: {
-      id: 'cs-new',
-      intakeId: _intakeId,
-      narrative:
-        'Paciente hipertenso(a), em uso de Losartana 50mg, apresenta cefaleia persistente há 5 dias com piora progressiva, acompanhada de tontura e episódios de visão turva. Refere náusea leve associada. Histórico familiar de AVC paterno. Quadro sugere necessidade de avaliação neurológica e controle pressórico.',
-      structuredFindings: [
-        'Cefaleia persistente há 5 dias com piora progressiva',
-        'Tontura e episódios de visão turva associados',
-        'Paciente hipertenso em tratamento',
-        'Histórico familiar de AVC',
-      ],
-      suspectedConditions: [
-        'Crise hipertensiva',
-        'Cefaleia tensional crônica',
-        'Enxaqueca com aura',
-        'Causa secundária (investigar)',
-      ],
-      relevantHistory:
-        'HAS em tratamento com Losartana 50mg. Pai teve AVC aos 65 anos. Alergia a dipirona.',
-      riskFactors: [
-        'Hipertensão arterial',
-        'Histórico familiar de AVC',
-        'Cefaleia com sinais de alarme (visão turva)',
-      ],
-      generatedAt: now,
-    },
-    examSuggestions: [
-      {
-        id: 'ex-n1',
-        intakeId: _intakeId,
-        examName: 'Aferição de Pressão Arterial (MAPA 24h)',
-        category: 'FUNCTIONAL',
-        priority: 'URGENT',
-        justification:
-          'Paciente hipertenso com cefaleia persistente. Necessário avaliar controle pressórico e picos.',
-        status: 'SUGGESTED',
-      },
-      {
-        id: 'ex-n2',
-        intakeId: _intakeId,
-        examName: 'Hemograma completo',
-        examCode: '02.02.02.038-0',
-        category: 'LABORATORY',
-        priority: 'ROUTINE',
-        justification: 'Avaliação basal para descartar causas secundárias.',
-        status: 'SUGGESTED',
-      },
-      {
-        id: 'ex-n3',
-        intakeId: _intakeId,
-        examName: 'Tomografia de Crânio',
-        category: 'IMAGING',
-        priority: 'URGENT',
-        justification:
-          'Cefaleia com sinais de alarme (visão turva, tontura) em paciente hipertenso com HF de AVC. Necessário descartar causa estrutural.',
-        status: 'SUGGESTED',
-      },
-    ],
-    referralRecommendation: {
-      id: 'rr-new',
-      intakeId: _intakeId,
-      decision: 'REFER_SPECIALIST',
-      confidence: 78,
-      specialty: 'Neurologia',
-      justification:
-        'Cefaleia persistente com sinais de alarme em paciente hipertenso com histórico familiar de AVC. Recomenda-se avaliação neurológica após exames iniciais. Manter acompanhamento pressórico na UBS.',
-      requiredExamsBeforeReferral: [
-        'MAPA 24h',
-        'Tomografia de Crânio',
-      ],
-      alternativeActions: [
-        'Ajuste de anti-hipertensivo na UBS',
-        'Orientação sobre sinais de alarme',
-        'Retorno em 48h se piora',
-      ],
-      generatedAt: now,
-    },
-    isComplete: true,
-    startedAt: new Date(Date.now() - 600000).toISOString(),
-    completedAt: now,
-  };
 }
 
 /**
  * Returns the initial greeting message to start the intake.
  */
 export function getGreetingMessage(): TriageMessage {
-  return makeMsg('assistant', AGENT_RESPONSES.GREETING);
+  return makeMsg(
+    'assistant',
+    'Olá! Sou o assistente clínico do FilaZero. Vou fazer algumas perguntas para entender melhor o que você está sentindo e agilizar seu atendimento. Tudo que você compartilhar é confidencial e será usado apenas pela equipe de saúde.\n\nQual é a sua queixa principal hoje? O que trouxe você à unidade de saúde?',
+  );
 }
