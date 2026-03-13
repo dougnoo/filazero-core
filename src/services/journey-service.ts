@@ -37,7 +37,7 @@ export async function getCitizenJourneys(
  * Backend: GET /api/journeys/:journeyId
  */
 export async function getJourneyById(journeyId: string): Promise<CareJourney | null> {
-  if (!isMockMode()) {
+  if (!isTryaMockMode()) {
     const { data } = await tryaApi.get<CareJourney>(`/journeys/${journeyId}`);
     return data;
   }
