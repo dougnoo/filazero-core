@@ -19,6 +19,7 @@ const citizenNav = [
 
 const professionalNav = [
   { label: 'Fila', icon: ListChecks, path: '/profissional' },
+  { label: 'Casos', icon: ClipboardList, path: '/casos' },
   { label: 'Revisão', icon: FileText, path: '/revisao-clinica' },
   { label: 'Perfil', icon: User, path: '/profissional/perfil' },
 ];
