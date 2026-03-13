@@ -81,7 +81,9 @@ export type ValidationActionType =
   | 'APPROVE_REFERRAL'
   | 'REJECT_REFERRAL'
   | 'REQUEST_MORE_INFO'
-  | 'RESOLVE_PRIMARY';
+  | 'RESOLVE_PRIMARY'
+  | 'CHANGE_PRIORITY'
+  | 'REDIRECT_CASE';
 
 export interface ValidationResponse {
   success: boolean;
