@@ -50,7 +50,7 @@ export async function getJourneyById(journeyId: string): Promise<CareJourney | n
  * Backend: GET /api/intakes/:intakeId
  */
 export async function getIntakeForJourney(intakeId: string): Promise<ClinicalIntake | null> {
-  if (!isMockMode()) {
+  if (!isTryaMockMode()) {
     const { data } = await tryaApi.get<ClinicalIntake>(`/intakes/${intakeId}`);
     return data;
   }
