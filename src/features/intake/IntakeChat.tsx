@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Loader2, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ServerChatMessage } from '@/domain/types/chat-protocol';
+import drIaAvatar from '@/assets/dr-ia-avatar.png';
 import type { ClinicalIntake } from '@/domain/types/clinical-intake';
 import { useIntakeSession } from '@/hooks/use-intake-session';
 
