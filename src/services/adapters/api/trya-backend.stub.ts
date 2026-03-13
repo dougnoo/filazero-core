@@ -1,60 +1,32 @@
 /**
  * API Stubs — trya-backend (handslab-trya-backend)
  *
- * These classes will be implemented when the real backend is connected.
+ * Remaining stubs for services not yet promoted to real implementations.
  * Currently they throw clear errors if accidentally activated.
  *
  * Target base URL: env.TRYA_BACKEND_URL
  * Auth: Bearer JWT + X-Municipality-Id + X-Unit-Id (via api-client.ts)
+ *
+ * Promoted to real:
+ *   - CaseService → case-service.api.ts
+ *   - PatientService → patient-service.api.ts
+ *   - JourneyService → journey-service.api.ts
  */
 
-import type { CareJourney } from '@/domain/types/care-journey';
-import type { ClinicalIntake, ExamSuggestion } from '@/domain/types/clinical-intake';
+import type { ExamSuggestion } from '@/domain/types/clinical-intake';
 import type {
   ValidationRequest,
   ValidationResponse,
   ClinicalPackageListParams,
-  JourneyListParams,
 } from '@/domain/contracts/trya-backend';
 import type { ClinicalPackage } from '@/services/clinical-review-service';
 import type {
-  IJourneyService,
   IClinicalReviewService,
   IExamService,
 } from '@/services/adapters/types';
 
 const NOT_IMPL = (method: string) =>
   new Error(`[ApiStub] ${method} not implemented — connect trya-backend first`);
-
-// ─── Case Service — MOVED to case-service.api.ts (Phase 7) ─────
-// ─── Patient Service — MOVED to patient-service.api.ts (Phase 7) ─────
-
-// ─── Journey Service ────────────────────────────────────────────
-
-export class ApiJourneyService implements IJourneyService {
-  /**
-   * GET /api/citizens/:citizenId/journeys?status=active
-   */
-  async getCitizenJourneys(_citizenId: string, _params?: JourneyListParams): Promise<CareJourney[]> {
-    throw NOT_IMPL('ApiJourneyService.getCitizenJourneys');
-    // TODO:
-    // const query = new URLSearchParams({ status: params?.status ?? 'active' });
-    // const { data } = await tryaApi.get<CareJourney[]>(`/api/citizens/${citizenId}/journeys?${query}`);
-    // return data;
-  }
-
-  async getJourneyById(_journeyId: string): Promise<CareJourney | null> {
-    throw NOT_IMPL('ApiJourneyService.getJourneyById');
-  }
-
-  async getIntakeForJourney(_intakeId: string): Promise<ClinicalIntake | null> {
-    throw NOT_IMPL('ApiJourneyService.getIntakeForJourney');
-  }
-
-  async getCitizenJourneyHistory(_citizenId: string): Promise<CareJourney[]> {
-    throw NOT_IMPL('ApiJourneyService.getCitizenJourneyHistory');
-  }
-}
 
 // ─── Clinical Review Service ────────────────────────────────────
 

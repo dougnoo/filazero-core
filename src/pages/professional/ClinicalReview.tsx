@@ -3,7 +3,8 @@ import { AppShell } from '@/components/layout/AppShell';
 import { UserRole } from '@/domain/enums/user-role';
 import { CaseList } from '@/features/clinical-review/CaseList';
 import { CaseDetail } from '@/features/clinical-review/CaseDetail';
-import { getPendingClinicalPackages, type ClinicalPackage } from '@/services/clinical-review-service';
+import { services } from '@/services/adapters';
+import type { ClinicalPackage } from '@/services/clinical-review-service';
 import { CareJourneyStatus } from '@/domain/enums/care-journey-status';
 import { FileText, Loader2 } from 'lucide-react';
 
@@ -13,7 +14,7 @@ export default function ClinicalReview() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getPendingClinicalPackages()
+    services.clinicalReview.getPendingPackages()
       .then((data) => {
         setPackages(data);
         if (data.length > 0) setSelected(data[0]);

@@ -22,11 +22,8 @@ import {
   TrendingUp, FlaskConical, CalendarClock, ShieldAlert,
 } from 'lucide-react';
 import { riskLevelConfig, RiskLevel } from '@/domain/enums/risk-level';
-import {
-  fetchDashboardData,
-  type DashboardData,
-  type Bottleneck,
-} from '@/services/dashboard-service';
+import { services } from '@/services/adapters';
+import type { DashboardData, Bottleneck } from '@/services/dashboard-service';
 import type { DashboardFilters } from '@/domain/contracts/platform-backend';
 
 // ─── KPI Card ───
@@ -136,7 +133,7 @@ export default function ClinicalDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDashboardData()
+    services.dashboard.fetchDashboard()
       .then((d) => {
         setData(d);
       })

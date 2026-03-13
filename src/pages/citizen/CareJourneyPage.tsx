@@ -25,7 +25,7 @@ import { CareJourneyStatus, careJourneyStatusConfig } from '@/domain/enums/care-
 import { CareStepStatus } from '@/domain/enums/care-step-status';
 import type { CareJourney } from '@/domain/types/care-journey';
 import type { ClinicalIntake } from '@/domain/types/clinical-intake';
-import { getCitizenJourneys, getIntakeForJourney } from '@/services/journey-service';
+import { services } from '@/services/adapters';
 import { cn } from '@/lib/utils';
 
 const STATUS_BANNER: Record<string, { icon: typeof Clock; title: string; subtitle: string; className: string }> = {
@@ -121,10 +121,10 @@ export default function CareJourneyPage() {
   useEffect(() => {
     (async () => {
       try {
-        const data = await getCitizenJourneys('c-current');
+        const data = await services.journeys.getCitizenJourneys('c-current');
         setJourneys(data);
         if (data.length > 0) {
-          const intakeData = await getIntakeForJourney(data[0].intakeId);
+          const intakeData = await services.journeys.getIntakeForJourney(data[0].intakeId);
           setIntake(intakeData);
         }
       } catch (err) {

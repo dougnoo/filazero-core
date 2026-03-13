@@ -1,23 +1,15 @@
 /**
  * useIntakeSession — React hook for the clinical intake chat.
  *
- * Now powered by Lovable AI Gateway via edge functions:
- * - clinical-chat: Streaming clinical conversation agent
- * - clinical-result: Structured output generation
- *
+ * Now powered by the service adapter layer (factory picks mock vs real API).
  * The hook manages conversation state, phase tracking, and result generation.
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { ServerChatMessage, AgentType } from '@/domain/types/chat-protocol';
 import type { ClinicalIntake } from '@/domain/types/clinical-intake';
-import {
-  sendIntakeMessage,
-  generateIntakeResult,
-  getGreetingMessage,
-  type IntakePhase,
-  PHASE_ORDER,
-} from '@/services/intake-service';
+import { type IntakePhase, PHASE_ORDER } from '@/services/intake-service';
+import { services } from '@/services/adapters';
 
 // ─── State shape ────────────────────────────────────────────────
 
@@ -68,7 +60,7 @@ export function useIntakeSession(): IntakeSessionState & IntakeSessionActions {
     setActiveAgent('onboarding');
     setIsConnected(true);
 
-    const greeting = getGreetingMessage();
+    const greeting = services.intake.getGreetingMessage();
     const greetingChat: ServerChatMessage = {
       id: greeting.id,
       sessionId: sid,
@@ -100,7 +92,7 @@ export function useIntakeSession(): IntakeSessionState & IntakeSessionActions {
     setError(null);
 
     try {
-      const { reply, nextPhase } = await sendIntakeMessage(
+      const { reply, nextPhase } = await services.intake.sendMessage(
         sessionId,
         content,
         phaseRef.current,
@@ -128,7 +120,7 @@ export function useIntakeSession(): IntakeSessionState & IntakeSessionActions {
         setProcessingStage('structuring');
 
         try {
-          const intakeResult = await generateIntakeResult(
+          const intakeResult = await services.intake.generateResult(
             sessionId,
             messagesRef.current.map((m) => ({
               id: m.id,

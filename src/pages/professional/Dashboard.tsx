@@ -11,7 +11,8 @@ import {
   Stethoscope, AlertTriangle, CheckCircle2, Loader2,
   Activity, ChevronRight,
 } from 'lucide-react';
-import { getPendingClinicalPackages, getAllClinicalPackages, type ClinicalPackage } from '@/services/clinical-review-service';
+import { services } from '@/services/adapters';
+import type { ClinicalPackage } from '@/services/clinical-review-service';
 import { mockQueuePositions } from '@/mock';
 import { CareJourneyStatus, careJourneyStatusConfig } from '@/domain/enums/care-journey-status';
 import { CaseDetail } from '@/features/clinical-review/CaseDetail';
@@ -32,7 +33,7 @@ export default function ProfessionalDashboard() {
   const waitingPatients = mockQueuePositions.filter((p) => p.status === 'WAITING');
 
   useEffect(() => {
-    getAllClinicalPackages()
+    services.clinicalReview.getAllPackages()
       .then(setAllPackages)
       .catch(console.error)
       .finally(() => setLoading(false));
