@@ -161,6 +161,7 @@ const mockIntake2: ClinicalIntake = {
       'Sem resposta a analgésico comum',
     ],
     suspectedConditions: ['Enxaqueca com aura', 'Cefaleia tensional crônica', 'Hipertensão intracraniana (investigar)'],
+    cid10Codes: ['G43.1', 'G93.2'],
     relevantHistory: 'Sem comorbidades. HF de enxaqueca crônica materna.',
     riskFactors: ['Cefaleia progressiva sem alívio', 'Alteração visual associada'],
     generatedAt: daysAgo(3),
