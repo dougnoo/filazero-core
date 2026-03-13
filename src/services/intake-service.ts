@@ -139,7 +139,7 @@ export async function generateIntakeResult(
   messages: TriageMessage[],
 ): Promise<ClinicalIntake> {
   // ── Real backend path ──
-  if (!isMockMode()) {
+  if (!isChatMockMode()) {
     const { data } = await chatApi.post<ClinicalIntake>(
       `/intakes/${_intakeId}/generate`,
       { messages },

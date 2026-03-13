@@ -226,7 +226,7 @@ export function useIntakeSession(): IntakeSessionState & IntakeSessionActions {
     setIsAgentTyping(true);
     setError(null);
 
-    if (isMockMode()) {
+    if (isChatMockMode()) {
       // Mock path: use existing mock service
       try {
         const { reply, nextPhase } = await mockSendMessage(sessionId, content, mockPhaseRef.current);
