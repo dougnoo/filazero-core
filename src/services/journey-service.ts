@@ -55,7 +55,7 @@ export async function getIntakeForJourney(intakeId: string): Promise<ClinicalInt
     return data;
   }
   await new Promise((r) => setTimeout(r, 200));
-  return mockClinicalIntake;
+  return mockIntakesMap[intakeId] ?? mockClinicalIntake;
 }
 
 /**

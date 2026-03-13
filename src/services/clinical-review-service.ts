@@ -114,7 +114,7 @@ export async function getClinicalPackageById(journeyId: string): Promise<Clinica
   if (!journey) return null;
   return {
     journey,
-    intake: { ...mockClinicalIntake, id: journey.intakeId, citizenId: journey.citizenId },
+    intake: mockIntakesMap[journey.intakeId] ?? { ...mockClinicalIntake, id: journey.intakeId, citizenId: journey.citizenId },
   };
 }
 
