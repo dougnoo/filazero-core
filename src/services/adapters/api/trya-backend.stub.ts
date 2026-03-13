@@ -8,7 +8,6 @@
  * Auth: Bearer JWT + X-Municipality-Id + X-Unit-Id (via api-client.ts)
  */
 
-import type { Patient } from '@/domain/types/case';
 import type { CareJourney } from '@/domain/types/care-journey';
 import type { ClinicalIntake, ExamSuggestion } from '@/domain/types/clinical-intake';
 import type {
@@ -19,7 +18,6 @@ import type {
 } from '@/domain/contracts/trya-backend';
 import type { ClinicalPackage } from '@/services/clinical-review-service';
 import type {
-  IPatientService,
   IJourneyService,
   IClinicalReviewService,
   IExamService,
