@@ -12,7 +12,7 @@
  *   "cognito:groups"        → ["PROFESSIONAL", "MANAGER", etc.]
  */
 
-import { env } from '@/lib/env';
+import { env, isAuthMockMode } from '@/lib/env';
 import { UserRole } from '@/domain/enums/user-role';
 
 // ─── Types ──────────────────────────────────────────────────────
