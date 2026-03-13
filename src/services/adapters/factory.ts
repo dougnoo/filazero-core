@@ -216,14 +216,24 @@ export function createPatientService(): IPatientService {
   return new MockPatientService();
 }
 
-/** chat-backend → Conversational intake */
+/**
+ * Intake Service — Uses Supabase Edge Functions (clinical-chat / clinical-result).
+ *
+ * The edge functions are always available (deployed on Lovable Cloud),
+ * so we use ApiIntakeService by default with mock as fallback.
+ * Only pure DEMO_MODE with no Supabase URL skips the API.
+ */
 export function createIntakeService(): IIntakeService {
-  if (!isChatMockMode()) {
-    console.info('[factory] ✅ IntakeService → API (with resilient fallback)');
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? '';
+
+  if (supabaseUrl) {
+    console.info('[factory] ✅ IntakeService → API (Supabase Edge Functions, with resilient mock fallback)');
     const api = new ApiIntakeService();
     const mock = new MockIntakeService();
     return new ResilientIntakeService(api, mock);
   }
+
+  console.info('[factory] IntakeService → Mock (no Supabase URL)');
   return new MockIntakeService();
 }
 
