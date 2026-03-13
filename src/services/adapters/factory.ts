@@ -3,24 +3,19 @@
  *
  * Decision tree:
  *   if DEMO_MODE → always mock (zero network calls)
- *   else if granular flag + URL configured → API impl (stub throws for now)
+ *   else if granular flag + URL configured → API impl (with resilient fallback)
  *   else → mock
+ *
+ * Phase 7: CaseService is the first real integration.
+ *   Uses ResilientCaseService for automatic fallback to mock on API failure.
  *
  * ─── Backend Module Mapping ────────────────────────────────────────
  *
- * trya-backend:     CaseService, PatientService, JourneyService,
+ * trya-backend:     CaseService ✅ (real), PatientService, JourneyService,
  *                   ClinicalReviewService, ExamService
  * chat-backend:     IntakeService
  * chat-agents:      ClinicalSummaryService, ReferralService
  * platform-backend: DashboardService
- *
- * ─── Integration Activation ───────────────────────────────────────
- *
- * To activate a real service:
- *   1. Set VITE_DEMO_MODE=false
- *   2. Set the granular flag (e.g. VITE_ENABLE_REAL_TRYA=true)
- *   3. Set the backend URL (e.g. VITE_TRYA_BACKEND_URL=...)
- *   4. Replace stub throw with real implementation in api/*.stub.ts
  */
 
 import {
