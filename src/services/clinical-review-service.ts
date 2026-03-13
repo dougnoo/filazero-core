@@ -93,7 +93,7 @@ export async function getAllClinicalPackages(
   await new Promise((r) => setTimeout(r, 400));
   return mockCareJourneys.map((journey) => ({
     journey,
-    intake: { ...mockClinicalIntake, id: journey.intakeId, citizenId: journey.citizenId },
+    intake: mockIntakesMap[journey.intakeId] ?? { ...mockClinicalIntake, id: journey.intakeId, citizenId: journey.citizenId },
   }));
 }
 
