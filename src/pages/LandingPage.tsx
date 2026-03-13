@@ -164,12 +164,14 @@ function HeroSection() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-base px-8 h-14 rounded-xl">
-                Agendar Apresentação
-                <ArrowRight className="ml-2 h-5 w-5" />
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-base px-8 h-14 rounded-xl" asChild>
+                <a href="#contato">
+                  Agendar Apresentação
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </a>
               </Button>
-              <Button size="lg" variant="outline" className="font-semibold text-base px-8 h-14 rounded-xl border-border">
-                Ver Proposta Completa
+              <Button size="lg" variant="outline" className="font-semibold text-base px-8 h-14 rounded-xl border-border" onClick={() => navigate("/app")}>
+                Ver Demo da Plataforma
               </Button>
             </div>
           </div>
