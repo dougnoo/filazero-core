@@ -57,9 +57,31 @@ export const env: EnvConfig = {
   ENABLE_REAL_BACKEND: bool(import.meta.env.VITE_ENABLE_REAL_BACKEND),
   ENABLE_REAL_AUTH: bool(import.meta.env.VITE_ENABLE_REAL_AUTH),
   ENABLE_WEBSOCKET: bool(import.meta.env.VITE_ENABLE_WEBSOCKET),
+
+  ENABLE_REAL_TRYA: bool(import.meta.env.VITE_ENABLE_REAL_TRYA),
+  ENABLE_REAL_PLATFORM: bool(import.meta.env.VITE_ENABLE_REAL_PLATFORM),
+  ENABLE_REAL_CHAT: bool(import.meta.env.VITE_ENABLE_REAL_CHAT),
 };
 
 /** Returns true when no real backend URL is configured → use mocks. */
 export function isMockMode(): boolean {
   return !env.ENABLE_REAL_BACKEND || !env.TRYA_BACKEND_URL;
+}
+
+/** Returns true when trya-backend should use real API (granular or global flag). */
+export function isTryaMockMode(): boolean {
+  if (env.ENABLE_REAL_TRYA && env.TRYA_BACKEND_URL) return false;
+  return isMockMode();
+}
+
+/** Returns true when platform-backend should use real API. */
+export function isPlatformMockMode(): boolean {
+  if (env.ENABLE_REAL_PLATFORM && env.PLATFORM_BACKEND_URL) return false;
+  return isMockMode();
+}
+
+/** Returns true when chat-backend should use real API. */
+export function isChatMockMode(): boolean {
+  if (env.ENABLE_REAL_CHAT && env.CHAT_HTTP_URL) return false;
+  return isMockMode();
 }
