@@ -34,6 +34,8 @@ interface EnvConfig {
   ENABLE_REAL_TRYA: boolean;
   ENABLE_REAL_PLATFORM: boolean;
   ENABLE_REAL_CHAT: boolean;
+  /** Enables real write operations on trya-backend (validation, updates). Read-only by default. */
+  ENABLE_TRYA_WRITE: boolean;
 }
 
 function bool(val: string | undefined): boolean {
