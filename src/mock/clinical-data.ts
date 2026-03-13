@@ -279,6 +279,7 @@ const mockIntake5: ClinicalIntake = {
     narrative: 'Paciente feminina, 55 anos, apresenta tosse produtiva há 3 semanas, perda ponderal de 4kg, sudorese noturna e febre vespertina. Contato domiciliar com caso de tuberculose (tio materno há 2 anos). Quadro altamente sugestivo de tuberculose pulmonar.',
     structuredFindings: ['Tosse produtiva > 2 semanas', 'Perda de peso involuntária (4kg)', 'Sudorese noturna e febre vespertina', 'Contato com caso confirmado de TB'],
     suspectedConditions: ['Tuberculose pulmonar', 'Neoplasia pulmonar (DD)', 'Infecção fúngica pulmonar'],
+    cid10Codes: ['A15.0', 'C34.9'],
     relevantHistory: 'Contato domiciliar com TB. Sem comorbidades conhecidas.',
     riskFactors: ['Contato com TB', 'Sintomas constitutivos', 'Tosse > 2 semanas'],
     generatedAt: daysAgo(2),
