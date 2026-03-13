@@ -26,6 +26,7 @@ const professionalNav = [
 
 const managerNav = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/gestor' },
+  { label: 'Casos', icon: ClipboardList, path: '/casos' },
   { label: 'Clínico', icon: Activity, path: '/dashboard-clinico' },
   { label: 'Fluxo', icon: BarChart3, path: '/fluxo' },
   { label: 'Config', icon: Settings, path: '/gestor/config' },

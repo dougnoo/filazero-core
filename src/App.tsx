@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CaseStoreProvider } from "@/contexts/CaseStore";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UserRole } from "@/domain/enums/user-role";
 
@@ -20,6 +21,7 @@ import ProfessionalLogin from "./pages/professional/Login";
 import ProfessionalDashboard from "./pages/professional/Dashboard";
 import ClinicalReview from "./pages/professional/ClinicalReview";
 import CasesPage from "./pages/professional/Cases";
+import CaseDetailPage from "./pages/professional/CaseDetailPage";
 
 // Manager pages
 import ManagerLogin from "./pages/manager/Login";
@@ -46,87 +48,94 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            {/* Landing page */}
-            <Route path="/" element={<LandingPage />} />
+          <CaseStoreProvider>
+            <Routes>
+              {/* Landing page */}
+              <Route path="/" element={<LandingPage />} />
 
-            {/* Login pages */}
-            <Route path="/login" element={<CitizenLogin />} />
-            <Route path="/profissional/login" element={<ProfessionalLogin />} />
-            <Route path="/gestor/login" element={<ManagerLogin />} />
-            <Route path="/admin/login" element={
-              <StaffLogin
-                title="Admin FilaZero"
-                subtitle="Acesse o painel administrativo da plataforma"
-                redirectTo="/admin"
-                role={UserRole.ADMIN}
-              />
-            } />
+              {/* Login pages */}
+              <Route path="/login" element={<CitizenLogin />} />
+              <Route path="/profissional/login" element={<ProfessionalLogin />} />
+              <Route path="/gestor/login" element={<ManagerLogin />} />
+              <Route path="/admin/login" element={
+                <StaffLogin
+                  title="Admin FilaZero"
+                  subtitle="Acesse o painel administrativo da plataforma"
+                  redirectTo="/admin"
+                  role={UserRole.ADMIN}
+                />
+              } />
 
-            {/* ═══ Citizen routes (protected) ═══ */}
-            <Route path="/app" element={
-              <ProtectedRoute allowedRoles={[UserRole.CITIZEN]}>
-                <CitizenHome />
-              </ProtectedRoute>
-            } />
-            <Route path="/intake" element={
-              <ProtectedRoute allowedRoles={[UserRole.CITIZEN]}>
-                <ClinicalIntake />
-              </ProtectedRoute>
-            } />
-            <Route path="/minha-jornada" element={
-              <ProtectedRoute allowedRoles={[UserRole.CITIZEN]}>
-                <CareJourneyPage />
-              </ProtectedRoute>
-            } />
-            {/* Legacy citizen routes */}
-            <Route path="/triagem" element={<CitizenTriage />} />
-            <Route path="/fila" element={<CitizenQueueStatus />} />
+              {/* ═══ Citizen routes (protected) ═══ */}
+              <Route path="/app" element={
+                <ProtectedRoute allowedRoles={[UserRole.CITIZEN]}>
+                  <CitizenHome />
+                </ProtectedRoute>
+              } />
+              <Route path="/intake" element={
+                <ProtectedRoute allowedRoles={[UserRole.CITIZEN]}>
+                  <ClinicalIntake />
+                </ProtectedRoute>
+              } />
+              <Route path="/minha-jornada" element={
+                <ProtectedRoute allowedRoles={[UserRole.CITIZEN]}>
+                  <CareJourneyPage />
+                </ProtectedRoute>
+              } />
+              {/* Legacy citizen routes */}
+              <Route path="/triagem" element={<CitizenTriage />} />
+              <Route path="/fila" element={<CitizenQueueStatus />} />
 
-            {/* ═══ Professional routes (protected) ═══ */}
-            <Route path="/profissional" element={
-              <ProtectedRoute allowedRoles={[UserRole.PROFESSIONAL]}>
-                <ProfessionalDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/revisao-clinica" element={
-              <ProtectedRoute allowedRoles={[UserRole.PROFESSIONAL]}>
-                <ClinicalReview />
-              </ProtectedRoute>
-            } />
-            <Route path="/casos" element={
-              <ProtectedRoute allowedRoles={[UserRole.PROFESSIONAL, UserRole.MANAGER]}>
-                <CasesPage />
-              </ProtectedRoute>
-            } />
+              {/* ═══ Professional routes (protected) ═══ */}
+              <Route path="/profissional" element={
+                <ProtectedRoute allowedRoles={[UserRole.PROFESSIONAL]}>
+                  <ProfessionalDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/revisao-clinica" element={
+                <ProtectedRoute allowedRoles={[UserRole.PROFESSIONAL]}>
+                  <ClinicalReview />
+                </ProtectedRoute>
+              } />
+              <Route path="/casos" element={
+                <ProtectedRoute allowedRoles={[UserRole.PROFESSIONAL, UserRole.MANAGER]}>
+                  <CasesPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/casos/:id" element={
+                <ProtectedRoute allowedRoles={[UserRole.PROFESSIONAL, UserRole.MANAGER]}>
+                  <CaseDetailPage />
+                </ProtectedRoute>
+              } />
 
-            {/* ═══ Manager routes (protected) ═══ */}
-            <Route path="/gestor" element={
-              <ProtectedRoute allowedRoles={[UserRole.MANAGER]}>
-                <ManagerDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard-clinico" element={
-              <ProtectedRoute allowedRoles={[UserRole.MANAGER]}>
-                <ClinicalDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/fluxo" element={
-              <ProtectedRoute allowedRoles={[UserRole.MANAGER]}>
-                <FlowAnalytics />
-              </ProtectedRoute>
-            } />
+              {/* ═══ Manager routes (protected) ═══ */}
+              <Route path="/gestor" element={
+                <ProtectedRoute allowedRoles={[UserRole.MANAGER]}>
+                  <ManagerDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard-clinico" element={
+                <ProtectedRoute allowedRoles={[UserRole.MANAGER]}>
+                  <ClinicalDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/fluxo" element={
+                <ProtectedRoute allowedRoles={[UserRole.MANAGER]}>
+                  <FlowAnalytics />
+                </ProtectedRoute>
+              } />
 
-            {/* ═══ Admin routes (protected) ═══ */}
-            <Route path="/admin" element={
-              <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            } />
+              {/* ═══ Admin routes (protected) ═══ */}
+              <Route path="/admin" element={
+                <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } />
 
-            {/* Catch-all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              {/* Catch-all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </CaseStoreProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
