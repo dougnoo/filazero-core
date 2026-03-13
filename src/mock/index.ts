@@ -22,3 +22,9 @@ export {
   mockTriageSummary,
   mockDashboardStats,
 } from './queue-data';
+
+// Cases: unified case list, patients
+export {
+  mockCases,
+  mockPatients,
+} from './cases-data';

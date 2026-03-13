@@ -8,3 +8,4 @@ export { CareJourneyStatus, careJourneyStatusConfig } from './care-journey-statu
 export { CareStepStatus, careStepStatusConfig } from './care-step-status';
 export { ReferralUrgency } from './referral-urgency';
 export { UnitType } from './unit-type';
+export { CaseStatus, caseStatusConfig, journeyStatusToCaseStatus } from './case-status';

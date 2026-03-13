@@ -19,6 +19,7 @@ import CareJourneyPage from "./pages/citizen/CareJourneyPage";
 import ProfessionalLogin from "./pages/professional/Login";
 import ProfessionalDashboard from "./pages/professional/Dashboard";
 import ClinicalReview from "./pages/professional/ClinicalReview";
+import CasesPage from "./pages/professional/Cases";
 
 // Manager pages
 import ManagerLogin from "./pages/manager/Login";
@@ -91,6 +92,11 @@ const App = () => (
             <Route path="/revisao-clinica" element={
               <ProtectedRoute allowedRoles={[UserRole.PROFESSIONAL]}>
                 <ClinicalReview />
+              </ProtectedRoute>
+            } />
+            <Route path="/casos" element={
+              <ProtectedRoute allowedRoles={[UserRole.PROFESSIONAL, UserRole.MANAGER]}>
+                <CasesPage />
               </ProtectedRoute>
             } />
 

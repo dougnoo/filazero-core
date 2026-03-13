@@ -19,6 +19,9 @@ export type {
   AttendanceRecord,
 } from './care-journey';
 
+// === Central Case entity ===
+export type { Case, Patient } from './case';
+
 // === Enums ===
 export { RiskLevel, riskLevelConfig } from '../enums/risk-level';
 export { QueueStatus, queueStatusConfig } from '../enums/queue-status';
@@ -27,3 +30,4 @@ export { UnitType, unitTypeConfig } from '../enums/unit-type';
 export { CareJourneyStatus, careJourneyStatusConfig } from '../enums/care-journey-status';
 export { CareStepStatus, careStepStatusConfig } from '../enums/care-step-status';
 export { ReferralUrgency, referralUrgencyConfig } from '../enums/referral-urgency';
+export { CaseStatus, caseStatusConfig, journeyStatusToCaseStatus } from '../enums/case-status';
