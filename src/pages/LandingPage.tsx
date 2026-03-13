@@ -73,9 +73,8 @@ const navItems = [
   { label: "Solução", href: "#solucao" },
   { label: "Como Funciona", href: "#como-funciona" },
   { label: "Impacto", href: "#impacto" },
-  { label: "Implementação", href: "#implementacao" },
+  { label: "Demo", href: "#demo" },
   { label: "Preço", href: "#preco" },
-  { label: "Segurança", href: "#seguranca" },
 ];
 
 function Navbar() {
