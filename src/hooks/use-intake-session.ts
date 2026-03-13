@@ -13,7 +13,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { WSManager } from '@/lib/ws-manager';
-import { env, isMockMode } from '@/lib/env';
+import { env, isChatMockMode } from '@/lib/env';
 import type {
   ServerMessage,
   ServerChatMessage,

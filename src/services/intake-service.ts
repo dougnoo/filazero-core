@@ -17,7 +17,7 @@
 import type { ClinicalIntake } from '@/domain/types/clinical-intake';
 import type { TriageMessage } from '@/domain/types/triage';
 import { RiskLevel } from '@/domain/enums/risk-level';
-import { isMockMode } from '@/lib/env';
+import { isChatMockMode } from '@/lib/env';
 import { chatApi } from '@/lib/api-client';
 
 // ─── Intake Phases ───
