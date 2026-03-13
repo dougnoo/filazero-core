@@ -3,26 +3,24 @@
  *
  * Decision tree:
  *   if DEMO_MODE → always mock (zero network calls)
- *   else if granular flag (e.g. ENABLE_REAL_TRYA) + URL configured → API impl
+ *   else if granular flag + URL configured → API impl (stub throws for now)
  *   else → mock
  *
- * Usage (future — not wired yet):
- *   const caseService = createCaseService();
- *   const cases = await caseService.getCases();
+ * ─── Backend Module Mapping ────────────────────────────────────────
  *
- * Current state:
- *   All create* functions return mock implementations that delegate to
- *   the existing service functions in src/services/*.ts.
- *   API implementations are stubbed with clear TODO markers.
+ * trya-backend:     CaseService, PatientService, JourneyService,
+ *                   ClinicalReviewService, ExamService
+ * chat-backend:     IntakeService
+ * chat-agents:      ClinicalSummaryService, ReferralService
+ * platform-backend: DashboardService
  *
- * ─── Integration Checklist ─────────────────────────────────────────
+ * ─── Integration Activation ───────────────────────────────────────
  *
  * To activate a real service:
  *   1. Set VITE_DEMO_MODE=false
  *   2. Set the granular flag (e.g. VITE_ENABLE_REAL_TRYA=true)
- *   3. Set the backend URL (e.g. VITE_TRYA_BACKEND_URL=https://api.filazero.com/v1)
- *   4. Implement the Api* class methods using tryaApi / platformApi from api-client.ts
- *   5. Test with a single service first (mixed mode is supported)
+ *   3. Set the backend URL (e.g. VITE_TRYA_BACKEND_URL=...)
+ *   4. Replace stub throw with real implementation in api/*.stub.ts
  */
 
 import {
@@ -33,14 +31,17 @@ import {
 
 import type {
   ICaseService,
+  IPatientService,
   IIntakeService,
   IJourneyService,
   IClinicalReviewService,
+  IClinicalSummaryService,
+  IReferralService,
+  IExamService,
   IDashboardService,
 } from './types';
 
-// ─── Lazy imports for mock implementations ──────────────────────
-// These wrap the existing service functions as adapter implementations.
+// ─── Mock service imports (existing service functions) ───────────
 
 import {
   getCases,
@@ -75,6 +76,22 @@ import {
   fetchWeeklyTrend,
 } from '@/services/dashboard-service';
 
+import { mockClinicalIntake } from '@/mock';
+
+// ─── API stub imports ───────────────────────────────────────────
+
+import {
+  ApiCaseService,
+  ApiPatientService,
+  ApiJourneyService,
+  ApiClinicalReviewService,
+  ApiExamService,
+  ApiIntakeService,
+  ApiClinicalSummaryService,
+  ApiReferralService,
+  ApiDashboardService,
+} from './api';
+
 // ═══════════════════════════════════════════════════════════════════
 // §1 — Mock Adapters (delegate to existing service functions)
 // ═══════════════════════════════════════════════════════════════════
@@ -83,6 +100,23 @@ class MockCaseService implements ICaseService {
   getCases = getCases;
   getCaseById = getCaseById;
   getCaseCountsByStatus = getCaseCountsByStatus;
+}
+
+class MockPatientService implements IPatientService {
+  async getPatientById(patientId: string) {
+    // Patient is embedded in Case — extract from mock cases
+    const caseItem = await getCaseById(patientId);
+    return caseItem?.patient ?? null;
+  }
+  async searchPatientByCPF(cpf: string) {
+    const cases = await getCases();
+    const found = cases.find((c) => c.patient.cpf === cpf);
+    return found?.patient ?? null;
+  }
+  async getPatientClinicalHistory(_patientId: string) {
+    await new Promise((r) => setTimeout(r, 300));
+    return [mockClinicalIntake];
+  }
 }
 
 class MockIntakeService implements IIntakeService {
@@ -105,6 +139,43 @@ class MockClinicalReviewService implements IClinicalReviewService {
   submitValidation = submitValidation;
 }
 
+class MockClinicalSummaryService implements IClinicalSummaryService {
+  async generateSummary(_intakeId: string, _messages: import('@/domain/types/triage').TriageMessage[]) {
+    await new Promise((r) => setTimeout(r, 500));
+    return mockClinicalIntake.clinicalSummary!;
+  }
+  async regenerateSummary(intakeId: string, messages: import('@/domain/types/triage').TriageMessage[]) {
+    return this.generateSummary(intakeId, messages);
+  }
+}
+
+class MockReferralService implements IReferralService {
+  async generateRecommendation() {
+    await new Promise((r) => setTimeout(r, 500));
+    return mockClinicalIntake.referralRecommendation!;
+  }
+  async recalculateAfterExams() {
+    return this.generateRecommendation();
+  }
+}
+
+class MockExamService implements IExamService {
+  async getExamsForIntake(_intakeId: string) {
+    await new Promise((r) => setTimeout(r, 300));
+    return mockClinicalIntake.examSuggestions ?? [];
+  }
+  async updateExamStatus(examId: string, status: import('@/domain/types/clinical-intake').ExamSuggestion['status'], result?: string) {
+    await new Promise((r) => setTimeout(r, 200));
+    const exam = mockClinicalIntake.examSuggestions?.find((e) => e.id === examId);
+    if (!exam) throw new Error(`Exam ${examId} not found`);
+    return { ...exam, status, result, completedAt: status === 'COMPLETED' ? new Date().toISOString() : undefined };
+  }
+  async suggestExams() {
+    await new Promise((r) => setTimeout(r, 500));
+    return mockClinicalIntake.examSuggestions ?? [];
+  }
+}
+
 class MockDashboardService implements IDashboardService {
   fetchDashboard = fetchDashboardData;
   fetchKPIs = fetchKPIs;
@@ -113,80 +184,78 @@ class MockDashboardService implements IDashboardService {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// §2 — API Adapters (stubs — implement when backend is ready)
+// §2 — Factory Functions
 // ═══════════════════════════════════════════════════════════════════
 
-// TODO: Implement ApiCaseService using tryaApi.get('/api/cases', ...)
-// TODO: Implement ApiIntakeService using chat-backend SSE + HTTP
-// TODO: Implement ApiJourneyService using tryaApi.get('/api/journeys', ...)
-// TODO: Implement ApiClinicalReviewService using tryaApi
-// TODO: Implement ApiDashboardService using platformApi
-
-// ═══════════════════════════════════════════════════════════════════
-// §3 — Factory Functions
-// ═══════════════════════════════════════════════════════════════════
-
-/**
- * Creates a CaseService adapter.
- * Backend: trya-backend
- * Flag: ENABLE_REAL_TRYA + TRYA_BACKEND_URL
- */
+/** trya-backend → Case CRUD */
 export function createCaseService(): ICaseService {
   if (!isTryaMockMode()) {
-    // TODO: return new ApiCaseService();
-    console.warn('[factory] ApiCaseService not implemented — falling back to mock');
+    console.warn('[factory] ApiCaseService is a stub — falling back to mock');
+    // TODO: return new ApiCaseService() when implemented
   }
   return new MockCaseService();
 }
 
-/**
- * Creates an IntakeService adapter.
- * Backend: chat-backend (SSE streaming)
- * Flag: ENABLE_REAL_CHAT + CHAT_HTTP_URL
- */
+/** trya-backend → Patient lookup */
+export function createPatientService(): IPatientService {
+  if (!isTryaMockMode()) {
+    console.warn('[factory] ApiPatientService is a stub — falling back to mock');
+  }
+  return new MockPatientService();
+}
+
+/** chat-backend → Conversational intake */
 export function createIntakeService(): IIntakeService {
   if (!isChatMockMode()) {
-    // TODO: return new ApiIntakeService();
-    console.warn('[factory] ApiIntakeService not implemented — falling back to mock');
+    console.warn('[factory] ApiIntakeService is a stub — falling back to mock');
   }
   return new MockIntakeService();
 }
 
-/**
- * Creates a JourneyService adapter.
- * Backend: trya-backend
- * Flag: ENABLE_REAL_TRYA + TRYA_BACKEND_URL
- */
+/** trya-backend → Journey tracking */
 export function createJourneyService(): IJourneyService {
   if (!isTryaMockMode()) {
-    // TODO: return new ApiJourneyService();
-    console.warn('[factory] ApiJourneyService not implemented — falling back to mock');
+    console.warn('[factory] ApiJourneyService is a stub — falling back to mock');
   }
   return new MockJourneyService();
 }
 
-/**
- * Creates a ClinicalReviewService adapter.
- * Backend: trya-backend
- * Flag: ENABLE_REAL_TRYA + TRYA_BACKEND_URL
- */
+/** trya-backend → Clinical review & validation */
 export function createClinicalReviewService(): IClinicalReviewService {
   if (!isTryaMockMode()) {
-    // TODO: return new ApiClinicalReviewService();
-    console.warn('[factory] ApiClinicalReviewService not implemented — falling back to mock');
+    console.warn('[factory] ApiClinicalReviewService is a stub — falling back to mock');
   }
   return new MockClinicalReviewService();
 }
 
-/**
- * Creates a DashboardService adapter.
- * Backend: platform-backend
- * Flag: ENABLE_REAL_PLATFORM + PLATFORM_BACKEND_URL
- */
+/** chat-agents → AI clinical summary generation */
+export function createClinicalSummaryService(): IClinicalSummaryService {
+  if (!isChatMockMode()) {
+    console.warn('[factory] ApiClinicalSummaryService is a stub — falling back to mock');
+  }
+  return new MockClinicalSummaryService();
+}
+
+/** chat-agents → AI referral recommendation */
+export function createReferralService(): IReferralService {
+  if (!isChatMockMode()) {
+    console.warn('[factory] ApiReferralService is a stub — falling back to mock');
+  }
+  return new MockReferralService();
+}
+
+/** trya-backend + chat-agents → Exam management */
+export function createExamService(): IExamService {
+  if (!isTryaMockMode()) {
+    console.warn('[factory] ApiExamService is a stub — falling back to mock');
+  }
+  return new MockExamService();
+}
+
+/** platform-backend → Manager dashboard analytics */
 export function createDashboardService(): IDashboardService {
   if (!isPlatformMockMode()) {
-    // TODO: return new ApiDashboardService();
-    console.warn('[factory] ApiDashboardService not implemented — falling back to mock');
+    console.warn('[factory] ApiDashboardService is a stub — falling back to mock');
   }
   return new MockDashboardService();
 }
