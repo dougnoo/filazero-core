@@ -136,8 +136,8 @@ export function IntakeChat({ onComplete, citizenId = 'c-current', unitId = 'u-1'
         )}
       </div>
 
-      {/* Input bar */}
-      <div className="border-t border-border bg-card px-3 py-3">
+      {/* Input bar — pb-safe adds extra padding on iOS for home indicator */}
+      <div className="border-t border-border bg-card px-3 py-2 pb-3">
         <div className="mx-auto flex max-w-lg items-center gap-2">
           <input
             ref={inputRef}
