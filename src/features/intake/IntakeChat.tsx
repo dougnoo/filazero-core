@@ -173,9 +173,12 @@ function ChatHeader() {
       <button className="text-foreground">
         <Menu className="h-5 w-5" />
       </button>
-      <span className="font-[var(--font-display)] text-lg font-bold tracking-tight text-foreground">
-        trya
-      </span>
+      <div className="flex items-center gap-2">
+        <img src={drIaAvatar} alt="Dr. IA" className="h-7 w-7 rounded-full object-cover" />
+        <span className="font-[var(--font-display)] text-lg font-bold tracking-tight text-foreground">
+          Dr. IA Triagem
+        </span>
+      </div>
       <div className="w-5" />
     </div>
   );
