@@ -1,1 +1,7 @@
 project_id = "hprdzyoixpzblfgyxygv"
+
+[functions.clinical-chat]
+verify_jwt = false
+
+[functions.clinical-result]
+verify_jwt = false
