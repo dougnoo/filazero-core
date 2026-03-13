@@ -4,6 +4,13 @@ import { ArrowLeft, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
+import { isDemoMode } from '@/lib/env';
+
+const DEMO_CITIZENS = [
+  { name: 'Maria da Silva Santos', cpf: '123.456.789-00', desc: 'Dor torácica — Emergência (Cardiologia)' },
+  { name: 'João Pedro Oliveira', cpf: '234.567.890-11', desc: 'Cefaleia com alteração visual — Urgente (Neurologia)' },
+  { name: 'Francisca Souza', cpf: '345.678.901-22', desc: 'Tosse persistente — Muito Urgente (Pneumologia)' },
+];
 
 export default function CitizenLogin() {
   const [cpf, setCpf] = useState('');
@@ -36,6 +43,11 @@ export default function CitizenLogin() {
       await loginWithCPF(cpf, otp);
       navigate(from, { replace: true });
     }
+  };
+
+  const handleDemoLogin = async (demoCpf: string) => {
+    await loginWithCPF(demoCpf, '1234');
+    navigate(from, { replace: true });
   };
 
   if (step === 'otp') {
@@ -112,6 +124,25 @@ export default function CitizenLogin() {
               Continuar
             </Button>
           </form>
+
+          {isDemoMode() && (
+            <div className="space-y-3 rounded-xl border border-dashed border-primary/30 bg-primary/5 p-4">
+              <p className="text-xs font-semibold text-primary uppercase tracking-wider">Acesso Demo — Pacientes</p>
+              {DEMO_CITIZENS.map((c) => (
+                <button
+                  key={c.cpf}
+                  onClick={() => handleDemoLogin(c.cpf)}
+                  disabled={isLoading}
+                  className="flex w-full flex-col items-start gap-0.5 rounded-lg border border-border bg-card p-3 text-left transition-colors hover:bg-accent hover:border-primary/40"
+                >
+                  <span className="text-sm font-medium text-foreground">{c.name}</span>
+                  <span className="text-xs text-muted-foreground">{c.desc}</span>
+                  <span className="text-[10px] font-mono text-muted-foreground/60">CPF: {c.cpf}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="text-center">
             <p className="text-xs text-muted-foreground">
               Ao continuar, você concorda com a{' '}

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/domain/enums/user-role';
+import { isDemoMode } from '@/lib/env';
 
 interface StaffLoginProps {
   title: string;
@@ -11,6 +12,26 @@ interface StaffLoginProps {
   redirectTo: string;
   role: UserRole;
 }
+
+interface DemoAccount {
+  name: string;
+  email: string;
+  desc: string;
+}
+
+const DEMO_ACCOUNTS: Record<string, DemoAccount[]> = {
+  [UserRole.PROFESSIONAL]: [
+    { name: 'Dr. Carlos Mendes', email: 'carlos@ubs.gov.br', desc: 'Clínico Geral — UBS Centro' },
+    { name: 'Dra. Fernanda Lima', email: 'fernanda@ubs.gov.br', desc: 'Médica de Família — UBS Norte' },
+  ],
+  [UserRole.MANAGER]: [
+    { name: 'Ana Coordenadora', email: 'ana@saude.gov.br', desc: 'Coordenadora de Atenção Básica' },
+    { name: 'Ricardo Diretor', email: 'gestor@saude.gov.br', desc: 'Diretor de Regulação Municipal' },
+  ],
+  [UserRole.ADMIN]: [
+    { name: 'Admin FilaZero', email: 'admin@filazero.com', desc: 'Administrador da Plataforma' },
+  ],
+};
 
 export default function StaffLogin({ title, subtitle, redirectTo, role }: StaffLoginProps) {
   const [email, setEmail] = useState('');
@@ -26,6 +47,13 @@ export default function StaffLogin({ title, subtitle, redirectTo, role }: StaffL
     await loginWithCredentials(email, password, role);
     navigate(from, { replace: true });
   };
+
+  const handleDemoLogin = async (demoEmail: string) => {
+    await loginWithCredentials(demoEmail, 'demo123', role);
+    navigate(from, { replace: true });
+  };
+
+  const demoAccounts = DEMO_ACCOUNTS[role] ?? [];
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -67,6 +95,24 @@ export default function StaffLogin({ title, subtitle, redirectTo, role }: StaffL
               Esqueci minha senha
             </button>
           </form>
+
+          {isDemoMode() && demoAccounts.length > 0 && (
+            <div className="space-y-3 rounded-xl border border-dashed border-primary/30 bg-primary/5 p-4">
+              <p className="text-xs font-semibold text-primary uppercase tracking-wider">Acesso Demo</p>
+              {demoAccounts.map((acc) => (
+                <button
+                  key={acc.email}
+                  onClick={() => handleDemoLogin(acc.email)}
+                  disabled={isLoading}
+                  className="flex w-full flex-col items-start gap-0.5 rounded-lg border border-border bg-card p-3 text-left transition-colors hover:bg-accent hover:border-primary/40"
+                >
+                  <span className="text-sm font-medium text-foreground">{acc.name}</span>
+                  <span className="text-xs text-muted-foreground">{acc.desc}</span>
+                  <span className="text-[10px] font-mono text-muted-foreground/60">{acc.email}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
