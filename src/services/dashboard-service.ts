@@ -183,7 +183,7 @@ export async function fetchKPIs(filters: DashboardFilters = {}): Promise<Dashboa
  * Fetch bottlenecks only (for alert widgets / notifications).
  */
 export async function fetchBottlenecks(filters: DashboardFilters = {}): Promise<Bottleneck[]> {
-  if (!isMockMode()) {
+  if (!isPlatformMockMode()) {
     const qs = filtersToParams(filters).toString();
     const path = `/api/manager/dashboard/bottlenecks${qs ? `?${qs}` : ''}`;
     const { data } = await platformApi.get<BottleneckDTO[]>(path);
