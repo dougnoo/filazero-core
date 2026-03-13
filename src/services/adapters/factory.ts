@@ -22,6 +22,7 @@ import {
   isTryaMockMode,
   isChatMockMode,
   isPlatformMockMode,
+  env,
 } from '@/lib/env';
 
 import type {
