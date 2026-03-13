@@ -29,5 +29,5 @@ export {
   ApiReferralService,
 } from './chat-agents.stub';
 
-// platform-backend (handslab-trya-platform-backend)
-export { ApiDashboardService } from './platform-backend.stub';
+// platform-backend — REAL (Phase 8)
+export { ApiDashboardService } from './dashboard-service.api';

@@ -93,6 +93,7 @@ import { ResilientPatientService } from './resilient-patient-service';
 import { ResilientIntakeService } from './resilient-intake-service';
 import { ResilientJourneyService } from './resilient-journey-service';
 import { ResilientClinicalReviewService } from './resilient-clinical-review-service';
+import { ResilientDashboardService } from './resilient-dashboard-service';
 
 // ═══════════════════════════════════════════════════════════════════
 // §1 — Mock Adapters (delegate to existing service functions)
@@ -307,7 +308,10 @@ export function createExamService(): IExamService {
 /** platform-backend → Manager dashboard analytics */
 export function createDashboardService(): IDashboardService {
   if (!isPlatformMockMode()) {
-    console.warn('[factory] ApiDashboardService is a stub — falling back to mock');
+    console.info('[factory] ✅ DashboardService → API (with resilient fallback)');
+    const api = new ApiDashboardService();
+    const mock = new MockDashboardService();
+    return new ResilientDashboardService(api, mock);
   }
   return new MockDashboardService();
 }
