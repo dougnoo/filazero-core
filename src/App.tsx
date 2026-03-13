@@ -33,6 +33,9 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import NotFound from "./pages/NotFound";
 import LandingPage from "./pages/LandingPage";
 
+// Auth
+import StaffLogin from "./components/auth/StaffLogin";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -43,15 +46,28 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* Public routes */}
+            {/* Landing page */}
             <Route path="/" element={<LandingPage />} />
-            <Route path="/app" element={<CitizenHome />} />
+
+            {/* Login pages */}
             <Route path="/login" element={<CitizenLogin />} />
             <Route path="/profissional/login" element={<ProfessionalLogin />} />
             <Route path="/gestor/login" element={<ManagerLogin />} />
-            <Route path="/admin/login" element={<ProfessionalLogin />} />
+            <Route path="/admin/login" element={
+              <StaffLogin
+                title="Admin FilaZero"
+                subtitle="Acesse o painel administrativo da plataforma"
+                redirectTo="/admin"
+                role={UserRole.ADMIN}
+              />
+            } />
 
-            {/* Citizen routes (protected) */}
+            {/* ═══ Citizen routes (protected) ═══ */}
+            <Route path="/app" element={
+              <ProtectedRoute allowedRoles={[UserRole.CITIZEN]}>
+                <CitizenHome />
+              </ProtectedRoute>
+            } />
             <Route path="/intake" element={
               <ProtectedRoute allowedRoles={[UserRole.CITIZEN]}>
                 <ClinicalIntake />
@@ -62,11 +78,11 @@ const App = () => (
                 <CareJourneyPage />
               </ProtectedRoute>
             } />
-            {/* Legacy citizen routes (kept working) */}
+            {/* Legacy citizen routes */}
             <Route path="/triagem" element={<CitizenTriage />} />
             <Route path="/fila" element={<CitizenQueueStatus />} />
 
-            {/* Professional routes (protected) */}
+            {/* ═══ Professional routes (protected) ═══ */}
             <Route path="/profissional" element={
               <ProtectedRoute allowedRoles={[UserRole.PROFESSIONAL]}>
                 <ProfessionalDashboard />
@@ -78,7 +94,7 @@ const App = () => (
               </ProtectedRoute>
             } />
 
-            {/* Manager routes (protected) */}
+            {/* ═══ Manager routes (protected) ═══ */}
             <Route path="/gestor" element={
               <ProtectedRoute allowedRoles={[UserRole.MANAGER]}>
                 <ManagerDashboard />
@@ -95,7 +111,7 @@ const App = () => (
               </ProtectedRoute>
             } />
 
-            {/* Admin routes (protected) */}
+            {/* ═══ Admin routes (protected) ═══ */}
             <Route path="/admin" element={
               <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
                 <AdminDashboard />
