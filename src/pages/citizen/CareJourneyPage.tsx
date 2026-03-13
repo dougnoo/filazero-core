@@ -117,6 +117,23 @@ export default function CareJourneyPage() {
     );
   }
 
+  if (error) {
+    return (
+      <AppShell role={UserRole.CITIZEN}>
+        <div className="mx-auto max-w-lg px-4 py-12 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10">
+            <AlertTriangle className="h-8 w-8 text-destructive" />
+          </div>
+          <h1 className="font-display text-xl font-bold text-foreground">Erro ao carregar jornada</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{error}</p>
+          <Button variant="outline" onClick={() => window.location.reload()} className="mt-6">
+            Tentar novamente
+          </Button>
+        </div>
+      </AppShell>
+    );
+  }
+
   if (journeys.length === 0) {
     return (
       <AppShell role={UserRole.CITIZEN}>
