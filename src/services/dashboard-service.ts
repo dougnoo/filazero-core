@@ -155,7 +155,7 @@ function generateMockDashboardData(): DashboardData {
  * Mock mode: returns static demo data.
  */
 export async function fetchDashboardData(filters: DashboardFilters = {}): Promise<DashboardData> {
-  if (!isMockMode()) {
+  if (!isPlatformMockMode()) {
     const qs = filtersToParams(filters).toString();
     const path = `/api/manager/dashboard${qs ? `?${qs}` : ''}`;
     const { data } = await platformApi.get<DashboardResponse>(path);
