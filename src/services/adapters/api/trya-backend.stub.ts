@@ -32,43 +32,8 @@ import type {
 const NOT_IMPL = (method: string) =>
   new Error(`[ApiStub] ${method} not implemented — connect trya-backend first`);
 
-// ─── Case Service ───────────────────────────────────────────────
-
-export class ApiCaseService implements ICaseService {
-  /**
-   * GET /api/cases?status=X&riskLevel=Y&search=Z
-   */
-  async getCases(_filters?: CaseFilters): Promise<Case[]> {
-    throw NOT_IMPL('ApiCaseService.getCases');
-    // TODO:
-    // const params = new URLSearchParams();
-    // if (filters?.status) params.set('status', filters.status);
-    // if (filters?.riskLevel) params.set('riskLevel', filters.riskLevel);
-    // if (filters?.search) params.set('search', filters.search);
-    // const { data } = await tryaApi.get<Case[]>(`/api/cases?${params}`);
-    // return data;
-  }
-
-  /**
-   * GET /api/cases/:id
-   */
-  async getCaseById(_caseId: string): Promise<Case | null> {
-    throw NOT_IMPL('ApiCaseService.getCaseById');
-    // TODO:
-    // const { data } = await tryaApi.get<Case>(`/api/cases/${caseId}`);
-    // return data;
-  }
-
-  /**
-   * GET /api/cases/counts
-   */
-  async getCaseCountsByStatus(): Promise<Record<CaseStatus, number>> {
-    throw NOT_IMPL('ApiCaseService.getCaseCountsByStatus');
-    // TODO:
-    // const { data } = await tryaApi.get<Record<CaseStatus, number>>('/api/cases/counts');
-    // return data;
-  }
-}
+// ─── Case Service — MOVED to case-service.api.ts (Phase 7) ─────
+// ApiCaseService is now a real implementation, not a stub.
 
 // ─── Patient Service ────────────────────────────────────────────
 
