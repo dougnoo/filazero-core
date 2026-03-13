@@ -190,10 +190,13 @@ function ChatBubble({ message }: { message: ServerChatMessage }) {
   const isUser = message.role === 'user';
 
   return (
-    <div className={cn('flex', isUser ? 'justify-end' : 'justify-start')}>
+    <div className={cn('flex items-end gap-2', isUser ? 'justify-end' : 'justify-start')}>
+      {!isUser && (
+        <img src={drIaAvatar} alt="Dr. IA" className="h-8 w-8 shrink-0 rounded-full object-cover shadow-sm" />
+      )}
       <div
         className={cn(
-          'max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
+          'max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
           isUser
             ? 'rounded-br-sm bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
             : 'rounded-bl-sm bg-card text-foreground shadow-sm'
