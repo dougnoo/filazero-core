@@ -107,6 +107,13 @@ export const mockClinicalIntake: ClinicalIntake = {
   symptomOnset: 'Súbito, sem fator desencadeante',
   associatedSymptoms: ['Dispneia', 'Sudorese'],
   painScale: 8,
+  vitalSigns: {
+    bloodPressure: '160/100 mmHg',
+    heartRate: 110,
+    temperature: 36.5,
+    oxygenSaturation: 94,
+    respiratoryRate: 22,
+  },
   currentMedications: ['Losartana 50mg'],
   allergies: [],
   chronicConditions: ['Hipertensão Arterial Sistêmica'],
