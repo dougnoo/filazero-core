@@ -93,6 +93,7 @@ import { ResilientPatientService } from './resilient-patient-service';
 import { ResilientIntakeService } from './resilient-intake-service';
 import { ResilientJourneyService } from './resilient-journey-service';
 import { ResilientClinicalReviewService } from './resilient-clinical-review-service';
+import { ResilientDashboardService } from './resilient-dashboard-service';
 
 // ═══════════════════════════════════════════════════════════════════
 // §1 — Mock Adapters (delegate to existing service functions)
