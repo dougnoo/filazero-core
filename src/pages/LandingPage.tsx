@@ -51,6 +51,8 @@ import { Bar, BarChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell }
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { UserRole } from "@/domain/enums/user-role";
 
 // ─── Animated Section Wrapper ─────────────────────────────
 function AnimatedSection({ children, id }: { children: React.ReactNode; id?: string }) {
@@ -1224,13 +1226,34 @@ function VisionSection() {
 // ─── Demo Channels ────────────────────────────────────────
 function DemoSection() {
   const navigate = useNavigate();
+  const { loginWithCPF, loginWithCredentials } = useAuth();
+
+  const handleDemoLogin = async (role: string) => {
+    try {
+      if (role === 'citizen') {
+        await loginWithCPF('123.456.789-00', '0000');
+        navigate('/app');
+      } else if (role === 'professional') {
+        await loginWithCredentials('carlos@ubs.gov.br', 'demo', UserRole.PROFESSIONAL);
+        navigate('/profissional');
+      } else if (role === 'manager') {
+        await loginWithCredentials('ana@saude.gov.br', 'demo', UserRole.MANAGER);
+        navigate('/gestor');
+      } else if (role === 'admin') {
+        await loginWithCredentials('admin@filazero.com', 'demo', UserRole.ADMIN);
+        navigate('/admin');
+      }
+    } catch (err) {
+      console.error('Demo login failed:', err);
+    }
+  };
 
   const channels = [
     {
       icon: Users,
       label: 'Canal do Paciente',
       description: 'Acolhimento clínico com IA, jornada de cuidado e acompanhamento',
-      path: '/login',
+      role: 'citizen',
       color: 'bg-primary/10 text-primary',
       cta: 'Entrar como Paciente',
     },
@@ -1238,7 +1261,7 @@ function DemoSection() {
       icon: Stethoscope,
       label: 'Canal do Médico',
       description: 'Revisão de pacotes clínicos, validação de exames e encaminhamentos',
-      path: '/profissional/login',
+      role: 'professional',
       color: 'bg-secondary/10 text-secondary',
       cta: 'Entrar como Médico',
     },
@@ -1246,7 +1269,7 @@ function DemoSection() {
       icon: Building2,
       label: 'Canal do Gestor de UBS',
       description: 'Dashboard de resolutividade, fluxo da rede e gargalos operacionais',
-      path: '/gestor/login',
+      role: 'manager',
       color: 'bg-accent text-accent-foreground',
       cta: 'Entrar como Gestor',
     },
@@ -1254,7 +1277,7 @@ function DemoSection() {
       icon: LayoutDashboard,
       label: 'Admin da Plataforma',
       description: 'Gestão SaaS de prefeituras, unidades de saúde e métricas da plataforma',
-      path: '/admin/login',
+      role: 'admin',
       color: 'bg-muted text-foreground',
       cta: 'Entrar como Admin',
     },
@@ -1271,7 +1294,7 @@ function DemoSection() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {channels.map((ch) => (
             <Card key={ch.label} className="group cursor-pointer hover:shadow-lg transition-all hover:border-primary/30"
-              onClick={() => navigate(ch.path)}>
+              onClick={() => handleDemoLogin(ch.role)}>
               <CardContent className="p-6 space-y-4">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${ch.color}`}>
                   <ch.icon className="h-6 w-6" />
