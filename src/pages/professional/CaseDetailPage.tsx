@@ -7,6 +7,7 @@
  */
 
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { UserRole } from '@/domain/enums/user-role';
 import { useCaseStore } from '@/contexts/CaseStore';
@@ -19,7 +20,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { caseStatusConfig, CaseStatus } from '@/domain/enums/case-status';
 import { RiskLevel } from '@/domain/enums/risk-level';
-import { mockCareJourneys } from '@/mock/clinical-data';
+import { services } from '@/services/adapters';
+import type { CareJourney } from '@/domain/types/care-journey';
 import {
   ArrowLeft, ArrowRight, User, FileText, FlaskConical,
   Stethoscope, CheckCircle2, Clock, AlertTriangle,
@@ -33,6 +35,16 @@ export default function CaseDetailPage() {
   const { getCase, getIntakeForCase, mutate } = useCaseStore();
 
   const caseItem = id ? getCase(id) : undefined;
+
+  const [journey, setJourney] = useState<CareJourney | null>(null);
+
+  useEffect(() => {
+    if (caseItem?.journeyId) {
+      services.journeys.getJourneyById(caseItem.journeyId)
+        .then((j) => setJourney(j))
+        .catch(() => setJourney(null));
+    }
+  }, [caseItem?.journeyId]);
 
   if (!caseItem) {
     return (
@@ -48,7 +60,6 @@ export default function CaseDetailPage() {
   }
 
   const intake = getIntakeForCase(caseItem);
-  const journey = mockCareJourneys.find((j) => j.id === caseItem.journeyId);
   const statusCfg = caseStatusConfig[caseItem.status];
   const isUrgent = caseItem.riskLevel === RiskLevel.EMERGENCY || caseItem.riskLevel === RiskLevel.VERY_URGENT;
 

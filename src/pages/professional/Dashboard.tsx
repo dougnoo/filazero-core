@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { services } from '@/services/adapters';
 import type { ClinicalPackage } from '@/services/clinical-review-service';
-import { mockQueuePositions } from '@/mock';
+import { mockQueuePositions } from '@/mock'; // TODO: replace with services.queue when QueueService is created
 import { CareJourneyStatus, careJourneyStatusConfig } from '@/domain/enums/care-journey-status';
 import { CaseDetail } from '@/features/clinical-review/CaseDetail';
 import { CaseList } from '@/features/clinical-review/CaseList';
