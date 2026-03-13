@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { UserRole } from '@/domain/enums/user-role';
-import { CaseList } from '@/components/clinical-review/CaseList';
-import { CaseDetail } from '@/components/clinical-review/CaseDetail';
+import { CaseList } from '@/features/clinical-review/CaseList';
+import { CaseDetail } from '@/features/clinical-review/CaseDetail';
 import { getPendingClinicalPackages, type ClinicalPackage } from '@/services/clinical-review-service';
 import { FileText, Loader2 } from 'lucide-react';
 

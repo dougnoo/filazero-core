@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { UserRole } from '@/domain/enums/user-role';
-import { RiskBadge } from '@/components/patient/RiskBadge';
+import { RiskBadge } from '@/features/shared/RiskBadge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,8 +11,7 @@ import {
   ListChecks, Clock, Users, FileCheck, ArrowRight,
   Stethoscope, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
-import { mockCareJourneys } from '@/lib/mock-clinical-data';
-import { mockQueuePositions } from '@/lib/mock-data';
+import { mockCareJourneys, mockQueuePositions } from '@/mock';
 import { CareJourneyStatus, careJourneyStatusConfig } from '@/domain/enums/care-journey-status';
 import { RiskLevel } from '@/domain/enums/risk-level';
 

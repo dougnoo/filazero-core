@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { RiskBadge } from '@/components/patient/RiskBadge';
+import { RiskBadge } from '@/features/shared/RiskBadge';
 import { Badge } from '@/components/ui/badge';
 import { careJourneyStatusConfig } from '@/domain/enums/care-journey-status';
 import { referralUrgencyConfig, ReferralUrgency } from '@/domain/enums/referral-urgency';

@@ -9,7 +9,7 @@ import {
   Users, Heart, Clock, FileCheck, Stethoscope,
   Building2, TrendingUp, AlertTriangle,
 } from 'lucide-react';
-import { mockClinicalDashboardStats } from '@/lib/mock-clinical-data';
+import { mockClinicalDashboardStats } from '@/mock';
 
 const stats = mockClinicalDashboardStats;
 

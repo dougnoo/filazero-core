@@ -14,8 +14,8 @@ import {
   Activity,
 } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
-import { JourneyTimeline } from '@/components/journey/JourneyTimeline';
-import { RiskBadge } from '@/components/patient/RiskBadge';
+import { JourneyTimeline } from '@/features/journey/JourneyTimeline';
+import { RiskBadge } from '@/features/shared/RiskBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
