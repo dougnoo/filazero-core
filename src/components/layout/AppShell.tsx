@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
-import { Home, MessageSquare, Route as RouteIcon, User, LayoutDashboard, FileText, ListChecks, Activity, BarChart3, Settings, LogOut } from 'lucide-react';
+import { Home, MessageSquare, Route as RouteIcon, User, LayoutDashboard, FileText, ListChecks, Activity, BarChart3, Settings, LogOut, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserRole } from '@/domain/enums/user-role';
 import { useAuth } from '@/contexts/AuthContext';
