@@ -12,11 +12,17 @@ export default function ClinicalReview() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getPendingClinicalPackages().then((data) => {
-      setPackages(data);
-      if (data.length > 0) setSelected(data[0]);
-      setLoading(false);
-    });
+    getPendingClinicalPackages()
+      .then((data) => {
+        setPackages(data);
+        if (data.length > 0) setSelected(data[0]);
+      })
+      .catch((err) => {
+        console.error('[ClinicalReview] Failed to load:', err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   return (
