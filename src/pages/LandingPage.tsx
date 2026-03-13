@@ -53,18 +53,17 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 // ─── Animated Section Wrapper ─────────────────────────────
-function AnimatedSection({ children, id, className }: { children: React.ReactNode; id?: string; className?: string }) {
+function AnimatedSection({ children, id }: { children: React.ReactNode; id?: string }) {
   return (
-    <motion.section
+    <motion.div
       id={id}
-      className={className}
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
       transition={{ duration: 0.6, ease: "easeOut" }}
     >
       {children}
-    </motion.section>
+    </motion.div>
   );
 }
 
