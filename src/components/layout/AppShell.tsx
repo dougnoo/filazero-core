@@ -49,6 +49,7 @@ export function AppShell({ children, role = UserRole.CITIZEN }: AppShellProps) {
     logout();
     const loginPath = role === UserRole.PROFESSIONAL ? '/profissional/login'
       : role === UserRole.MANAGER ? '/gestor/login'
+      : role === UserRole.ADMIN ? '/admin/login'
       : '/login';
     navigate(loginPath);
   };
