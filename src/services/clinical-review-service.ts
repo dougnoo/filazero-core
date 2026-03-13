@@ -16,7 +16,7 @@ import type {
   ValidationActionType,
   ClinicalPackageListParams,
 } from '@/domain/contracts/trya-backend';
-import { mockCareJourneys, mockClinicalIntake } from '@/lib/mock-clinical-data';
+import { mockCareJourneys, mockIntakesMap, mockClinicalIntake } from '@/lib/mock-clinical-data';
 import { CareJourneyStatus } from '@/domain/enums/care-journey-status';
 import { isTryaMockMode } from '@/lib/env';
 import { tryaApi } from '@/lib/api-client';
