@@ -27,18 +27,27 @@ import {
   Search,
   ClipboardList,
   Timer,
-  TrendingDown,
-  
-  Repeat,
   UserCheck,
-  Hourglass,
   Brain,
-  Shield,
   Phone,
   Mail,
+  Lock,
+  Server,
+  ScanEye,
+  Plug,
+  LayoutDashboard,
+  Mic,
+  Newspaper,
+  CircleCheckBig,
+  Quote,
+  TrendingUp,
+  HeartPulse,
+  Globe,
+  Handshake,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Bar, BarChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from "recharts";
 
 // ─── Hero ─────────────────────────────────────────────────
 function HeroSection() {
