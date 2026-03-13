@@ -62,20 +62,49 @@ const DEFAULT_BANNER = {
   className: 'border-border bg-muted/30',
 };
 
-function getNextAction(journey: CareJourney): { label: string; description: string } | null {
+function getNextAction(journey: CareJourney): { label: string; description: string; blockedBy?: string } | null {
   const currentStep = journey.steps[journey.currentStepIndex];
   if (!currentStep) return null;
+
+  // Check for blockages: if a prior required step is not completed
+  const pendingExams = journey.steps.filter(
+    (s) => (s.type === 'EXAM_REQUEST' || s.type === 'EXAM_RESULT') && s.status !== CareStepStatus.COMPLETED && s.order < currentStep.order
+  );
+  const pendingReview = journey.steps.filter(
+    (s) => s.type === 'REFERRAL_DECISION' && s.status === CareStepStatus.PENDING && s.order < currentStep.order
+  );
+
+  if (currentStep.status === CareStepStatus.BLOCKED) {
+    return {
+      label: 'Etapa bloqueada',
+      description: 'Esta etapa depende da conclusão de um passo anterior. A equipe de saúde está trabalhando para resolver.',
+      blockedBy: pendingExams.length > 0 ? 'Resultado de exames pendente' : pendingReview.length > 0 ? 'Revisão médica pendente' : 'Dependência anterior',
+    };
+  }
+
   switch (currentStep.type) {
+    case 'INTAKE':
+      return { label: 'Completar acolhimento', description: 'Continue a conversa com o assistente clínico para finalizar a coleta de dados.' };
+    case 'TRIAGE':
+      return { label: 'Triagem em andamento', description: 'Seus dados estão sendo analisados pela IA clínica para classificação de risco.' };
     case 'EXAM_REQUEST':
       return { label: 'Realizar exames', description: 'Dirija-se ao laboratório ou setor de imagem da unidade para realizar os exames solicitados.' };
+    case 'EXAM_RESULT':
+      return { label: 'Aguardar resultados', description: 'Os resultados dos exames estão sendo processados. Você será notificado quando estiverem prontos.' };
     case 'REFERRAL_DECISION':
-      return { label: 'Aguardar avaliação', description: 'A equipe médica está avaliando seu caso. Você será notificado sobre o próximo passo.' };
+      return {
+        label: 'Aguardar avaliação médica',
+        description: 'Um profissional de saúde está revisando seu caso e definindo o próximo passo.',
+        blockedBy: pendingExams.length > 0 ? `Aguardando ${pendingExams.length} exame(s) pendente(s)` : undefined,
+      };
     case 'REGULATION_QUEUE':
-      return { label: 'Aguardar agendamento', description: `Seu caso está na regulação. Tempo estimado: ${journey.estimatedWaitDays ?? '—'} dias.` };
+      return { label: 'Aguardar agendamento', description: `Seu caso está na fila de regulação. Tempo estimado: ${journey.estimatedWaitDays ?? '—'} dias.` };
+    case 'SPECIALIST_PREPARATION':
+      return { label: 'Preparo para consulta', description: 'Reúna seus exames e documentos. A consulta com especialista será agendada em breve.' };
     case 'ATTENDANCE':
-      return { label: 'Comparecer à consulta', description: 'Sua consulta está agendada. Leve seus documentos e exames.' };
+      return { label: 'Comparecer à consulta', description: 'Sua consulta está agendada. Leve seus documentos, exames e cartão SUS.' };
     case 'FOLLOW_UP':
-      return { label: 'Agendar retorno', description: 'Procure a recepção da UBS para agendar seu retorno.' };
+      return { label: 'Agendar retorno', description: 'Procure a recepção da UBS para agendar seu retorno de acompanhamento.' };
     default:
       return null;
   }
