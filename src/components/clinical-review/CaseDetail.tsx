@@ -11,8 +11,9 @@ import { RiskBadge } from '@/components/patient/RiskBadge';
 import { careJourneyStatusConfig } from '@/domain/enums/care-journey-status';
 import { careStepStatusConfig, CareStepStatus } from '@/domain/enums/care-step-status';
 import { cn } from '@/lib/utils';
-import type { ClinicalPackage, ValidationAction } from '@/services/clinical-review-service';
+import type { ClinicalPackage } from '@/services/clinical-review-service';
 import { submitValidation } from '@/services/clinical-review-service';
+import type { ValidationActionType } from '@/domain/contracts/trya-backend';
 import { toast } from 'sonner';
 
 interface CaseDetailProps {
