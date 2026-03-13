@@ -200,7 +200,7 @@ export async function fetchWeeklyTrend(
   filters: DashboardFilters = {},
   weeks = 1,
 ): Promise<WeeklyTrend[]> {
-  if (!isMockMode()) {
+  if (!isPlatformMockMode()) {
     const params = filtersToParams(filters);
     params.set('weeks', String(weeks));
     const path = `/api/manager/dashboard/weekly-trend?${params.toString()}`;
