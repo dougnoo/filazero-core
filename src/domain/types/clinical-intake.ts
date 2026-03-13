@@ -65,6 +65,7 @@ export interface ClinicalSummary {
   narrative: string; // AI-generated clinical narrative
   structuredFindings: string[]; // Key findings as bullet points
   suspectedConditions: string[]; // Differential diagnoses suggested by AI
+  cid10Codes?: string[]; // CID-10 codes for suspected conditions
   relevantHistory: string; // Filtered relevant medical history
   riskFactors: string[]; // Identified risk factors
   generatedAt: string;

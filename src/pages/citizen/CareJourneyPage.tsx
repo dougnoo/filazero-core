@@ -254,6 +254,12 @@ export default function CareJourneyPage() {
                   <p className="text-xs font-medium uppercase tracking-wider text-primary">Próximo passo</p>
                   <p className="mt-0.5 text-sm font-semibold text-foreground">{nextAction.label}</p>
                   <p className="mt-1 text-xs text-muted-foreground">{nextAction.description}</p>
+                  {nextAction.blockedBy && (
+                    <div className="mt-2 flex items-center gap-1.5 rounded-md bg-destructive/5 border border-destructive/20 px-2.5 py-1.5">
+                      <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />
+                      <p className="text-[11px] text-destructive">{nextAction.blockedBy}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>

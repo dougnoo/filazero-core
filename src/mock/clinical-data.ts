@@ -357,6 +357,7 @@ const mockIntake7: ClinicalIntake = {
     narrative: 'Paciente feminina, 67 anos, refere gonalgia direita há 6 meses, principalmente ao subir escadas e agachar. Relata crepitação articular e edema leve eventual. Sem trauma. Quadro compatível com osteoartrose de joelho.',
     structuredFindings: ['Gonalgia mecânica há 6 meses', 'Crepitação articular', 'Edema leve intermitente', 'Sem instabilidade'],
     suspectedConditions: ['Osteoartrose de joelho', 'Lesão meniscal degenerativa'],
+    cid10Codes: ['M17.1', 'M23.3'],
     relevantHistory: 'Sem comorbidades relevantes. IMC 28.', riskFactors: ['Idade > 60', 'Sobrepeso'],
     generatedAt: daysAgo(10),
   },

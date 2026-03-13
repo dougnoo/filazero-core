@@ -326,6 +326,12 @@ export const VALIDATION_ACTION_EFFECTS: Record<ValidationActionType, {
       to: 'RESOLVED' as CareJourneyStatus,
     },
   },
+  CHANGE_PRIORITY: {
+    description: 'Changes clinical priority score based on professional reassessment',
+  },
+  REDIRECT_CASE: {
+    description: 'Redirects case to a different specialty or unit',
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════════

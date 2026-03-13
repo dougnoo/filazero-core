@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import {
   FileText, FlaskConical, ArrowRight, AlertTriangle, CheckCircle2,
-  XCircle, MessageSquarePlus, Stethoscope, Activity, Clock,
-  Send, Clipboard, ChevronDown, ChevronUp,
+  XCircle, Stethoscope, Activity, Clock,
+  Send, Clipboard, ChevronDown, ChevronUp, Gauge, RotateCcw,
+  ShieldAlert, Heart,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
 import { RiskBadge } from '@/features/shared/RiskBadge';
 import { careJourneyStatusConfig, CareJourneyStatus } from '@/domain/enums/care-journey-status';
 import { careStepStatusConfig, CareStepStatus } from '@/domain/enums/care-step-status';
@@ -16,6 +19,7 @@ import { cn } from '@/lib/utils';
 import type { ClinicalPackage } from '@/services/clinical-review-service';
 import { submitValidation } from '@/services/clinical-review-service';
 import type { ValidationActionType } from '@/domain/contracts/trya-backend';
+import { useCaseStore } from '@/contexts/CaseStore';
 import { toast } from 'sonner';
 
 interface CaseDetailProps {
@@ -44,11 +48,16 @@ const ACTION_LABELS: Record<string, string> = {
   REJECT_REFERRAL: 'Encaminhamento rejeitado',
   RESOLVE_PRIMARY: 'Caso resolvido na UBS',
   REQUEST_MORE_INFO: 'Mais informações solicitadas',
+  CHANGE_PRIORITY: 'Prioridade alterada',
+  REDIRECT_CASE: 'Caso redirecionado',
 };
 
 export function CaseDetail({ pkg, onValidationComplete }: CaseDetailProps) {
   const { journey, intake } = pkg;
   const { clinicalSummary, examSuggestions, referralRecommendation } = intake;
+  const { getCaseByJourneyId, mutate: mutateCaseStore } = useCaseStore();
+  const caseItem = getCaseByJourneyId(journey.id);
+
   const [validating, setValidating] = useState<ValidationActionType | null>(null);
   const [doctorNotes, setDoctorNotes] = useState('');
   const [showNotes, setShowNotes] = useState(false);
@@ -56,6 +65,12 @@ export function CaseDetail({ pkg, onValidationComplete }: CaseDetailProps) {
   const [examStates, setExamStates] = useState<Record<string, 'approved' | 'rejected' | null>>(
     () => Object.fromEntries((examSuggestions ?? []).map((e) => [e.id, null]))
   );
+
+  // New action states
+  const [newPriority, setNewPriority] = useState(journey.priorityScore);
+  const [newSpecialty, setNewSpecialty] = useState(journey.targetSpecialty ?? '');
+  const [showPriorityEdit, setShowPriorityEdit] = useState(false);
+  const [showRedirect, setShowRedirect] = useState(false);
 
   const handleAction = async (action: ValidationActionType) => {
     setValidating(action);
@@ -67,6 +82,28 @@ export function CaseDetail({ pkg, onValidationComplete }: CaseDetailProps) {
       });
       if (result.success) {
         setCompletedActions((prev) => new Set([...prev, action]));
+
+        // Wire to CaseStore mutations
+        if (caseItem) {
+          switch (action) {
+            case 'APPROVE_EXAMS':
+              mutateCaseStore({ type: 'REQUEST_EXAMS', caseId: caseItem.id });
+              break;
+            case 'APPROVE_REFERRAL':
+              mutateCaseStore({ type: 'MARK_REFERRED', caseId: caseItem.id, destination: referralRecommendation?.specialty ?? 'Especialista' });
+              break;
+            case 'RESOLVE_PRIMARY':
+              mutateCaseStore({ type: 'MARK_COMPLETED', caseId: caseItem.id });
+              break;
+            case 'CHANGE_PRIORITY':
+              mutateCaseStore({ type: 'UPDATE_PRIORITY', caseId: caseItem.id, priorityScore: newPriority });
+              break;
+            case 'REDIRECT_CASE':
+              mutateCaseStore({ type: 'UPDATE_DESTINATION', caseId: caseItem.id, destination: newSpecialty });
+              break;
+          }
+        }
+
         toast.success(
           <div className="space-y-1">
             <p className="font-semibold">{ACTION_LABELS[action]}</p>
@@ -95,7 +132,6 @@ export function CaseDetail({ pkg, onValidationComplete }: CaseDetailProps) {
   const approvedExams = Object.values(examStates).filter((v) => v === 'approved').length;
   const totalExams = examSuggestions?.length ?? 0;
   const allExamsDecided = Object.values(examStates).every((v) => v !== null);
-
   const hasCompletedAny = completedActions.size > 0;
 
   return (
@@ -119,8 +155,14 @@ export function CaseDetail({ pkg, onValidationComplete }: CaseDetailProps) {
             </Badge>
           )}
           <Badge variant="outline" className="text-xs">
-            Prioridade: {journey.priorityScore}/100
+            Prioridade: {caseItem?.priorityScore ?? journey.priorityScore}/100
           </Badge>
+          {intake.socialVulnerabilityScore != null && (
+            <Badge variant="outline" className="text-xs border-destructive/30 text-destructive">
+              <ShieldAlert className="mr-1 h-3 w-3" />
+              Vuln. Social: {intake.socialVulnerabilityScore}/10
+            </Badge>
+          )}
           {hasCompletedAny && (
             <Badge className="text-xs bg-primary">
               ✓ Validado
@@ -130,7 +172,7 @@ export function CaseDetail({ pkg, onValidationComplete }: CaseDetailProps) {
       </div>
 
       <div className="space-y-4 p-4">
-        {/* Clinical Summary */}
+        {/* ═══ CLINICAL SUMMARY ═══ */}
         {clinicalSummary && (
           <Card>
             <CardHeader className="pb-3">
@@ -165,6 +207,20 @@ export function CaseDetail({ pkg, onValidationComplete }: CaseDetailProps) {
                 </div>
               </div>
 
+              {/* CID-10 Codes */}
+              {clinicalSummary.cid10Codes && clinicalSummary.cid10Codes.length > 0 && (
+                <div>
+                  <p className="mb-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">CID-10 Suspeitos</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {clinicalSummary.cid10Codes.map((code, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs font-mono">
+                        {code}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <p className="mb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Fatores de Risco</p>
                 <div className="flex flex-wrap gap-1.5">
@@ -180,6 +236,41 @@ export function CaseDetail({ pkg, onValidationComplete }: CaseDetailProps) {
                 <div>
                   <p className="mb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Histórico Relevante</p>
                   <p className="text-sm text-muted-foreground">{clinicalSummary.relevantHistory}</p>
+                </div>
+              )}
+
+              {/* Vital Signs */}
+              {intake.vitalSigns && (
+                <div>
+                  <p className="mb-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Sinais Vitais</p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {intake.vitalSigns.bloodPressure && (
+                      <div className="flex items-center gap-1.5 rounded-md border p-2">
+                        <Heart className="h-3 w-3 text-destructive" />
+                        <span className="text-muted-foreground">PA:</span>
+                        <span className="font-medium">{intake.vitalSigns.bloodPressure}</span>
+                      </div>
+                    )}
+                    {intake.vitalSigns.heartRate && (
+                      <div className="flex items-center gap-1.5 rounded-md border p-2">
+                        <Activity className="h-3 w-3 text-secondary" />
+                        <span className="text-muted-foreground">FC:</span>
+                        <span className="font-medium">{intake.vitalSigns.heartRate} bpm</span>
+                      </div>
+                    )}
+                    {intake.vitalSigns.temperature && (
+                      <div className="flex items-center gap-1.5 rounded-md border p-2">
+                        <span className="text-muted-foreground">Temp:</span>
+                        <span className="font-medium">{intake.vitalSigns.temperature}°C</span>
+                      </div>
+                    )}
+                    {intake.vitalSigns.oxygenSaturation && (
+                      <div className="flex items-center gap-1.5 rounded-md border p-2">
+                        <span className="text-muted-foreground">SpO₂:</span>
+                        <span className="font-medium">{intake.vitalSigns.oxygenSaturation}%</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -238,7 +329,6 @@ export function CaseDetail({ pkg, onValidationComplete }: CaseDetailProps) {
                       <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
                         {exam.justification}
                       </p>
-                      {/* Decision buttons */}
                       <div className="mt-2 flex items-center gap-2">
                         <Button
                           size="sm"
@@ -264,7 +354,6 @@ export function CaseDetail({ pkg, onValidationComplete }: CaseDetailProps) {
                 })}
               </div>
 
-              {/* Batch approve/reject */}
               <div className="mt-4 flex gap-2">
                 <Button
                   size="sm"
@@ -314,7 +403,7 @@ export function CaseDetail({ pkg, onValidationComplete }: CaseDetailProps) {
               {referralRecommendation.requiredExamsBeforeReferral.length > 0 && (
                 <div>
                   <p className="mb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Exames Necessários Antes
+                    Exames Necessários Antes do Encaminhamento
                   </p>
                   <ul className="space-y-1">
                     {referralRecommendation.requiredExamsBeforeReferral.map((e, i) => (
@@ -345,7 +434,7 @@ export function CaseDetail({ pkg, onValidationComplete }: CaseDetailProps) {
 
               <Separator />
 
-              {/* Action buttons */}
+              {/* Main referral action buttons */}
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                   Definir jornada do paciente
@@ -389,6 +478,104 @@ export function CaseDetail({ pkg, onValidationComplete }: CaseDetailProps) {
             </CardContent>
           </Card>
         )}
+
+        {/* ═══ PROFESSIONAL ACTIONS: CHANGE PRIORITY & REDIRECT ═══ */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm font-display">
+              <Gauge className="h-4 w-4 text-muted-foreground" />
+              Ações Profissionais
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {/* Change Priority */}
+            <div className="space-y-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 w-full justify-start"
+                onClick={() => setShowPriorityEdit(!showPriorityEdit)}
+              >
+                <Gauge className="h-3.5 w-3.5" />
+                {completedActions.has('CHANGE_PRIORITY') ? '✓ Prioridade Alterada' : 'Alterar Prioridade'}
+                {showPriorityEdit ? <ChevronUp className="ml-auto h-3.5 w-3.5" /> : <ChevronDown className="ml-auto h-3.5 w-3.5" />}
+              </Button>
+              {showPriorityEdit && (
+                <div className="rounded-lg border p-3 space-y-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Nova prioridade:</span>
+                    <span className="font-display font-bold text-sm">{newPriority}/100</span>
+                  </div>
+                  <Slider
+                    value={[newPriority]}
+                    onValueChange={(v) => setNewPriority(v[0])}
+                    min={0}
+                    max={100}
+                    step={5}
+                    className="w-full"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={() => { handleAction('CHANGE_PRIORITY'); setShowPriorityEdit(false); }}
+                    disabled={validating !== null || completedActions.has('CHANGE_PRIORITY')}
+                    className="gap-1.5"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Confirmar Prioridade
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Redirect Case */}
+            <div className="space-y-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 w-full justify-start"
+                onClick={() => setShowRedirect(!showRedirect)}
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                {completedActions.has('REDIRECT_CASE') ? '✓ Caso Redirecionado' : 'Redirecionar Caso'}
+                {showRedirect ? <ChevronUp className="ml-auto h-3.5 w-3.5" /> : <ChevronDown className="ml-auto h-3.5 w-3.5" />}
+              </Button>
+              {showRedirect && (
+                <div className="rounded-lg border p-3 space-y-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground">Especialidade de destino:</label>
+                    <Input
+                      value={newSpecialty}
+                      onChange={(e) => setNewSpecialty(e.target.value)}
+                      placeholder="Ex: Cardiologia, Ortopedia..."
+                      className="mt-1 text-sm"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => { handleAction('REDIRECT_CASE'); setShowRedirect(false); }}
+                    disabled={validating !== null || !newSpecialty || completedActions.has('REDIRECT_CASE')}
+                    className="gap-1.5"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Confirmar Redirecionamento
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Request More Info */}
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 w-full justify-start"
+              onClick={() => handleAction('REQUEST_MORE_INFO')}
+              disabled={validating !== null || completedActions.has('REQUEST_MORE_INFO')}
+            >
+              <AlertTriangle className="h-3.5 w-3.5" />
+              {completedActions.has('REQUEST_MORE_INFO') ? '✓ Info Solicitada' : 'Solicitar Mais Informações'}
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* ═══ DOCTOR NOTES ═══ */}
         <Card>
