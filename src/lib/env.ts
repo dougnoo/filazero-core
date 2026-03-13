@@ -61,6 +61,7 @@ export const env: EnvConfig = {
   ENABLE_REAL_TRYA: bool(import.meta.env.VITE_ENABLE_REAL_TRYA),
   ENABLE_REAL_PLATFORM: bool(import.meta.env.VITE_ENABLE_REAL_PLATFORM),
   ENABLE_REAL_CHAT: bool(import.meta.env.VITE_ENABLE_REAL_CHAT),
+  ENABLE_TRYA_WRITE: bool(import.meta.env.VITE_ENABLE_TRYA_WRITE),
 };
 
 /** Returns true when demo mode is on — everything uses mocks */
