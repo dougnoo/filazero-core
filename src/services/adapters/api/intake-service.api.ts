@@ -156,7 +156,7 @@ function mapExamSuggestions(intakeId: string, d: Record<string, unknown>) {
     intakeId,
     examName: (e.examName as string) ?? (e.exam_name as string) ?? '',
     examCode: (e.examCode as string) ?? (e.exam_code as string),
-    category: ((e.category as string) || 'OTHER') as 'LABORATORY' | 'IMAGING' | 'CLINICAL' | 'OTHER',
+    category: ((e.category as string) || 'OTHER') as 'LABORATORY' | 'IMAGING' | 'FUNCTIONAL' | 'OTHER',
     priority: ((e.priority as string) || 'ROUTINE') as 'URGENT' | 'ROUTINE',
     justification: (e.justification as string) || '',
     status: 'SUGGESTED' as const,
