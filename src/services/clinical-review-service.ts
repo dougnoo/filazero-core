@@ -78,7 +78,7 @@ export async function getPendingClinicalPackages(
 export async function getAllClinicalPackages(
   params?: ClinicalPackageListParams,
 ): Promise<ClinicalPackage[]> {
-  if (!isMockMode()) {
+  if (!isTryaMockMode()) {
     const query = new URLSearchParams();
     if (params?.status) query.set('status', params.status);
     if (params?.page) query.set('page', String(params.page));
