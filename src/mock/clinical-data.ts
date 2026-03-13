@@ -206,6 +206,7 @@ const mockIntake3: ClinicalIntake = {
     narrative: 'Paciente feminina, 28 anos, com terceiro episódio de ITU em 6 meses. Apresenta disúria, polaciúria e desconforto suprapúbico há 3 dias. Sem febre. Alérgica a sulfa.',
     structuredFindings: ['3º episódio de ITU em 6 meses', 'Disúria e polaciúria', 'Sem febre', 'Alergia a sulfa'],
     suspectedConditions: ['ITU de repetição', 'Cistite bacteriana'],
+    cid10Codes: ['N30.0', 'N39.0'],
     relevantHistory: 'ITU de repetição. Alergia a sulfa.', riskFactors: ['ITU recorrente'],
     generatedAt: daysAgo(7),
   },
